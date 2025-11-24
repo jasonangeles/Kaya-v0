@@ -97,7 +97,7 @@ export const generateHistory = (assets: Asset[], range: TimeRange = '1M'): Histo
     currentTotalUSD += amountInUSD;
   });
 
-  let dataPoints = 30;
+  let dataPoints = 40; // Increased points for smoother curve
   let intervalHours = 24;
   let startDate = new Date();
 
@@ -108,8 +108,8 @@ export const generateHistory = (assets: Asset[], range: TimeRange = '1M'): Histo
       startDate.setHours(startDate.getHours() - 24);
       break;
     case '1W':
-      dataPoints = 7;
-      intervalHours = 24;
+      dataPoints = 28; // 4 points per day
+      intervalHours = 6;
       startDate.setDate(startDate.getDate() - 7);
       break;
     case '1M':
@@ -118,111 +118,112 @@ export const generateHistory = (assets: Asset[], range: TimeRange = '1M'): Histo
       startDate.setDate(startDate.getDate() - 30);
       break;
     case '3M':
-      dataPoints = 90;
-      intervalHours = 24;
+      dataPoints = 45; 
+      intervalHours = 24 * 2;
       startDate.setDate(startDate.getDate() - 90);
       break;
     case 'YTD':
       const startOfYear = new Date(today.getFullYear(), 0, 1);
       const diffTime = Math.abs(today.getTime() - startOfYear.getTime());
-      dataPoints = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-      intervalHours = 24;
+      dataPoints = Math.max(20, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7))); // Weekly points 
+      intervalHours = 24 * 7;
       startDate = startOfYear;
       break;
     case '1Y':
-      dataPoints = 52; // Weekly points for smoother chart
+      dataPoints = 52; 
       intervalHours = 24 * 7;
       startDate.setFullYear(startDate.getFullYear() - 1);
       break;
     case 'ALL':
-      dataPoints = 60; // Monthly points for 5 years
+      dataPoints = 60; 
       intervalHours = 24 * 30;
       startDate.setFullYear(startDate.getFullYear() - 5);
       break;
   }
 
   // Value Erosion settings (Annual inflation approx 4-5%)
-  const hourlyErosionRate = 0.000005; // very rough approx
   
+  // ALGORITHM UPDATE: Use Random Walk / Cumulative Trend instead of pure random noise
+  // This creates smooth "financial-looking" curves instead of jagged lines.
+  
+  // We simulate BACKWARDS from today (which is currentTotalUSD)
+  let simulatedUSD = currentTotalUSD;
+  let simulatedBTCPrice = BTC_PRICE_USD;
+
+  // We need to generate points in reverse order first (from today backwards), then reverse the array
+  const reversePoints: HistoricalPoint[] = [];
+
   for (let i = 0; i <= dataPoints; i++) {
-    const d = new Date(startDate.getTime() + (i * intervalHours * 60 * 60 * 1000));
+    const d = new Date(today.getTime() - (i * intervalHours * 60 * 60 * 1000));
     
-    // Don't go into future
-    if (d > today) break;
-
-    // Volatility depends on range. Short range = mostly noise. Long range = big trends.
-    const timeProgress = i / dataPoints; // 0 to 1
-    const volatility = range === '1D' ? 0.02 : (range === 'ALL' ? 3.0 : 0.5);
-    
-    // Create a deterministic-ish wave pattern
-    const noise = Math.sin(i * 0.5) * Math.cos(i * 0.2) * volatility;
-    
-    // Mock BTC Price History
-    // Ensure the last point is roughly current price
-    const startPrice = range === '1D' ? BTC_PRICE_USD * 0.98 : BTC_PRICE_USD * 0.4;
-    const endPrice = BTC_PRICE_USD;
-    
-    // Linear interp + noise
-    let simBTCPrice = startPrice + ((endPrice - startPrice) * timeProgress);
-    simBTCPrice = simBTCPrice * (1 + (Math.random() * 0.05 - 0.025)); // Add randomness
-
-    if (range === '1D') {
-        simBTCPrice = BTC_PRICE_USD * (0.99 + (Math.random() * 0.02));
+    // Skip future if logic slightly overlaps
+    if (d > new Date()) {
+        d.setTime(new Date().getTime());
     }
 
-    // Value Erosion (Inflation)
-    const erosionFactor = 1 - (i * (0.15 / dataPoints)); 
-    const inflationIndex = 100 * erosionFactor;
+    // 1. Calculate Volatility Factor based on range
+    const volatilityStep = range === '1D' ? 0.002 : (range === '1Y' || range === 'ALL' ? 0.03 : 0.015);
+    
+    // 2. Add trend + noise (Random Walk)
+    // The 'change' represents going BACK in time. 
+    // If market generally goes UP over time, going back means values should be LOWER or HIGHER depending on trend.
+    // Let's assume a slight general upward trend for assets (so going back, we subtract)
+    const trend = range === '1D' ? 0 : 0.001; // 0.1% growth per step
+    const noise = (Math.random() - 0.5) * volatilityStep * 2;
+    
+    const changePercent = trend + noise;
+    
+    // For BTC, higher volatility
+    const btcNoise = (Math.random() - 0.5) * (volatilityStep * 3) * 2;
+    const btcTrend = range === '1D' ? 0 : 0.002;
+    
+    // Store current state before modifying for next (previous) step
+    const inflationIndex = 100 * (1 - (i * (0.04 / (365*24/intervalHours)))); // Simple linear erosion
 
-    // Asset Value simulation (Portfolio fluctuation)
-    // We base this on the CURRENT total and work backward with some variance
-    const portVariance = 1 + (Math.random() * 0.04 - 0.02); // +/- 2% variance in history
-    const simulatedUSD = currentTotalUSD * portVariance;
-
-    points.push({
+    reversePoints.push({
       date: range === '1D' 
         ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         : d.toISOString(), 
       totalValueUSD: simulatedUSD,
       totalValuePHP: simulatedUSD * RATES.PHP,
-      totalValueBTC: simulatedUSD / simBTCPrice,
-      btcPrice: simBTCPrice,
+      totalValueBTC: simulatedUSD / simulatedBTCPrice,
+      btcPrice: simulatedBTCPrice,
       inflationIndex: inflationIndex
     });
+
+    // Update for next step (going backwards in time)
+    // Current = Previous * (1 + change)  => Previous = Current / (1 + change)
+    simulatedUSD = simulatedUSD / (1 + changePercent);
+    simulatedBTCPrice = simulatedBTCPrice / (1 + btcTrend + btcNoise);
   }
-  return points;
+
+  return reversePoints.reverse();
 };
 
 // Generate Exchange Rate History (Source vs Target)
 export const getExchangeRateHistory = (from: Currency, to: Currency, range: TimeRange = '1M'): HistoricalPoint[] => {
-    // Note: We are reusing the HistoricalPoint interface but stuffing rate data into totalValueUSD
-    // This is a shortcut for MVP visualization
     const points: HistoricalPoint[] = [];
-    
-    // Base Rates to USD
     const rateFrom = RATES[from] || 1;
     const rateTo = RATES[to] || 1;
-    
-    // Current Cross Rate (1 unit of From = X units of To)
-    // e.g. 1 USD = 56 PHP.  (1 / 1) * 56
-    // e.g. 1 CAD = X PHP.   (1 / 1.36) * 56 = 41.17
     const currentRate = (1 / rateFrom) * rateTo;
     
+    // Smooth trend generation
     const dataPoints = 30;
-    
+    let rateWalker = currentRate;
+
+    const tempPoints = [];
     for (let i = 0; i < dataPoints; i++) {
-        // Create a trend
-        const volatility = 0.02; // 2% fluctuation
-        const randomVar = 1 + (Math.random() * volatility - (volatility/2));
-        
-        // Slightly trend up or down based on index
-        const trend = 1 + (Math.sin(i * 0.2) * 0.01);
-        
-        const historicalRate = currentRate * randomVar * trend;
-        
+        tempPoints.push(rateWalker);
+        // Walk backwards
+        rateWalker = rateWalker + (rateWalker * (Math.random() - 0.5) * 0.01);
+    }
+    
+    const finalRates = tempPoints.reverse();
+
+    for (let i = 0; i < dataPoints; i++) {
         points.push({
             date: i.toString(),
-            totalValueUSD: historicalRate, // HACK: Using this field for the chart
+            totalValueUSD: finalRates[i], 
             totalValuePHP: 0,
             totalValueBTC: 0,
             btcPrice: 0,

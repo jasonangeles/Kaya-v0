@@ -2,7 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { Asset } from '../types';
 
 const getClient = () => {
-    const apiKey = process.env.API_KEY;
+    // VITE_API_KEY is required for Vite applications
+    const apiKey = import.meta.env.VITE_API_KEY;
     if (!apiKey) return null;
     return new GoogleGenAI({ apiKey });
 };
@@ -12,7 +13,7 @@ export const getWealthInsights = async (assets: Asset[], totalNetWorthPHP: numbe
   if (!client) {
     console.warn("API Key missing. Returning default insights.");
     return [
-        "API Key missing. Ensure process.env.API_KEY is available.",
+        "API Key missing. Add VITE_API_KEY to Vercel Environment Variables.",
         "Track your daily expenses to stay on top!", 
         "Diversify your assets to beat inflation."
     ];

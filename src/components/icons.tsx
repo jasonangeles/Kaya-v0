@@ -1,3 +1,4 @@
+import React from 'react';
 import { 
   LayoutDashboard, 
   Plus, 
@@ -27,7 +28,7 @@ import {
   ArrowLeftRight,
   ChevronDown,
   ArrowLeft,
-  Calendar,
+  CalendarDays,
   History,
   ArrowDownLeft,
   ArrowUpRight,
@@ -68,7 +69,7 @@ export const Icons = {
   ArrowLeftRight: ArrowLeftRight,
   ChevronDown: ChevronDown,
   ArrowLeft: ArrowLeft,
-  Calendar: Calendar,
+  Calendar: CalendarDays,
   History: History,
   ArrowDownLeft: ArrowDownLeft,
   ArrowUpRight: ArrowUpRight,
