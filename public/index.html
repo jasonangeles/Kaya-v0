@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#111111" />
+    <meta
+      name="description"
+      content="Kaya - OFW Wealth Tracker. Privacy-first wealth tracking."
+    />
+    <title>Kaya Wealth</title>
+    
+    <!-- Tailwind CSS (CDN for simplicity to keep your custom config) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              background: '#111111', // Updated to #111111
+              surface: '#121212',    // Zinc 900
+              primary: '#14afeb',    // Cyan Blue (Requested: rgb(20, 175, 235))
+              secondary: '#10b981',  // Emerald 500
+              accent: '#f43f5e',     // Rose 500
+              textMain: '#ffffff',
+              textMuted: '#a1a1aa',  // Zinc 400
+              border: '#27272a',     // Zinc 800
+            },
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+      body {
+        background-color: #111111; /* Updated base color */
+        /* Enhanced radial gradient for better blur visibility */
+        background-image: 
+          radial-gradient(circle at 10% 10%, rgba(20, 175, 235, 0.15) 0%, transparent 40%),
+          radial-gradient(circle at 90% 40%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+          radial-gradient(circle at 50% 100%, #1e293b 0%, transparent 60%);
+        background-attachment: fixed;
+        color: #ffffff;
+        font-family: 'Outfit', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+      }
+
+      /* Replaced CSS body::after noise with inline SVG #noice styling below */
+
+      #noice {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        pointer-events: none;
+        z-index: -1; /* Sits above body background/gradients, behind #root */
+        opacity: 0.04; /* Matches previous subtle grain opacity */
+      }
+
+      #root {
+        position: relative;
+        z-index: 1; /* Content sits above the noise */
+      }
+
+      /* Unified Glass Panel Style */
+      .glass-panel {
+        background-color: rgba(24, 24, 27, 0.45); /* Consistent tint */
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        border: none !important; /* Force remove borders */
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Surface Noise for Widgets (Tactile feel) */
+      /* Kept as pseudo-element for widgets to maintain internal texture */
+      .glass-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        opacity: 0.03; 
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+      }
+
+      /* Hide scrollbar for clean mobile look */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    
+    <!-- Inline SVG Noise Background (Crisp rendering on all devices) -->
+    <svg id="noice">
+        <filter id="noise-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="1.24" numOctaves="4" stitchTiles="stitch"></feTurbulence>
+            <feColorMatrix type="saturate" values="0"></feColorMatrix>
+            <feComponentTransfer>
+                <feFuncR type="linear" slope="0.34"></feFuncR>
+                <feFuncG type="linear" slope="0.34"></feFuncG>
+                <feFuncB type="linear" slope="0.34"></feFuncB>
+                <feFuncA type="linear" slope="0.6"></feFuncA>
+            </feComponentTransfer>
+            <feComponentTransfer>
+                <feFuncR type="linear" slope="1.47" intercept="-0.23"/>
+                <feFuncG type="linear" slope="1.47" intercept="-0.23"/>
+                <feFuncB type="linear" slope="1.47" intercept="-0.23"/>
+            </feComponentTransfer>
+        </filter>
+        <rect width="100%" height="100%" filter="url(#noise-filter)"></rect>
+    </svg>
+
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
