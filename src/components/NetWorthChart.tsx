@@ -79,7 +79,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
   if (isComparison) {
     return (
       <div className="w-full h-full transition-all duration-500 ease-in-out">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <LineChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
              <XAxis 
               dataKey="date" 
@@ -121,7 +121,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
 
   return (
     <div className="w-full h-full transition-all duration-500 ease-in-out">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <AreaChart
           data={data}
           margin={{ top: 10, right: 0, left: 0, bottom: 0 }}

@@ -8,22 +8,16 @@ import { getWealthInsights } from './services/geminiService';
 // --- Helper Components ---
 
 const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children?: React.ReactNode }) => {
-  // Bottom Sheet Style Modal
   return (
     <>
-      {/* Backdrop */}
       <div 
         className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
-      
-      {/* Slide Up Panel */}
       <div 
-        className={`fixed bottom-0 left-0 w-full z-50 glass-panel rounded-t-3xl p-6 shadow-2xl transform transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`fixed bottom-0 left-0 w-full z-50 bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transform transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
       >
-         {/* Drag Handle */}
         <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
-        
         <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-white">✕</button>
         {children}
       </div>
@@ -31,7 +25,6 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
   );
 };
 
-// History Swipe Item Component
 interface HistoryItemProps {
   entry: AssetHistoryEntry;
   currency: Currency;
@@ -51,10 +44,8 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
   const touchStartX = useRef<number | null>(null);
   const isDragging = useRef(false);
 
-  // Initial Hint Animation
   useEffect(() => {
     if (shouldAnimateHint) {
-      // Small nudge to the left and back
       const timer = setTimeout(() => {
         setOffset(-60);
         setTimeout(() => setOffset(0), 400);
@@ -72,8 +63,6 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
     if (!isDragging.current || touchStartX.current === null) return;
     const currentX = e.targetTouches[0].clientX;
     const diff = currentX - touchStartX.current;
-    
-    // Only allow dragging left (negative values), max -100px
     if (diff < 0) {
       setOffset(Math.max(diff, -100));
     }
@@ -83,12 +72,9 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
     isDragging.current = false;
     touchStartX.current = null;
     if (offset < -60) {
-      // Trigger delete if swiped far enough
-      // Reset first for smooth exit or handled by parent re-render
       setOffset(0);
       onDelete();
     } else {
-      // Snap back
       setOffset(0);
     }
   };
@@ -100,16 +86,14 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
 
   return (
     <div className="relative overflow-hidden group">
-      {/* Delete Background Layer */}
       <div 
         className={`absolute inset-y-0 right-0 w-full bg-red-500/20 flex items-center justify-end px-6 rounded-none transition-opacity duration-200 ${offset < -10 ? 'opacity-100' : 'opacity-0'}`}
       >
         <Icons.Delete className="text-red-500" size={20} />
       </div>
 
-      {/* Swipeable Content Layer */}
       <div 
-        className={`relative bg-[#18181b]/60 backdrop-blur-md p-4 flex justify-between items-center transition-transform duration-200 ease-out ${!isLast ? 'border-b border-white/5' : ''}`}
+        className={`relative bg-black/40 backdrop-blur-md p-4 flex justify-between items-center transition-transform duration-200 ease-out ${!isLast ? 'border-b border-white/5' : ''}`}
         style={{ transform: `translateX(${offset}px)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -130,7 +114,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
         </div>
         <div className="text-right select-none pointer-events-none">
           <p className="text-sm font-medium text-zinc-300">
-            {currency === Currency.BTC ? '₿' : currency}{entry.amount.toLocaleString()}
+            {currency === Currency.BTC ? '₿' : getCurrencySymbol(currency)}{entry.amount.toLocaleString()}
           </p>
         </div>
       </div>
@@ -138,8 +122,6 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
   );
 };
 
-
-// Settings Components
 const SettingsGroup = ({ title, children }: { title?: string, children?: React.ReactNode }) => (
   <div className="mb-6">
     {title && <h4 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2 px-2">{title}</h4>}
@@ -176,10 +158,8 @@ const SettingsItem = ({
       {icon && <div className="text-primary">{icon}</div>}
       <span className="text-white text-sm font-medium">{label}</span>
     </div>
-    
     <div className="flex items-center gap-2">
       {value && <span className="text-textMuted text-sm">{value}</span>}
-      
       {toggle && (
         <div 
           onClick={(e) => { e.stopPropagation(); onToggle && onToggle(); }}
@@ -188,13 +168,11 @@ const SettingsItem = ({
           <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-200 shadow-sm ${isToggled ? 'left-6' : 'left-1'}`} />
         </div>
       )}
-      
       {!toggle && <Icons.ChevronRight className="w-4 h-4 text-zinc-600" />}
     </div>
   </div>
 );
 
-// --- Constants ---
 const CURRENCY_OPTIONS = [
   { code: Currency.PHP, name: 'Philippine Peso' },
   { code: Currency.USD, name: 'US Dollar' },
@@ -209,24 +187,18 @@ const CURRENCY_OPTIONS = [
   { code: Currency.BTC, name: 'Bitcoin' },
 ];
 
-// --- Main App ---
-
 export default function App() {
-  // State
   const [assets, setAssets] = useState<Asset[]>(INITIAL_ASSETS);
   const [settings, setSettings] = useState<UserSettings>({
     displayCurrency: Currency.PHP,
     showInBTC: false,
     onboardingComplete: true,
-    streakDays: 12, // Mock streak
+    streakDays: 12,
     lastLogin: new Date().toISOString()
   });
   
-  // Navigation State
   const [activeTab, setActiveTab] = useState<'HOME' | 'ASSETS' | 'SETTINGS' | 'SETTINGS_CURRENCY'>('HOME');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
-
-  // UI State
   const [privacyMode, setPrivacyMode] = useState(false);
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
   const [comparisonMode, setComparisonMode] = useState(false);
@@ -234,48 +206,36 @@ export default function App() {
   const [showStreakTooltip, setShowStreakTooltip] = useState(false);
   const [historySwipeHintShown, setHistorySwipeHintShown] = useState(false);
 
-  // Modal & Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // If true, we are Editing the main asset details. If false, we are "Adding Balance"
+  const [isEditMode, setIsEditMode] = useState(false);
   const [modalCategory, setModalCategory] = useState<AssetCategory>(AssetCategory.BANK_PH);
   const [modalCurrency, setModalCurrency] = useState<Currency>(Currency.PHP);
   const [currencySearch, setCurrencySearch] = useState('');
   const [isCurrencySearchOpen, setIsCurrencySearchOpen] = useState(false);
-  
-  // Update Balance Specific State
   const [updateType, setUpdateType] = useState<'TRANSACTION' | 'MARKET'>('TRANSACTION');
   const [updateDate, setUpdateDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Undo State
   const [lastDeletedAsset, setLastDeletedAsset] = useState<Asset | null>(null);
   const [showUndoToast, setShowUndoToast] = useState(false);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Insights State
   const [insights, setInsights] = useState<string[]>([]);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const [activeInsightIndex, setActiveInsightIndex] = useState(0);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
-  // Dummy Settings
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [faceIdEnabled, setFaceIdEnabled] = useState(false);
   const [passcodeEnabled, setPasscodeEnabled] = useState(true);
 
-  // Derived Data
   const selectedAsset = useMemo(() => assets.find(a => a.id === selectedAssetId), [assets, selectedAssetId]);
-  
-  // Chart Data for Overview
   const historyData = useMemo(() => generateHistory(assets, selectedTimeRange), [assets, selectedTimeRange]);
   
-  // Chart Data for Single Asset
   const assetHistoryData = useMemo(() => {
     if (!selectedAsset) return [];
-    
     const now = new Date();
     const cutoff = new Date();
-    
     switch(selectedTimeRange) {
         case '1D': cutoff.setHours(now.getHours() - 24); break;
         case '1W': cutoff.setDate(now.getDate() - 7); break;
@@ -286,11 +246,9 @@ export default function App() {
         case 'ALL': cutoff.setFullYear(now.getFullYear() - 10); break;
     }
 
-    // Convert asset history to chart format and filter
     return selectedAsset.history
         .filter(h => new Date(h.date) >= cutoff)
         .map(h => {
-            // Calculate values properly based on asset currency
             let valUSD = 0;
             if (selectedAsset.currency === Currency.BTC) {
                 valUSD = h.amount * BTC_PRICE_USD;
@@ -298,7 +256,6 @@ export default function App() {
                 const rate = RATES[selectedAsset.currency] || 1;
                 valUSD = h.amount / rate;
             }
-
             return {
                 date: h.date,
                 totalValueUSD: valUSD,
@@ -324,30 +281,24 @@ export default function App() {
     }, 0);
   }, [assets]);
 
-  // Styling Helpers
   const totalValueParts = useMemo(() => {
     if (privacyMode) return { symbol: '', value: '••••••' };
-    
     if (comparisonMode) {
       return { symbol: '₿', value: (totalValueUSD / BTC_PRICE_USD).toFixed(6) };
     }
-
     let val = totalValueUSD;
     if (settings.displayCurrency !== Currency.USD) {
          val = totalValueUSD * (RATES[settings.displayCurrency] || 1);
     }
-    
     const parts = new Intl.NumberFormat('en-PH', { 
       style: 'currency', 
       currency: settings.displayCurrency 
     }).formatToParts(val);
-
     const symbol = parts.find(p => p.type === 'currency')?.value || '';
     const value = parts
       .filter(p => p.type !== 'currency' && p.type !== 'literal')
       .map(p => p.value)
       .join('');
-    
     return { symbol, value };
   }, [totalValueUSD, settings.displayCurrency, comparisonMode, privacyMode]);
 
@@ -364,7 +315,6 @@ export default function App() {
       .slice(0, 3);
   }, [assets]);
 
-  // Effects
   useEffect(() => {
     const fetchAdvice = async () => {
       setIsLoadingInsights(true);
@@ -376,11 +326,8 @@ export default function App() {
     fetchAdvice();
   }, []); 
   
-  // Set Hint Shown flag after first view of detail page
   useEffect(() => {
     if (selectedAsset && !historySwipeHintShown) {
-        // We let the component logic trigger. 
-        // We just mark it as shown so next time we don't do it.
         const timer = setTimeout(() => {
             setHistorySwipeHintShown(true);
         }, 1500);
@@ -388,11 +335,9 @@ export default function App() {
     }
   }, [selectedAsset, historySwipeHintShown]);
 
-
-  // Handlers
   const handleOpenAddAsset = () => {
     setSelectedAssetId(null);
-    setIsEditMode(false); // Creating new asset
+    setIsEditMode(false);
     setModalCategory(AssetCategory.BANK_PH);
     setModalCurrency(Currency.PHP);
     setCurrencySearch('PHP');
@@ -400,14 +345,12 @@ export default function App() {
   };
 
   const handleOpenUpdateBalance = () => {
-    // Adding balance to existing asset
-    setIsEditMode(false); // "Update Balance" mode
+    setIsEditMode(false);
     setUpdateDate(new Date().toISOString().split('T')[0]);
     setIsModalOpen(true);
   };
 
   const handleOpenEditAssetDetails = (asset: Asset) => {
-    // Editing metadata (Name, Institution)
     setIsEditMode(true); 
     setModalCategory(asset.category);
     setModalCurrency(asset.currency);
@@ -420,49 +363,35 @@ export default function App() {
     const formData = new FormData(e.currentTarget);
     
     if (selectedAsset && !isEditMode) {
-        // CASE: Adding a history entry (Update Balance)
         const newAmount = parseFloat(formData.get('amount') as string);
-        const dateStr = formData.get('date') as string; // 'YYYY-MM-DD'
-        
-        // Ensure date has time to sort properly
+        const dateStr = formData.get('date') as string;
         const isoDate = new Date(dateStr + 'T12:00:00Z').toISOString();
-        const change = newAmount - selectedAsset.amount; // Simple diff from current
-
-        // Note: Realistically, you'd calculate change from the *entry before this date*, 
-        // but for MVP we assume linear time.
-
+        const change = newAmount - selectedAsset.amount;
         const newEntry: AssetHistoryEntry = {
             id: Date.now().toString(),
             date: isoDate,
             amount: newAmount,
-            change: change, // Calculated relative to previous 'current'
+            change: change,
             type: updateType
         };
-
         const updatedAsset = { 
             ...selectedAsset, 
             amount: newAmount, 
             lastUpdated: isoDate,
-            history: [newEntry, ...selectedAsset.history] // Prepend
+            history: [newEntry, ...selectedAsset.history]
         };
-
         setAssets(prev => prev.map(a => a.id === selectedAsset.id ? updatedAsset : a));
     } else {
-        // CASE: Creating New or Editing Metadata
         const assetData = {
             name: formData.get('name') as string,
             category: formData.get('category') as AssetCategory,
             institution: formData.get('institution') as string,
         };
-
         if (selectedAsset && isEditMode) {
-             // Update Metadata only
              setAssets(prev => prev.map(a => a.id === selectedAsset.id ? { ...a, ...assetData } : a));
         } else {
-            // Create New Asset
             const amount = parseFloat(formData.get('amount') as string);
             const currency = formData.get('currency') as Currency;
-            
             const newAsset: Asset = {
                 id: Date.now().toString(),
                 ...assetData,
@@ -483,7 +412,6 @@ export default function App() {
             setAssets(prev => [...prev, newAsset]);
         }
     }
-
     setIsModalOpen(false);
   };
 
@@ -491,11 +419,8 @@ export default function App() {
     if (!selectedAsset) return;
     setLastDeletedAsset(selectedAsset);
     setAssets(prev => prev.filter(a => a.id !== selectedAsset.id));
-    
-    // Reset view
     setSelectedAssetId(null);
     setIsModalOpen(false);
-    
     setShowUndoToast(true);
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
     undoTimeoutRef.current = setTimeout(() => {
@@ -506,22 +431,14 @@ export default function App() {
   
   const handleDeleteHistoryEntry = (entryId: string) => {
     if (!selectedAsset) return;
-    
-    // Optimistic UI update
     const updatedHistory = selectedAsset.history.filter(h => h.id !== entryId);
-    
-    // Recalculate amount if needed, for MVP we just remove the record.
-    // In a real app, deleting a history entry implies we revert to the state BEFORE it, or AFTER it depending on logic.
-    // Here we will just set the 'amount' to the *most recent* entry's amount after deletion.
     let newAmount = selectedAsset.amount;
     if (updatedHistory.length > 0) {
-        // Sort DESC
         const sorted = [...updatedHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         newAmount = sorted[0].amount;
     } else {
         newAmount = 0;
     }
-
     const updatedAsset = { ...selectedAsset, history: updatedHistory, amount: newAmount };
     setAssets(prev => prev.map(a => a.id === selectedAsset.id ? updatedAsset : a));
   };
@@ -553,7 +470,6 @@ export default function App() {
     const distance = touchStartX.current - touchEndX.current;
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
-
     if (isLeftSwipe && activeInsightIndex < insights.length - 1) {
       setActiveInsightIndex(prev => prev + 1);
     }
@@ -562,17 +478,11 @@ export default function App() {
     }
   };
 
-  // --- Views ---
-
-  // 1. Asset Detail View
   const renderAssetDetail = () => {
     if (!selectedAsset) return null;
-
     return (
         <div className="pb-28 animate-[fadeIn_0.3s_ease-out]">
-            {/* Integrated Widget with Nav */}
-            <div className="glass-panel rounded-3xl p-5 mb-6 relative overflow-visible shadow-lg z-20">
-                {/* Top Nav Row inside Widget */}
+            <div className="glass-panel rounded-t-[32px] rounded-b-3xl p-5 mb-6 relative overflow-visible shadow-lg z-20">
                 <div className="flex justify-between items-center mb-2 -mt-1">
                      <button 
                         onClick={() => setSelectedAssetId(null)}
@@ -594,7 +504,7 @@ export default function App() {
                     </p>
                     <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-normal text-zinc-500">
-                            {selectedAsset.currency === Currency.BTC ? '₿' : selectedAsset.currency}
+                            {selectedAsset.currency === Currency.BTC ? '₿' : getCurrencySymbol(selectedAsset.currency)}
                         </span>
                         <span className="text-4xl font-medium text-white tracking-tight">
                             {selectedAsset.amount.toLocaleString()}
@@ -611,7 +521,6 @@ export default function App() {
                     />
                 </div>
 
-                {/* Integrated Time Filters */}
                 <div className="flex justify-between items-center bg-black/30 rounded-full p-0.5 mt-2">
                     {(['1D', '1W', '1M', '3M', 'YTD', '1Y', 'ALL'] as TimeRange[]).map((range) => (
                         <button
@@ -629,7 +538,6 @@ export default function App() {
                  </div>
             </div>
 
-            {/* History List */}
             <div className="px-1">
                 <div className="flex justify-between items-center mb-3">
                     <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Value History</h3>
@@ -661,10 +569,8 @@ export default function App() {
     );
   };
 
-  // 2. Dashboard View
   const renderHome = () => (
     <div className="space-y-6 pb-28 animate-[fadeIn_0.5s_ease-out]">
-      {/* Header */}
       <header className="flex justify-between items-center px-1">
         <div>
             <div className="flex items-center gap-2">
@@ -696,7 +602,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Merged Wealth Widget */}
       <div className="glass-panel rounded-3xl p-4 relative overflow-visible shadow-lg z-20">
          <div className="flex justify-between items-start mb-0 relative">
             <div className="flex-1">
@@ -793,7 +698,6 @@ export default function App() {
          </div>
       </div>
 
-      {/* Portfolio Preview */}
       <div className="px-1">
           <div className="flex justify-between items-end mb-3">
              <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Top Assets</h3>
@@ -837,7 +741,6 @@ export default function App() {
           </div>
       </div>
 
-      {/* Insights */}
       <div className="px-1">
         <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-3">Insights</h3>
         {isLoadingInsights ? (
@@ -959,9 +862,7 @@ export default function App() {
                     className={`p-4 flex justify-between items-center cursor-pointer hover:bg-white/5 transition-colors ${index !== CURRENCY_OPTIONS.length - 1 ? 'border-b border-white/5' : ''}`}
                 >
                     <div className="flex items-center gap-3">
-                         <span className={`font-medium w-8 ${settings.displayCurrency === option.code ? 'text-primary' : 'text-white'}`}>
-                            {option.code}
-                         </span>
+                         <span className={`font-medium w-8 ${settings.displayCurrency === option.code ? 'text-primary' : 'text-white'}`}>{option.code}</span>
                          <span className="text-sm text-textMuted">{option.name}</span>
                     </div>
                     {settings.displayCurrency === option.code && (
@@ -1103,27 +1004,11 @@ export default function App() {
                         </div>
                     </div>
 
-                    {/* Type Toggle */}
-                    <div className="bg-black/50 p-1 rounded-xl flex gap-1 border border-white/5">
-                        <button
-                            type="button"
-                            onClick={() => setUpdateType('TRANSACTION')}
-                            className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${updateType === 'TRANSACTION' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                        >
-                            <Icons.Wallet size={16} /> Money moved
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setUpdateType('MARKET')}
-                            className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${updateType === 'MARKET' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                        >
-                            <Icons.Trend size={16} /> Market change
-                        </button>
-                    </div>
+                    {/* Toggle removed per request */}
 
                     <button 
                         type="submit" 
-                        className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 transition-colors mt-4"
+                        className="w-full bg-gradient-to-r from-cyan-400 to-blue-600 text-white shadow-lg shadow-blue-500/30 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-4"
                     >
                         Add Balance
                     </button>
@@ -1145,7 +1030,7 @@ export default function App() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Amount</label>
-                                <input required name="amount" type="number" step="any" placeholder={getInstitutionLabel(modalCategory)} className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-zinc-700" />
+                                <input required name="amount" type="number" step="any" placeholder="0.00" className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-zinc-700" />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Currency</label>
@@ -1190,7 +1075,7 @@ export default function App() {
                         {selectedAsset && (
                             <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
                         )}
-                        <button type="submit" className={`flex-[2] bg-primary hover:bg-sky-500 text-white font-bold py-3.5 rounded-xl transition-colors ${!selectedAsset ? 'w-full' : ''}`}>
+                        <button type="submit" className={`flex-[2] bg-gradient-to-r from-cyan-400 to-blue-600 text-white shadow-lg shadow-blue-500/30 font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity ${!selectedAsset ? 'w-full' : ''}`}>
                             {selectedAsset ? 'Save Changes' : 'Add Asset'}
                         </button>
                     </div>
@@ -1203,7 +1088,6 @@ export default function App() {
   );
 }
 
-// Helper for dynamic label
 function getInstitutionLabel(category: AssetCategory) {
     switch (category) {
         case AssetCategory.BANK_PH:
@@ -1215,5 +1099,22 @@ function getInstitutionLabel(category: AssetCategory) {
             return 'Brokerage';
         default:
             return 'Institution / Platform';
+    }
+}
+
+function getCurrencySymbol(currency: Currency) {
+    switch (currency) {
+        case Currency.PHP: return '₱';
+        case Currency.USD: return '$';
+        case Currency.CAD: return 'C$';
+        case Currency.AED: return 'د.إ';
+        case Currency.SAR: return '﷼';
+        case Currency.SGD: return 'S$';
+        case Currency.HKD: return 'HK$';
+        case Currency.JPY: return '¥';
+        case Currency.EUR: return '€';
+        case Currency.GBP: return '£';
+        case Currency.BTC: return '₿';
+        default: return currency;
     }
 }
