@@ -30,19 +30,22 @@ interface HistoryItemProps {
   currency: Currency;
   isLast: boolean;
   onDelete: () => void;
+  onEdit: () => void;
   shouldAnimateHint: boolean;
 }
 
-const HistoryItem: React.FC<HistoryItemProps> = ({ 
-  entry, 
-  currency, 
-  isLast, 
-  onDelete, 
-  shouldAnimateHint 
+const HistoryItem: React.FC<HistoryItemProps> = ({
+  entry,
+  currency,
+  isLast,
+  onDelete,
+  onEdit,
+  shouldAnimateHint
 }) => {
   const [offset, setOffset] = useState(0);
-  const touchStartX = useRef<number | null>(null);
+  const startX = useRef<number | null>(null);
   const isDragging = useRef(false);
+  const moved = useRef(false);
 
   useEffect(() => {
     if (shouldAnimateHint) {
@@ -54,29 +57,33 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
     }
   }, [shouldAnimateHint]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.targetTouches[0].clientX;
+  // Shared drag logic for both touch (mobile) and mouse (desktop).
+  const begin = (x: number) => {
+    startX.current = x;
     isDragging.current = true;
+    moved.current = false;
   };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging.current || touchStartX.current === null) return;
-    const currentX = e.targetTouches[0].clientX;
-    const diff = currentX - touchStartX.current;
-    if (diff < 0) {
-      setOffset(Math.max(diff, -100));
-    }
+  const drag = (x: number) => {
+    if (!isDragging.current || startX.current === null) return;
+    const diff = x - startX.current;
+    if (Math.abs(diff) > 4) moved.current = true;
+    if (diff < 0) setOffset(Math.max(diff, -100));
   };
-
-  const handleTouchEnd = () => {
+  const finish = () => {
+    if (!isDragging.current) return;
     isDragging.current = false;
-    touchStartX.current = null;
+    startX.current = null;
     if (offset < -60) {
       setOffset(0);
       onDelete();
     } else {
       setOffset(0);
     }
+  };
+
+  const handleClick = () => {
+    // A click without a meaningful drag opens the editor (works on desktop + mobile).
+    if (!moved.current) onEdit();
   };
 
   const isPositive = entry.change >= 0;
@@ -86,20 +93,25 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
 
   return (
     <div className="relative overflow-hidden group">
-      <div 
+      <div
         className={`absolute inset-y-0 right-0 w-full bg-red-500/20 flex items-center justify-end px-6 rounded-none transition-opacity duration-200 ${offset < -10 ? 'opacity-100' : 'opacity-0'}`}
       >
         <Icons.Delete className="text-red-500" size={20} />
       </div>
 
-      <div 
-        className={`relative bg-[#0e0e0e] p-4 flex justify-between items-center transition-transform duration-200 ease-out ${!isLast ? 'border-b border-white/5' : ''}`}
+      <div
+        className={`relative bg-[#0e0e0e] p-4 flex justify-between items-center transition-transform duration-200 ease-out cursor-pointer select-none ${!isLast ? 'border-b border-white/5' : ''}`}
         style={{ transform: `translateX(${offset}px)` }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onTouchStart={(e) => begin(e.targetTouches[0].clientX)}
+        onTouchMove={(e) => drag(e.targetTouches[0].clientX)}
+        onTouchEnd={finish}
+        onMouseDown={(e) => begin(e.clientX)}
+        onMouseMove={(e) => drag(e.clientX)}
+        onMouseUp={finish}
+        onMouseLeave={finish}
+        onClick={handleClick}
       >
-        <div className="flex items-center gap-3 select-none pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-none">
           <div className={`p-2 rounded-xl border border-white/5 ${iconBgClass} ${iconColorClass}`}>
             <Icon size={18} />
           </div>
@@ -112,10 +124,17 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
             </p>
           </div>
         </div>
-        <div className="text-right select-none pointer-events-none">
-          <p className="text-sm font-medium text-zinc-300">
+        <div className="flex items-center gap-2 text-right">
+          <p className="text-sm font-medium text-zinc-300 pointer-events-none">
             {currency === Currency.BTC ? '₿' : getCurrencySymbol(currency)}{entry.amount.toLocaleString()}
           </p>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            aria-label="Delete entry"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
+          >
+            <Icons.Delete size={16} />
+          </button>
         </div>
       </div>
     </div>
@@ -161,11 +180,11 @@ const SettingsItem = ({
     <div className="flex items-center gap-2">
       {value && <span className="text-textMuted text-sm">{value}</span>}
       {toggle && (
-        <div 
+        <div
           onClick={(e) => { e.stopPropagation(); onToggle && onToggle(); }}
-          className={`w-11 h-6 rounded-full relative transition-colors duration-200 ${isToggled ? 'bg-primary' : 'bg-zinc-700'}`}
+          className={`w-11 h-6 rounded-full relative transition-colors duration-200 ${isToggled ? 'bg-white' : 'bg-zinc-700'}`}
         >
-          <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-200 shadow-sm ${isToggled ? 'left-6' : 'left-1'}`} />
+          <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-200 shadow-sm ${isToggled ? 'left-6 bg-black' : 'left-1 bg-white'}`} />
         </div>
       )}
       {!toggle && <Icons.ChevronRight className="w-4 h-4 text-zinc-600" />}
@@ -187,15 +206,55 @@ const CURRENCY_OPTIONS = [
   { code: Currency.BTC, name: 'Bitcoin' },
 ];
 
+const STORAGE_KEYS = { assets: 'kaya.assets.v1', settings: 'kaya.settings.v1' };
+
+const loadStored = <T,>(key: string, fallback: T): T => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+// Recompute an asset's current balance, lastUpdated, and each entry's change
+// from its history. Keeps everything consistent after add/edit/delete, even
+// when entries are back-dated.
+const recomputeAsset = (asset: Asset, history: AssetHistoryEntry[]): Asset => {
+  const asc = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  let prev = 0;
+  const withChange = asc.map((h, i) => {
+    const change = i === 0 ? h.amount : h.amount - prev;
+    prev = h.amount;
+    return { ...h, change };
+  });
+  const desc = withChange.slice().reverse(); // newest first for display
+  const latest = desc[0];
+  return {
+    ...asset,
+    history: desc,
+    amount: latest ? latest.amount : 0,
+    lastUpdated: latest ? latest.date : asset.lastUpdated
+  };
+};
+
 export default function App() {
-  const [assets, setAssets] = useState<Asset[]>(INITIAL_ASSETS);
-  const [settings, setSettings] = useState<UserSettings>({
+  const [assets, setAssets] = useState<Asset[]>(() => loadStored(STORAGE_KEYS.assets, INITIAL_ASSETS));
+  const [settings, setSettings] = useState<UserSettings>(() => loadStored(STORAGE_KEYS.settings, {
     displayCurrency: Currency.PHP,
     showInBTC: false,
     onboardingComplete: true,
     streakDays: 12,
     lastLogin: new Date().toISOString()
-  });
+  }));
+
+  // Persist data locally so real entries survive reloads.
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEYS.assets, JSON.stringify(assets)); } catch {}
+  }, [assets]);
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings)); } catch {}
+  }, [settings]);
   
   const [activeTab, setActiveTab] = useState<'HOME' | 'ASSETS' | 'SETTINGS' | 'SETTINGS_CURRENCY'>('HOME');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -214,6 +273,7 @@ export default function App() {
   const [isCurrencySearchOpen, setIsCurrencySearchOpen] = useState(false);
   const [updateType, setUpdateType] = useState<'TRANSACTION' | 'MARKET'>('TRANSACTION');
   const [updateDate, setUpdateDate] = useState(new Date().toISOString().split('T')[0]);
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
 
   const [lastDeletedAsset, setLastDeletedAsset] = useState<Asset | null>(null);
   const [showUndoToast, setShowUndoToast] = useState(false);
@@ -230,6 +290,7 @@ export default function App() {
   const [passcodeEnabled, setPasscodeEnabled] = useState(true);
 
   const selectedAsset = useMemo(() => assets.find(a => a.id === selectedAssetId), [assets, selectedAssetId]);
+  const editingEntry = useMemo(() => selectedAsset?.history.find(h => h.id === editingEntryId) || null, [selectedAsset, editingEntryId]);
   const historyData = useMemo(() => generateHistory(assets, selectedTimeRange), [assets, selectedTimeRange]);
   
   const assetHistoryData = useMemo(() => {
@@ -346,8 +407,21 @@ export default function App() {
 
   const handleOpenUpdateBalance = () => {
     setIsEditMode(false);
+    setEditingEntryId(null);
     setUpdateDate(new Date().toISOString().split('T')[0]);
     setIsModalOpen(true);
+  };
+
+  const handleOpenEditHistoryEntry = (entry: AssetHistoryEntry) => {
+    setIsEditMode(false);
+    setEditingEntryId(entry.id);
+    setUpdateDate(entry.date.split('T')[0]);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingEntryId(null);
   };
 
   const handleOpenEditAssetDetails = (asset: Asset) => {
@@ -366,21 +440,26 @@ export default function App() {
         const newAmount = parseFloat(formData.get('amount') as string);
         const dateStr = formData.get('date') as string;
         const isoDate = new Date(dateStr + 'T12:00:00Z').toISOString();
-        const change = newAmount - selectedAsset.amount;
-        const newEntry: AssetHistoryEntry = {
-            id: Date.now().toString(),
-            date: isoDate,
-            amount: newAmount,
-            change: change,
-            type: updateType
-        };
-        const updatedAsset = { 
-            ...selectedAsset, 
-            amount: newAmount, 
-            lastUpdated: isoDate,
-            history: [newEntry, ...selectedAsset.history]
-        };
+        let history: AssetHistoryEntry[];
+        if (editingEntryId) {
+            // Edit an existing saved entry (date and/or amount).
+            history = selectedAsset.history.map(h =>
+                h.id === editingEntryId ? { ...h, amount: newAmount, date: isoDate } : h
+            );
+        } else {
+            // Add a new balance entry.
+            const newEntry: AssetHistoryEntry = {
+                id: Date.now().toString(),
+                date: isoDate,
+                amount: newAmount,
+                change: 0,
+                type: updateType
+            };
+            history = [newEntry, ...selectedAsset.history];
+        }
+        const updatedAsset = recomputeAsset(selectedAsset, history);
         setAssets(prev => prev.map(a => a.id === selectedAsset.id ? updatedAsset : a));
+        setEditingEntryId(null);
     } else {
         const assetData = {
             name: formData.get('name') as string,
@@ -432,14 +511,7 @@ export default function App() {
   const handleDeleteHistoryEntry = (entryId: string) => {
     if (!selectedAsset) return;
     const updatedHistory = selectedAsset.history.filter(h => h.id !== entryId);
-    let newAmount = selectedAsset.amount;
-    if (updatedHistory.length > 0) {
-        const sorted = [...updatedHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        newAmount = sorted[0].amount;
-    } else {
-        newAmount = 0;
-    }
-    const updatedAsset = { ...selectedAsset, history: updatedHistory, amount: newAmount };
+    const updatedAsset = recomputeAsset(selectedAsset, updatedHistory);
     setAssets(prev => prev.map(a => a.id === selectedAsset.id ? updatedAsset : a));
   };
 
@@ -454,6 +526,14 @@ export default function App() {
   const handleCurrencySelect = (currency: Currency) => {
     setSettings(prev => ({ ...prev, displayCurrency: currency }));
     setIsCurrencyDropdownOpen(false);
+  };
+
+  const handleClearData = () => {
+    const ok = window.confirm('Remove all assets and start with an empty tracker? This cannot be undone.');
+    if (!ok) return;
+    setSelectedAssetId(null);
+    setAssets([]);
+    setActiveTab('HOME');
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -554,12 +634,13 @@ export default function App() {
                         <div className="p-6 text-center text-textMuted text-sm">No history yet.</div>
                     )}
                     {selectedAsset.history.map((entry, index) => (
-                         <HistoryItem 
-                            key={entry.id} 
-                            entry={entry} 
-                            currency={selectedAsset.currency} 
+                         <HistoryItem
+                            key={entry.id}
+                            entry={entry}
+                            currency={selectedAsset.currency}
                             isLast={index === selectedAsset.history.length - 1}
                             onDelete={() => handleDeleteHistoryEntry(entry.id)}
+                            onEdit={() => handleOpenEditHistoryEntry(entry)}
                             shouldAnimateHint={index === 0 && !historySwipeHintShown}
                          />
                     ))}
@@ -902,8 +983,9 @@ export default function App() {
       </SettingsGroup>
 
       <SettingsGroup title="Data">
-        <SettingsItem icon={<Icons.Cloud size={20} />} label="Backup" value="Synced" onClick={() => {}} />
-        <SettingsItem icon={<Icons.Download size={20} />} label="Export CSV" onClick={() => {}} isLast />
+        <SettingsItem icon={<Icons.Cloud size={20} />} label="Backup" value="On this device" onClick={() => {}} />
+        <SettingsItem icon={<Icons.Download size={20} />} label="Export CSV" onClick={() => {}} />
+        <SettingsItem icon={<Icons.Delete size={20} />} label="Clear all data & start fresh" onClick={handleClearData} isLast />
       </SettingsGroup>
 
       <SettingsGroup title="Support">
@@ -918,10 +1000,10 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-[100dvh] bg-transparent text-textMain max-w-md mx-auto relative shadow-2xl overflow-hidden font-sans">
+    <div className="h-[100dvh] flex flex-col bg-transparent text-textMain max-w-md mx-auto relative shadow-2xl overflow-hidden font-sans">
 
       {/* Scrollable Content Area */}
-      <main className="h-[100dvh] overflow-y-auto no-scrollbar p-6">
+      <main className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
         {activeTab === 'SETTINGS' ? renderSettings() : 
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
          selectedAssetId ? renderAssetDetail() : 
@@ -942,7 +1024,7 @@ export default function App() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="absolute bottom-0 left-0 w-full glass-panel pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-8 flex justify-between items-center z-40">
+      <nav className="shrink-0 w-full glass-panel pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-8 flex justify-between items-center z-40">
         <button onClick={() => { setActiveTab('HOME'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${activeTab === 'HOME' ? 'text-primary' : 'text-zinc-600'}`}>
             <Icons.Dashboard className="w-6 h-6" strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
             <span className="text-[10px] font-medium tracking-wide">Overview</span>
@@ -967,11 +1049,11 @@ export default function App() {
       )}
 
       {/* Dynamic Slide-Up Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedAsset && !isEditMode ? (
-            // VIEW: Add Balance (History Entry)
+            // VIEW: Add Balance OR Edit a saved history entry
             <>
-                <h2 className="text-2xl font-medium mb-6 text-white">Add Balance</h2>
+                <h2 className="text-2xl font-medium mb-6 text-white">{editingEntryId ? 'Edit Entry' : 'Add Balance'}</h2>
                 <form onSubmit={handleSaveAsset} className="space-y-6">
                     <div>
                         <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Date</label>
@@ -992,26 +1074,37 @@ export default function App() {
                         <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">New Balance</label>
                         <div className="flex items-center bg-black/50 border border-white/10 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
                              <span className="text-zinc-500 font-medium mr-2">{selectedAsset.currency}</span>
-                             <input 
-                                required 
-                                name="amount" 
-                                type="number" 
-                                step="any" 
-                                placeholder="0.00" 
-                                className="w-full bg-transparent border-none text-white text-2xl font-medium p-2 outline-none placeholder:text-zinc-700" 
+                             <input
+                                key={editingEntryId || 'new'}
+                                required
+                                name="amount"
+                                type="number"
+                                step="any"
+                                placeholder="0.00"
+                                defaultValue={editingEntry ? editingEntry.amount : undefined}
+                                className="w-full bg-transparent border-none text-white text-2xl font-medium p-2 outline-none placeholder:text-zinc-700"
                                 autoFocus
                             />
                         </div>
                     </div>
 
-                    {/* Toggle removed per request */}
-
-                    <button 
-                        type="submit" 
-                        className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-4"
-                    >
-                        Add Balance
-                    </button>
+                    <div className="flex gap-3 pt-2">
+                        {editingEntryId && (
+                            <button
+                                type="button"
+                                onClick={() => { handleDeleteHistoryEntry(editingEntryId); handleCloseModal(); }}
+                                className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Icons.Delete size={18} /> Delete
+                            </button>
+                        )}
+                        <button
+                            type="submit"
+                            className={`bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity ${editingEntryId ? 'flex-[2]' : 'w-full'}`}
+                        >
+                            {editingEntryId ? 'Save Entry' : 'Add Balance'}
+                        </button>
+                    </div>
                 </form>
             </>
         ) : (
