@@ -758,7 +758,7 @@ export default function App() {
                 >
                     {insights.map((tip, idx) => (
                         <div key={idx} className="w-full flex-shrink-0 flex gap-4 items-start px-6 pt-6">
-                             <div className="mt-1.5 w-2 h-2 rounded-full bg-primary flex-shrink-0 shadow-[0_0_10px_rgba(20,175,235,0.5)]" />
+                             <div className="mt-1.5 w-2 h-2 rounded-full bg-primary flex-shrink-0 shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
                              <p className="text-base text-slate-200 font-light leading-relaxed flex-1 min-w-0 break-words whitespace-normal">{tip}</p>
                         </div>
                     ))}
@@ -881,12 +881,12 @@ export default function App() {
       </header>
 
       {/* Premium Banner */}
-      <div className="mb-8 relative overflow-hidden rounded-3xl p-6 bg-gradient-to-r from-cyan-400 to-blue-600 shadow-lg cursor-pointer transform transition-transform active:scale-95">
+      <div className="mb-8 relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 shadow-lg cursor-pointer transform transition-transform active:scale-95">
         <div className="relative z-10">
           <h3 className="text-lg font-bold text-white mb-1">Kaya Premium</h3>
-          <p className="text-white/80 text-sm">Unlock unlimited history & AI insights.</p>
+          <p className="text-white/60 text-sm">Unlock unlimited history & AI insights.</p>
         </div>
-        <div className="absolute top-0 right-0 p-4 opacity-30">
+        <div className="absolute top-0 right-0 p-4 opacity-20 text-white">
            <Icons.Sparkles size={64} />
         </div>
       </div>
@@ -934,7 +934,7 @@ export default function App() {
         <div className="absolute bottom-28 right-6 z-30">
           <button 
               onClick={selectedAssetId ? handleOpenUpdateBalance : handleOpenAddAsset}
-              className="bg-gradient-to-r from-cyan-400 to-blue-600 text-white w-14 h-14 rounded-2xl shadow-lg shadow-blue-500/30 transition-all active:scale-95 flex items-center justify-center"
+              className="bg-white text-black w-14 h-14 rounded-2xl shadow-lg shadow-black/40 transition-all active:scale-95 flex items-center justify-center"
           >
               <Icons.Add className="w-7 h-7" />
           </button>
@@ -961,7 +961,7 @@ export default function App() {
       {showUndoToast && lastDeletedAsset && (
         <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-zinc-900 border border-white/10 shadow-2xl rounded-xl px-6 py-4 flex items-center gap-4 min-w-[320px] animate-[fadeIn_0.3s_ease-out]">
             <span className="text-white text-sm font-medium">Deleted {lastDeletedAsset.name}</span>
-            <button onClick={handleUndoDelete} className="ml-auto text-primary font-bold text-sm hover:text-sky-400 tracking-wide">UNDO</button>
+            <button onClick={handleUndoDelete} className="ml-auto text-primary font-bold text-sm hover:text-zinc-300 tracking-wide">UNDO</button>
             <button onClick={() => setShowUndoToast(false)} className="text-zinc-500 hover:text-white">✕</button>
         </div>
       )}
@@ -1008,7 +1008,7 @@ export default function App() {
 
                     <button 
                         type="submit" 
-                        className="w-full bg-gradient-to-r from-cyan-400 to-blue-600 text-white shadow-lg shadow-blue-500/30 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-4"
+                        className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-4"
                     >
                         Add Balance
                     </button>
@@ -1075,7 +1075,7 @@ export default function App() {
                         {selectedAsset && (
                             <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
                         )}
-                        <button type="submit" className={`flex-[2] bg-gradient-to-r from-cyan-400 to-blue-600 text-white shadow-lg shadow-blue-500/30 font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity ${!selectedAsset ? 'w-full' : ''}`}>
+                        <button type="submit" className={`flex-[2] bg-white text-black shadow-lg shadow-black/40 font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity ${!selectedAsset ? 'w-full' : ''}`}>
                             {selectedAsset ? 'Save Changes' : 'Add Asset'}
                         </button>
                     </div>

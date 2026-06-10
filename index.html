@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#111111" />
+    <meta name="theme-color" content="#000000" />
     <meta
       name="description"
       content="Kaya - OFW Wealth Tracker. Privacy-first wealth tracking."
@@ -19,14 +19,14 @@
         theme: {
           extend: {
             colors: {
-              background: '#111111',
-              surface: '#121212',
-              primary: '#14afeb',
+              background: '#000000',
+              surface: '#0e0e0e',
+              primary: '#ffffff',
               secondary: '#10b981',
               accent: '#f43f5e',
               textMain: '#ffffff',
-              textMuted: '#a1a1aa',
-              border: '#27272a',
+              textMuted: '#8e8e93',
+              border: '#1f1f1f',
             },
             fontFamily: {
               sans: ['Outfit', 'sans-serif'],
@@ -43,11 +43,9 @@
     
     <style>
       body {
-        background-color: #111111;
-        background-image: 
-          radial-gradient(circle at 10% 10%, rgba(20, 175, 235, 0.15) 0%, transparent 40%),
-          radial-gradient(circle at 90% 40%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
-          radial-gradient(circle at 50% 100%, #1e293b 0%, transparent 60%);
+        background-color: #000000;
+        background-image:
+          radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 45%);
         background-attachment: fixed;
         color: #ffffff;
         font-family: 'Outfit', sans-serif;
@@ -76,11 +74,11 @@
 
       /* Unified Glass Panel Style */
       .glass-panel {
-        background-color: rgba(24, 24, 27, 0.45);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-        border: none !important;
+        background-color: rgba(20, 20, 20, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
         position: relative;
         z-index: 1;
       }

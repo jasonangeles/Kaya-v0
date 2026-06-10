@@ -16,7 +16,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
   // Standard Chart Data Key
   // Note: For EXCHANGE mode, we are temporarily reusing 'totalValueUSD' to store the rate
   const dataKey = mode === 'BTC' ? 'totalValueBTC' : (displayCurrency === Currency.PHP && !isExchange ? 'totalValuePHP' : 'totalValueUSD');
-  const color = mode === 'BTC' ? '#F7931A' : (isExchange ? '#14afeb' : '#10b981'); // Bitcoin Orange, Cyan, or Emerald Green
+  const color = mode === 'BTC' ? '#F7931A' : (isExchange ? '#e4e4e7' : '#10b981'); // Bitcoin Orange, Neutral, or Emerald Green
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
