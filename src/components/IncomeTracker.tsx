@@ -79,6 +79,7 @@ const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
 interface Props {
   displayCurrency: Currency;
   privacyMode: boolean;
+  addTick: number;
 }
 
 const emptyDraft = (currency: Currency): IncomeRecord => ({
@@ -91,7 +92,7 @@ const emptyDraft = (currency: Currency): IncomeRecord => ({
   note: ''
 });
 
-export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode }) => {
+export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, addTick }) => {
   const [records, setRecords] = useState<IncomeRecord[]>(loadStored);
   const [mode, setMode] = useState<Mode>('MONTH');
   const [isOpen, setIsOpen] = useState(false);
@@ -164,6 +165,12 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode })
     setDraft(emptyDraft(displayCurrency));
     setIsOpen(true);
   };
+
+  // Opened from the shared floating + button in App.
+  useEffect(() => {
+    if (addTick > 0) openAdd();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addTick]);
   const openEdit = (r: IncomeRecord) => {
     setEditingId(r.id);
     setDraft({ ...r, date: r.date.split('T')[0] });
@@ -327,16 +334,6 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode })
           </div>
         ))
       )}
-
-      {/* Floating add button */}
-      <div className="absolute bottom-28 right-6 z-30">
-        <button
-          onClick={openAdd}
-          className="bg-white text-black w-14 h-14 rounded-2xl shadow-lg shadow-black/40 transition-all active:scale-95 flex items-center justify-center"
-        >
-          <Icons.Add className="w-7 h-7" />
-        </button>
-      </div>
 
       {/* Add / Edit sheet */}
       <Sheet isOpen={isOpen} onClose={closeSheet}>

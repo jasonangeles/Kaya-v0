@@ -36,7 +36,10 @@ import {
   ArrowUp,
   ArrowDown,
   Check,
-  Edit2
+  Edit2,
+  BarChart3,
+  Fingerprint,
+  Delete as DeleteKey
 } from 'lucide-react';
 
 export const Icons = {
@@ -76,5 +79,8 @@ export const Icons = {
   ArrowUp: ArrowUp,
   ArrowDown: ArrowDown,
   Check: Check,
-  Edit: Edit2
+  Edit: Edit2,
+  BarChart: BarChart3,
+  Fingerprint: Fingerprint,
+  Backspace: DeleteKey
 };

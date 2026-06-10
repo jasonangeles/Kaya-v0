@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Icons } from './components/icons';
 import { NetWorthChart } from './components/NetWorthChart';
 import { IncomeTracker } from './components/IncomeTracker';
+import { LockScreen, SetPinSheet, isBiometricAvailable, registerBiometric } from './components/AppLock';
 import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry } from './types';
 import { RATES, INITIAL_ASSETS, generateHistory, BTC_PRICE_USD } from './services/mockDataService';
 import { getWealthInsights } from './services/geminiService';
@@ -275,6 +276,8 @@ export default function App() {
   const [updateType, setUpdateType] = useState<'TRANSACTION' | 'MARKET'>('TRANSACTION');
   const [updateDate, setUpdateDate] = useState(new Date().toISOString().split('T')[0]);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [incomeAddTick, setIncomeAddTick] = useState(0);
+  const mainRef = useRef<HTMLElement>(null);
 
   const [lastDeletedAsset, setLastDeletedAsset] = useState<Asset | null>(null);
   const [showUndoToast, setShowUndoToast] = useState(false);
@@ -285,10 +288,53 @@ export default function App() {
   const [activeInsightIndex, setActiveInsightIndex] = useState(0);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+  const insightsMouseDown = useRef(false);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [faceIdEnabled, setFaceIdEnabled] = useState(false);
-  const [passcodeEnabled, setPasscodeEnabled] = useState(true);
+
+  // Security: PIN + optional biometric unlock, persisted locally.
+  const [security, setSecurity] = useState<{ pin: string | null; biometric: boolean; biometricId: string | null }>(
+    () => loadStored('kaya.security.v1', { pin: null, biometric: false, biometricId: null })
+  );
+  const [locked, setLocked] = useState<boolean>(() => !!loadStored<{ pin: string | null }>('kaya.security.v1', { pin: null }).pin);
+  const [showSetPin, setShowSetPin] = useState(false);
+
+  useEffect(() => {
+    try { localStorage.setItem('kaya.security.v1', JSON.stringify(security)); } catch {}
+  }, [security]);
+
+  // Re-lock when the app is sent to the background (if a PIN is set).
+  useEffect(() => {
+    const onVis = () => { if (document.visibilityState === 'hidden' && security.pin) setLocked(true); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [security.pin]);
+
+  const handleToggleAppLock = () => {
+    if (security.pin) {
+      if (window.confirm('Turn off App Lock and remove your PIN?')) {
+        setSecurity({ pin: null, biometric: false, biometricId: null });
+      }
+    } else {
+      setShowSetPin(true);
+    }
+  };
+  const handleSetPin = (hash: string) => {
+    setSecurity(s => ({ ...s, pin: hash }));
+    setShowSetPin(false);
+  };
+  const handleToggleBiometric = async () => {
+    if (!security.pin) { window.alert('Set a PIN first, then you can enable biometric unlock.'); return; }
+    if (security.biometric) { setSecurity(s => ({ ...s, biometric: false, biometricId: null })); return; }
+    const available = await isBiometricAvailable();
+    if (!available) {
+      window.alert('Biometric unlock isn’t available here. On iPhone, add Kaya to your Home Screen and open it from there, then try again.');
+      return;
+    }
+    const id = await registerBiometric();
+    if (id) setSecurity(s => ({ ...s, biometric: true, biometricId: id }));
+    else window.alert('Could not set up biometric unlock. You can still use your PIN.');
+  };
 
   const selectedAsset = useMemo(() => assets.find(a => a.id === selectedAssetId), [assets, selectedAssetId]);
   const editingEntry = useMemo(() => selectedAsset?.history.find(h => h.id === editingEntryId) || null, [selectedAsset, editingEntryId]);
@@ -537,6 +583,13 @@ export default function App() {
     setActiveTab('HOME');
   };
 
+  // Switch tab and always scroll the view back to the top.
+  const goTab = (tab: typeof activeTab) => {
+    setActiveTab(tab);
+    setSelectedAssetId(null);
+    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
     touchEndX.current = 0;
@@ -557,6 +610,22 @@ export default function App() {
     if (isRightSwipe && activeInsightIndex > 0) {
       setActiveInsightIndex(prev => prev - 1);
     }
+  };
+
+  // Desktop mouse-drag for the insights carousel (mirrors touch swipe).
+  const handleInsightsMouseDown = (e: React.MouseEvent) => {
+    insightsMouseDown.current = true;
+    touchStartX.current = e.clientX;
+    touchEndX.current = 0;
+  };
+  const handleInsightsMouseMove = (e: React.MouseEvent) => {
+    if (!insightsMouseDown.current) return;
+    touchEndX.current = e.clientX;
+  };
+  const handleInsightsMouseEnd = () => {
+    if (!insightsMouseDown.current) return;
+    insightsMouseDown.current = false;
+    handleTouchEnd();
   };
 
   const renderAssetDetail = () => {
@@ -828,11 +897,15 @@ export default function App() {
         {isLoadingInsights ? (
             <div className="p-4 rounded-3xl glass-panel animate-pulse h-24"></div>
         ) : (
-            <div 
-                className="glass-panel rounded-3xl relative overflow-hidden select-none shadow-lg"
+            <div
+                className="glass-panel rounded-3xl relative overflow-hidden select-none shadow-lg cursor-grab active:cursor-grabbing"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
+                onMouseDown={handleInsightsMouseDown}
+                onMouseMove={handleInsightsMouseMove}
+                onMouseUp={handleInsightsMouseEnd}
+                onMouseLeave={handleInsightsMouseEnd}
             >
                 <div 
                     className="flex w-full transition-transform duration-500 ease-out"
@@ -979,8 +1052,8 @@ export default function App() {
       </SettingsGroup>
 
       <SettingsGroup title="Security">
-        <SettingsItem icon={<Icons.Lock size={20} />} label="App Lock" toggle isToggled={passcodeEnabled} onToggle={() => setPasscodeEnabled(!passcodeEnabled)} />
-        <SettingsItem icon={<Icons.Smartphone size={20} />} label="Face ID" toggle isToggled={faceIdEnabled} onToggle={() => setFaceIdEnabled(!faceIdEnabled)} isLast />
+        <SettingsItem icon={<Icons.Lock size={20} />} label="App Lock (PIN)" toggle isToggled={!!security.pin} onToggle={handleToggleAppLock} />
+        <SettingsItem icon={<Icons.Fingerprint size={20} />} label="Face ID / Touch ID" toggle isToggled={security.biometric} onToggle={handleToggleBiometric} isLast />
       </SettingsGroup>
 
       <SettingsGroup title="Data">
@@ -1004,46 +1077,48 @@ export default function App() {
     <div className="h-[100dvh] flex flex-col bg-transparent text-textMain max-w-md mx-auto relative shadow-2xl overflow-hidden font-sans">
 
       {/* Scrollable Content Area */}
-      <main className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
+      <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
         {activeTab === 'SETTINGS' ? renderSettings() :
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
-         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} /> :
+         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} /> :
          selectedAssetId ? renderAssetDetail() :
          activeTab === 'ASSETS' ? renderPortfolioList() :
          renderHome()}
       </main>
 
-      {/* FAB: Main Add Button OR Update Balance Button */}
-      {activeTab !== 'SETTINGS' && activeTab !== 'SETTINGS_CURRENCY' && activeTab !== 'INCOME' && (
-        <div className="absolute bottom-28 right-6 z-30">
-          <button 
-              onClick={selectedAssetId ? handleOpenUpdateBalance : handleOpenAddAsset}
-              className="bg-white text-black w-14 h-14 rounded-2xl shadow-lg shadow-black/40 transition-all active:scale-95 flex items-center justify-center"
-          >
-              <Icons.Add className="w-7 h-7" />
-          </button>
-        </div>
-      )}
+      {/* Bottom bar: FAB anchored one equal gap above the nav */}
+      <div className="shrink-0 relative z-40">
+        {activeTab !== 'SETTINGS' && activeTab !== 'SETTINGS_CURRENCY' && (
+          <div className="absolute right-6 bottom-full mb-6 z-30">
+            <button
+                onClick={() => {
+                  if (activeTab === 'INCOME') setIncomeAddTick(t => t + 1);
+                  else if (selectedAssetId) handleOpenUpdateBalance();
+                  else handleOpenAddAsset();
+                }}
+                className="bg-white text-black w-14 h-14 rounded-2xl shadow-lg shadow-black/40 transition-all active:scale-95 flex items-center justify-center"
+            >
+                <Icons.Add className="w-7 h-7" />
+            </button>
+          </div>
+        )}
 
-      {/* Bottom Navigation */}
-      <nav className="shrink-0 w-full glass-panel pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-6 flex justify-between items-center z-40">
-        <button onClick={() => { setActiveTab('HOME'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${activeTab === 'HOME' ? 'text-primary' : 'text-zinc-600'}`}>
-            <Icons.Dashboard className="w-6 h-6" strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
-            <span className="text-[10px] font-medium tracking-wide">Overview</span>
-        </button>
-        <button onClick={() => { setActiveTab('ASSETS'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${activeTab === 'ASSETS' ? 'text-primary' : 'text-zinc-600'}`}>
-            <Icons.Wallet className="w-6 h-6" strokeWidth={activeTab === 'ASSETS' ? 2.5 : 2} />
-            <span className="text-[10px] font-medium tracking-wide">Portfolio</span>
-        </button>
-        <button onClick={() => { setActiveTab('INCOME'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${activeTab === 'INCOME' ? 'text-primary' : 'text-zinc-600'}`}>
-            <Icons.Trend className="w-6 h-6" strokeWidth={activeTab === 'INCOME' ? 2.5 : 2} />
-            <span className="text-[10px] font-medium tracking-wide">Income</span>
-        </button>
-        <button onClick={() => { setActiveTab('SETTINGS'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'text-primary' : 'text-zinc-600'}`}>
-            <Icons.Settings className="w-6 h-6" strokeWidth={(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 2.5 : 2} />
-            <span className="text-[10px] font-medium tracking-wide">Settings</span>
-        </button>
-      </nav>
+        {/* Bottom Navigation (icons only) */}
+        <nav className="w-full glass-panel pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-8 flex justify-around items-center">
+          <button aria-label="Overview" onClick={() => goTab('HOME')} className={`p-2 ${activeTab === 'HOME' ? 'text-primary' : 'text-zinc-600'}`}>
+              <Icons.Dashboard className="w-6 h-6" strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
+          </button>
+          <button aria-label="Portfolio" onClick={() => goTab('ASSETS')} className={`p-2 ${activeTab === 'ASSETS' ? 'text-primary' : 'text-zinc-600'}`}>
+              <Icons.Wallet className="w-6 h-6" strokeWidth={activeTab === 'ASSETS' ? 2.5 : 2} />
+          </button>
+          <button aria-label="Income" onClick={() => goTab('INCOME')} className={`p-2 ${activeTab === 'INCOME' ? 'text-primary' : 'text-zinc-600'}`}>
+              <Icons.BarChart className="w-6 h-6" strokeWidth={activeTab === 'INCOME' ? 2.5 : 2} />
+          </button>
+          <button aria-label="Settings" onClick={() => goTab('SETTINGS')} className={`p-2 ${(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'text-primary' : 'text-zinc-600'}`}>
+              <Icons.Settings className="w-6 h-6" strokeWidth={(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 2.5 : 2} />
+          </button>
+        </nav>
+      </div>
 
       {/* Undo Toast */}
       {showUndoToast && lastDeletedAsset && (
@@ -1052,6 +1127,17 @@ export default function App() {
             <button onClick={handleUndoDelete} className="ml-auto text-primary font-bold text-sm hover:text-zinc-300 tracking-wide">UNDO</button>
             <button onClick={() => setShowUndoToast(false)} className="text-zinc-500 hover:text-white">✕</button>
         </div>
+      )}
+
+      {/* Security: set-PIN sheet + lock overlay */}
+      <SetPinSheet isOpen={showSetPin} onClose={() => setShowSetPin(false)} onSet={handleSetPin} />
+      {locked && security.pin && (
+        <LockScreen
+          expectedHash={security.pin}
+          biometric={security.biometric}
+          biometricId={security.biometricId}
+          onUnlock={() => setLocked(false)}
+        />
       )}
 
       {/* Dynamic Slide-Up Modal */}
