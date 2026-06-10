@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Icons } from './components/icons';
 import { NetWorthChart } from './components/NetWorthChart';
+import { IncomeTracker } from './components/IncomeTracker';
 import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry } from './types';
 import { RATES, INITIAL_ASSETS, generateHistory, BTC_PRICE_USD } from './services/mockDataService';
 import { getWealthInsights } from './services/geminiService';
@@ -256,7 +257,7 @@ export default function App() {
     try { localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings)); } catch {}
   }, [settings]);
   
-  const [activeTab, setActiveTab] = useState<'HOME' | 'ASSETS' | 'SETTINGS' | 'SETTINGS_CURRENCY'>('HOME');
+  const [activeTab, setActiveTab] = useState<'HOME' | 'ASSETS' | 'INCOME' | 'SETTINGS' | 'SETTINGS_CURRENCY'>('HOME');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [privacyMode, setPrivacyMode] = useState(false);
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
@@ -1004,15 +1005,16 @@ export default function App() {
 
       {/* Scrollable Content Area */}
       <main className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
-        {activeTab === 'SETTINGS' ? renderSettings() : 
+        {activeTab === 'SETTINGS' ? renderSettings() :
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
-         selectedAssetId ? renderAssetDetail() : 
-         activeTab === 'ASSETS' ? renderPortfolioList() : 
+         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} /> :
+         selectedAssetId ? renderAssetDetail() :
+         activeTab === 'ASSETS' ? renderPortfolioList() :
          renderHome()}
       </main>
 
       {/* FAB: Main Add Button OR Update Balance Button */}
-      {activeTab !== 'SETTINGS' && activeTab !== 'SETTINGS_CURRENCY' && (
+      {activeTab !== 'SETTINGS' && activeTab !== 'SETTINGS_CURRENCY' && activeTab !== 'INCOME' && (
         <div className="absolute bottom-28 right-6 z-30">
           <button 
               onClick={selectedAssetId ? handleOpenUpdateBalance : handleOpenAddAsset}
@@ -1024,7 +1026,7 @@ export default function App() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="shrink-0 w-full glass-panel pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-8 flex justify-between items-center z-40">
+      <nav className="shrink-0 w-full glass-panel pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-6 flex justify-between items-center z-40">
         <button onClick={() => { setActiveTab('HOME'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${activeTab === 'HOME' ? 'text-primary' : 'text-zinc-600'}`}>
             <Icons.Dashboard className="w-6 h-6" strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
             <span className="text-[10px] font-medium tracking-wide">Overview</span>
@@ -1032,6 +1034,10 @@ export default function App() {
         <button onClick={() => { setActiveTab('ASSETS'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${activeTab === 'ASSETS' ? 'text-primary' : 'text-zinc-600'}`}>
             <Icons.Wallet className="w-6 h-6" strokeWidth={activeTab === 'ASSETS' ? 2.5 : 2} />
             <span className="text-[10px] font-medium tracking-wide">Portfolio</span>
+        </button>
+        <button onClick={() => { setActiveTab('INCOME'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${activeTab === 'INCOME' ? 'text-primary' : 'text-zinc-600'}`}>
+            <Icons.Trend className="w-6 h-6" strokeWidth={activeTab === 'INCOME' ? 2.5 : 2} />
+            <span className="text-[10px] font-medium tracking-wide">Income</span>
         </button>
         <button onClick={() => { setActiveTab('SETTINGS'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'text-primary' : 'text-zinc-600'}`}>
             <Icons.Settings className="w-6 h-6" strokeWidth={(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 2.5 : 2} />

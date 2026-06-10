@@ -44,6 +44,16 @@ export interface Asset {
   history: AssetHistoryEntry[];
 }
 
+export interface IncomeRecord {
+  id: string;
+  amount: number;
+  currency: Currency;
+  source: string;   // e.g. "FB", "RCR" — the payer / ticker
+  category: string; // e.g. "Dividend", "Interest"
+  date: string;     // ISO date
+  note?: string;
+}
+
 export interface HistoricalPoint {
   date: string;
   totalValuePHP: number;

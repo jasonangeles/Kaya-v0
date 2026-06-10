@@ -1,0 +1,440 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Icons } from './icons';
+import { Currency, IncomeRecord } from '../types';
+import { RATES, BTC_PRICE_USD } from '../services/mockDataService';
+
+const STORAGE_KEY = 'kaya.income.v1';
+
+const CURRENCY_OPTIONS: Currency[] = [
+  Currency.PHP, Currency.USD, Currency.CAD, Currency.AED,
+  Currency.SAR, Currency.SGD, Currency.HKD, Currency.JPY,
+  Currency.EUR, Currency.GBP
+];
+
+const CATEGORY_OPTIONS = ['Dividend', 'Interest', 'Rental income', 'Royalties', 'Other'];
+
+const symbolOf = (c: Currency) => {
+  switch (c) {
+    case Currency.PHP: return '₱';
+    case Currency.USD: return '$';
+    case Currency.CAD: return 'C$';
+    case Currency.AED: return 'د.إ';
+    case Currency.SAR: return '﷼';
+    case Currency.SGD: return 'S$';
+    case Currency.HKD: return 'HK$';
+    case Currency.JPY: return '¥';
+    case Currency.EUR: return '€';
+    case Currency.GBP: return '£';
+    case Currency.BTC: return '₿';
+    default: return '';
+  }
+};
+
+// Convert any (amount, currency) into the chosen display currency.
+const toDisplay = (amount: number, from: Currency, display: Currency): number => {
+  const usd = from === Currency.BTC ? amount * BTC_PRICE_USD : amount / (RATES[from] || 1);
+  if (display === Currency.BTC) return usd / BTC_PRICE_USD;
+  return usd * (RATES[display] || 1);
+};
+
+const fmt = (val: number, display: Currency) => {
+  if (display === Currency.BTC) return `₿${val.toFixed(6)}`;
+  return `${symbolOf(display)}${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+};
+
+const loadStored = (): IncomeRecord[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+type Mode = 'MONTH' | 'YEAR';
+
+const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+const yearKey = (d: Date) => `${d.getFullYear()}`;
+
+const monthLabel = (key: string) => {
+  const [y, m] = key.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short' }) + (m === 1 ? ` '${String(y).slice(2)}` : '');
+};
+
+const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children?: React.ReactNode }) => (
+  <>
+    <div
+      className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      onClick={onClose}
+    />
+    <div className={`fixed bottom-0 left-0 w-full z-50 bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transform transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+      <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
+      <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-white">✕</button>
+      {children}
+    </div>
+  </>
+);
+
+interface Props {
+  displayCurrency: Currency;
+  privacyMode: boolean;
+}
+
+const emptyDraft = (currency: Currency): IncomeRecord => ({
+  id: '',
+  amount: 0,
+  currency,
+  source: '',
+  category: 'Dividend',
+  date: new Date().toISOString().split('T')[0],
+  note: ''
+});
+
+export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode }) => {
+  const [records, setRecords] = useState<IncomeRecord[]>(loadStored);
+  const [mode, setMode] = useState<Mode>('MONTH');
+  const [isOpen, setIsOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<IncomeRecord>(emptyDraft(displayCurrency));
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch {}
+  }, [records]);
+
+  // Build a continuous set of periods for the chart (last 12 months, or all years present).
+  const chartData = useMemo(() => {
+    const totals = new Map<string, number>();
+    records.forEach(r => {
+      const d = new Date(r.date);
+      const key = mode === 'MONTH' ? monthKey(d) : yearKey(d);
+      totals.set(key, (totals.get(key) || 0) + toDisplay(r.amount, r.currency, displayCurrency));
+    });
+
+    const keys: string[] = [];
+    const now = new Date();
+    if (mode === 'MONTH') {
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        keys.push(monthKey(d));
+      }
+    } else {
+      const years = records.map(r => new Date(r.date).getFullYear());
+      const minY = years.length ? Math.min(...years) : now.getFullYear();
+      for (let y = Math.min(minY, now.getFullYear() - 4); y <= now.getFullYear(); y++) keys.push(`${y}`);
+    }
+    return keys.map(key => ({
+      key,
+      label: mode === 'MONTH' ? monthLabel(key) : key,
+      total: Math.round((totals.get(key) || 0) * 100) / 100
+    }));
+  }, [records, mode, displayCurrency]);
+
+  const current = chartData[chartData.length - 1]?.total || 0;
+  const previous = chartData[chartData.length - 2]?.total || 0;
+  const growth = previous > 0 ? ((current - previous) / previous) * 100 : (current > 0 ? 100 : 0);
+  const allTimeTotal = useMemo(
+    () => records.reduce((s, r) => s + toDisplay(r.amount, r.currency, displayCurrency), 0),
+    [records, displayCurrency]
+  );
+
+  // Group records by period for the list, newest first.
+  const grouped = useMemo(() => {
+    const map = new Map<string, IncomeRecord[]>();
+    [...records]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .forEach(r => {
+        const d = new Date(r.date);
+        const key = mode === 'MONTH' ? monthKey(d) : yearKey(d);
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(r);
+      });
+    return [...map.entries()].map(([key, items]) => ({
+      key,
+      label: mode === 'MONTH'
+        ? new Date(Number(key.split('-')[0]), Number(key.split('-')[1]) - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        : key,
+      subtotal: items.reduce((s, r) => s + toDisplay(r.amount, r.currency, displayCurrency), 0),
+      items
+    }));
+  }, [records, mode, displayCurrency]);
+
+  const openAdd = () => {
+    setEditingId(null);
+    setDraft(emptyDraft(displayCurrency));
+    setIsOpen(true);
+  };
+  const openEdit = (r: IncomeRecord) => {
+    setEditingId(r.id);
+    setDraft({ ...r, date: r.date.split('T')[0] });
+    setIsOpen(true);
+  };
+  const closeSheet = () => { setIsOpen(false); setEditingId(null); };
+
+  const save = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!draft.amount || !draft.source.trim()) return;
+    const isoDate = new Date(draft.date.split('T')[0] + 'T12:00:00Z').toISOString();
+    if (editingId) {
+      setRecords(prev => prev.map(r => r.id === editingId ? { ...draft, date: isoDate } : r));
+    } else {
+      setRecords(prev => [...prev, { ...draft, id: Date.now().toString(), date: isoDate }]);
+    }
+    closeSheet();
+  };
+
+  const remove = () => {
+    if (!editingId) return;
+    setRecords(prev => prev.filter(r => r.id !== editingId));
+    closeSheet();
+  };
+
+  // Duplicate: copy details with today's date, then open it for quick editing.
+  const duplicate = () => {
+    const id = Date.now().toString();
+    const copy: IncomeRecord = {
+      ...draft,
+      id,
+      date: new Date().toISOString()
+    };
+    setRecords(prev => [...prev, copy]);
+    setEditingId(id);
+    setDraft({ ...copy, date: copy.date.split('T')[0] });
+  };
+
+  const hide = (s: string) => privacyMode ? '••••••' : s;
+  const positive = growth >= 0;
+
+  return (
+    <div className="pb-28 space-y-6 animate-[fadeIn_0.4s_ease-out]">
+      <header className="px-1">
+        <h1 className="text-3xl font-medium text-white mb-1">Passive Income</h1>
+        <p className="text-sm text-textMuted">Track how your dividends & interest grow</p>
+      </header>
+
+      {/* Summary + chart */}
+      <div className="glass-panel rounded-3xl p-4 shadow-lg">
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <p className="text-textMuted text-xs font-medium tracking-widest uppercase mb-1">
+              {mode === 'MONTH' ? 'This month' : 'This year'}
+            </p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-normal text-zinc-500">{displayCurrency === Currency.BTC ? '₿' : symbolOf(displayCurrency)}</span>
+              <span className="text-4xl font-medium text-white tracking-tight">
+                {privacyMode ? '••••••' : Math.round(current).toLocaleString()}
+              </span>
+            </div>
+          </div>
+          <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium ${positive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+            {positive ? <Icons.ArrowUp size={14} /> : <Icons.ArrowDown size={14} />}
+            {Math.abs(growth).toFixed(1)}%
+          </div>
+        </div>
+        <p className="text-[11px] text-textMuted mb-3">
+          {mode === 'MONTH' ? 'Month over month' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}
+        </p>
+
+        <div className="h-36 -mx-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+              <XAxis dataKey="label" tick={{ fill: '#71717a', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={10} />
+              <YAxis hide domain={[0, 'auto']} />
+              <Tooltip
+                cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                content={({ active, payload, label }: any) => {
+                  if (!active || !payload || !payload.length) return null;
+                  return (
+                    <div className="bg-zinc-900/95 border border-white/10 p-3 rounded-xl shadow-2xl">
+                      <p className="text-zinc-400 text-xs mb-1">{label}</p>
+                      <p className="text-emerald-400 font-bold text-sm">{fmt(payload[0].value, displayCurrency)}</p>
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="total" radius={[4, 4, 0, 0]} animationDuration={700}>
+                {chartData.map((entry, i) => (
+                  <Cell key={i} fill={i === chartData.length - 1 ? '#10b981' : '#3f3f46'} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Mode toggle */}
+        <div className="flex bg-black/30 rounded-full p-0.5 mt-3">
+          {(['MONTH', 'YEAR'] as Mode[]).map(m => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`flex-1 py-1.5 text-xs font-medium rounded-full transition-all ${mode === m ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              {m === 'MONTH' ? 'Monthly' : 'Yearly'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Records grouped by period */}
+      {records.length === 0 ? (
+        <div className="glass-panel rounded-3xl p-8 text-center shadow-lg">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3">
+            <Icons.Trend size={22} />
+          </div>
+          <p className="text-white font-medium mb-1">No income logged yet</p>
+          <p className="text-textMuted text-sm">Tap + to add your first dividend or interest payment.</p>
+        </div>
+      ) : (
+        grouped.map(group => (
+          <div key={group.key} className="px-1">
+            <div className="flex justify-between items-baseline mb-2 px-1">
+              <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">{group.label}</h3>
+              <span className="text-xs font-medium text-emerald-400">{hide(fmt(group.subtotal, displayCurrency))}</span>
+            </div>
+            <div className="rounded-3xl overflow-hidden shadow-lg bg-[#0e0e0e] border border-white/5">
+              {group.items.map((r, idx) => (
+                <div
+                  key={r.id}
+                  onClick={() => openEdit(r)}
+                  className={`group p-4 flex justify-between items-center cursor-pointer hover:bg-white/5 transition-colors ${idx !== group.items.length - 1 ? 'border-b border-white/5' : ''}`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-white/5">
+                      <Icons.ArrowDownLeft size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{r.source || r.category}</p>
+                      <p className="text-[11px] text-textMuted truncate">
+                        {r.category} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <p className="text-sm font-medium text-emerald-400">
+                      {privacyMode ? '••••' : `+${symbolOf(r.currency)}${r.amount.toLocaleString()}`}
+                    </p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setRecords(prev => prev.filter(x => x.id !== r.id)); }}
+                      aria-label="Delete record"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
+                    >
+                      <Icons.Delete size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+
+      {/* Floating add button */}
+      <div className="absolute bottom-28 right-6 z-30">
+        <button
+          onClick={openAdd}
+          className="bg-white text-black w-14 h-14 rounded-2xl shadow-lg shadow-black/40 transition-all active:scale-95 flex items-center justify-center"
+        >
+          <Icons.Add className="w-7 h-7" />
+        </button>
+      </div>
+
+      {/* Add / Edit sheet */}
+      <Sheet isOpen={isOpen} onClose={closeSheet}>
+        <h2 className="text-2xl font-medium mb-6 text-white">{editingId ? 'Edit Income' : 'Add Income'}</h2>
+        <form onSubmit={save} className="space-y-5">
+          <div>
+            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Amount</label>
+            <div className="flex items-center bg-black/50 border border-white/10 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-white/40 transition-all">
+              <select
+                value={draft.currency}
+                onChange={(e) => setDraft({ ...draft, currency: e.target.value as Currency })}
+                className="bg-zinc-800 text-zinc-300 text-sm rounded-lg px-2 py-1 mr-3 outline-none"
+              >
+                {CURRENCY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <input
+                required
+                type="number"
+                step="any"
+                placeholder="0.00"
+                value={draft.amount || ''}
+                onChange={(e) => setDraft({ ...draft, amount: parseFloat(e.target.value) || 0 })}
+                className="w-full bg-transparent border-none text-emerald-400 text-2xl font-medium p-1 outline-none placeholder:text-zinc-700"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Source</label>
+            <input
+              required
+              placeholder="e.g. FB, RCR, BPI Savings"
+              value={draft.source}
+              onChange={(e) => setDraft({ ...draft, source: e.target.value })}
+              className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-white/40 outline-none transition-all placeholder:text-zinc-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Category</label>
+            <div className="relative">
+              <select
+                value={draft.category}
+                onChange={(e) => setDraft({ ...draft, category: e.target.value })}
+                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white outline-none appearance-none focus:border-white/40 transition-all"
+              >
+                {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-textMuted"><Icons.ChevronDown size={20} /></div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Date</label>
+            <div className="relative">
+              <input
+                required
+                type="date"
+                value={draft.date}
+                onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-white/40 outline-none transition-all"
+              />
+              <Icons.Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Note (optional)</label>
+            <input
+              placeholder="Anything to remember"
+              value={draft.note || ''}
+              onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+              className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-white/40 outline-none transition-all placeholder:text-zinc-700"
+            />
+          </div>
+
+          {editingId ? (
+            <div className="space-y-3 pt-2">
+              <button type="submit" className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+                Save
+              </button>
+              <div className="flex gap-3">
+                <button type="button" onClick={duplicate} className="flex-1 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                  <Icons.History size={18} /> Duplicate
+                </button>
+                <button type="button" onClick={remove} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                  <Icons.Delete size={18} /> Delete
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="submit" className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-2">
+              Add Income
+            </button>
+          )}
+        </form>
+      </Sheet>
+    </div>
+  );
+};
