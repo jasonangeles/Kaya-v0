@@ -93,7 +93,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
       </div>
 
       <div 
-        className={`relative bg-black/40 backdrop-blur-md p-4 flex justify-between items-center transition-transform duration-200 ease-out ${!isLast ? 'border-b border-white/5' : ''}`}
+        className={`relative bg-[#0e0e0e] p-4 flex justify-between items-center transition-transform duration-200 ease-out ${!isLast ? 'border-b border-white/5' : ''}`}
         style={{ transform: `translateX(${offset}px)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -549,7 +549,7 @@ export default function App() {
                     </button>
                 </div>
 
-                <div className="glass-panel rounded-3xl overflow-hidden shadow-lg bg-transparent">
+                <div className="rounded-3xl overflow-hidden shadow-lg bg-[#0e0e0e] border border-white/5">
                     {selectedAsset.history.length === 0 && (
                         <div className="p-6 text-center text-textMuted text-sm">No history yet.</div>
                     )}
@@ -918,10 +918,10 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-transparent text-textMain max-w-md mx-auto relative shadow-2xl overflow-hidden font-sans">
-      
+    <div className="min-h-[100dvh] bg-transparent text-textMain max-w-md mx-auto relative shadow-2xl overflow-hidden font-sans">
+
       {/* Scrollable Content Area */}
-      <main className="h-screen overflow-y-auto no-scrollbar p-6">
+      <main className="h-[100dvh] overflow-y-auto no-scrollbar p-6">
         {activeTab === 'SETTINGS' ? renderSettings() : 
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
          selectedAssetId ? renderAssetDetail() : 
@@ -942,7 +942,7 @@ export default function App() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="absolute bottom-0 left-0 w-full glass-panel h-24 pb-6 px-8 flex justify-between items-center z-40">
+      <nav className="absolute bottom-0 left-0 w-full glass-panel pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-8 flex justify-between items-center z-40">
         <button onClick={() => { setActiveTab('HOME'); setSelectedAssetId(null); }} className={`flex flex-col items-center gap-1.5 ${activeTab === 'HOME' ? 'text-primary' : 'text-zinc-600'}`}>
             <Icons.Dashboard className="w-6 h-6" strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
             <span className="text-[10px] font-medium tracking-wide">Overview</span>
