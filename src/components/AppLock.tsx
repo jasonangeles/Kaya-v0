@@ -9,6 +9,19 @@ export const hashPin = async (pin: string): Promise<string> => {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
+const canonicalCode = (c: string) => c.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+// A readable one-time recovery code, e.g. "K7QP-2MXR".
+export const generateRecoveryCode = (): string => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous 0/O/1/I
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  let s = '';
+  bytes.forEach(b => { s += chars[b % chars.length]; });
+  return s.slice(0, 4) + '-' + s.slice(4, 8);
+};
+
+export const hashRecoveryCode = (code: string): Promise<string> => hashPin('recovery:' + canonicalCode(code));
+
 const bufToB64 = (b: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(b)));
 const b64ToBuf = (s: string) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
@@ -127,12 +140,14 @@ export const LockScreen = ({
   expectedHash,
   biometric,
   biometricId,
-  onUnlock
+  onUnlock,
+  onForgot
 }: {
   expectedHash: string;
   biometric: boolean;
   biometricId: string | null;
   onUnlock: () => void;
+  onForgot?: () => void;
 }) => {
   const [digits, setDigits] = useState('');
   const [error, setError] = useState(false);
@@ -178,7 +193,96 @@ export const LockScreen = ({
         biometric={biometric && !!biometricId}
         onBiometric={tryBiometric}
       />
+      {onForgot && (
+        <button onClick={onForgot} className="mt-8 text-textMuted text-sm hover:text-white transition-colors">
+          Forgot PIN?
+        </button>
+      )}
     </div>
+  );
+};
+
+// Sheet to recover access by entering the recovery code.
+export const RecoverySheet = ({
+  isOpen,
+  onClose,
+  expectedHash,
+  onSuccess
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  expectedHash: string | null;
+  onSuccess: () => void;
+}) => {
+  const [code, setCode] = useState('');
+  const [error, setError] = useState(false);
+
+  useEffect(() => { if (isOpen) { setCode(''); setError(false); } }, [isOpen]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!expectedHash) return;
+    const h = await hashRecoveryCode(code);
+    if (h === expectedHash) onSuccess();
+    else setError(true);
+  };
+
+  return (
+    <>
+      <div
+        className={`fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+      />
+      <div className={`fixed bottom-0 left-0 w-full z-[70] bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 pb-10 shadow-2xl transform transition-transform duration-300 ease-out max-w-md mx-auto ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+        <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
+        <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-white">✕</button>
+        <h2 className="text-2xl font-medium text-white mb-1">Enter recovery code</h2>
+        <p className="text-textMuted text-sm mb-5">The code shown when you first set your PIN.</p>
+        <form onSubmit={submit} className="space-y-4">
+          <input
+            autoFocus
+            value={code}
+            onChange={(e) => { setCode(e.target.value); setError(false); }}
+            placeholder="XXXX-XXXX"
+            className={`w-full bg-black/50 border rounded-xl p-4 text-white text-center text-xl tracking-[0.3em] uppercase outline-none transition-all placeholder:text-zinc-700 ${error ? 'border-rose-500' : 'border-white/10 focus:border-white/40'}`}
+          />
+          {error && <p className="text-rose-400 text-sm text-center">That code didn’t match. Try again.</p>}
+          <button type="submit" className="w-full bg-white text-black font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+            Unlock & set new PIN
+          </button>
+        </form>
+      </div>
+    </>
+  );
+};
+
+// One-time display of a freshly generated recovery code.
+export const RecoveryCodeSheet = ({ code, onClose }: { code: string | null; onClose: () => void }) => {
+  const [copied, setCopied] = useState(false);
+  const open = !!code;
+  return (
+    <>
+      <div className={`fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} />
+      <div className={`fixed bottom-0 left-0 w-full z-[70] bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 pb-10 shadow-2xl transform transition-transform duration-300 ease-out max-w-md mx-auto ${open ? 'translate-y-0' : 'translate-y-full'}`}>
+        <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
+        <h2 className="text-2xl font-medium text-white mb-1">Save your recovery code</h2>
+        <p className="text-textMuted text-sm mb-5">
+          This is the only way back in if you forget your PIN. Write it down or store it somewhere safe — it won’t be shown again.
+        </p>
+        <div className="bg-black/50 border border-white/10 rounded-xl p-5 text-center mb-4">
+          <span className="text-3xl font-medium text-white tracking-[0.25em]">{code}</span>
+        </div>
+        <button
+          onClick={() => { if (code) { navigator.clipboard?.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500); } }}
+          className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium py-3.5 rounded-xl transition-colors mb-3"
+        >
+          {copied ? 'Copied ✓' : 'Copy code'}
+        </button>
+        <button onClick={onClose} className="w-full bg-white text-black font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+          I’ve saved it
+        </button>
+      </div>
+    </>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Icons } from './components/icons';
 import { NetWorthChart } from './components/NetWorthChart';
 import { IncomeTracker } from './components/IncomeTracker';
-import { LockScreen, SetPinSheet, isBiometricAvailable, registerBiometric } from './components/AppLock';
+import { LockScreen, SetPinSheet, RecoverySheet, RecoveryCodeSheet, generateRecoveryCode, hashRecoveryCode, isBiometricAvailable, registerBiometric } from './components/AppLock';
 import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry } from './types';
 import { RATES, INITIAL_ASSETS, generateHistory, BTC_PRICE_USD } from './services/mockDataService';
 import { getWealthInsights } from './services/geminiService';
@@ -293,11 +293,13 @@ export default function App() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // Security: PIN + optional biometric unlock, persisted locally.
-  const [security, setSecurity] = useState<{ pin: string | null; biometric: boolean; biometricId: string | null }>(
-    () => loadStored('kaya.security.v1', { pin: null, biometric: false, biometricId: null })
+  const [security, setSecurity] = useState<{ pin: string | null; biometric: boolean; biometricId: string | null; recoveryHash: string | null }>(
+    () => loadStored('kaya.security.v1', { pin: null, biometric: false, biometricId: null, recoveryHash: null })
   );
   const [locked, setLocked] = useState<boolean>(() => !!loadStored<{ pin: string | null }>('kaya.security.v1', { pin: null }).pin);
   const [showSetPin, setShowSetPin] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
 
   useEffect(() => {
     try { localStorage.setItem('kaya.security.v1', JSON.stringify(security)); } catch {}
@@ -313,15 +315,30 @@ export default function App() {
   const handleToggleAppLock = () => {
     if (security.pin) {
       if (window.confirm('Turn off App Lock and remove your PIN?')) {
-        setSecurity({ pin: null, biometric: false, biometricId: null });
+        setSecurity({ pin: null, biometric: false, biometricId: null, recoveryHash: null });
       }
     } else {
       setShowSetPin(true);
     }
   };
-  const handleSetPin = (hash: string) => {
-    setSecurity(s => ({ ...s, pin: hash }));
+  const handleChangePin = () => setShowSetPin(true);
+  const handleSetPin = async (hash: string) => {
     setShowSetPin(false);
+    if (!security.recoveryHash) {
+      // First time enabling: generate a one-time recovery code.
+      const code = generateRecoveryCode();
+      const rHash = await hashRecoveryCode(code);
+      setSecurity(s => ({ ...s, pin: hash, recoveryHash: rHash }));
+      setRecoveryCode(code);
+    } else {
+      setSecurity(s => ({ ...s, pin: hash }));
+    }
+  };
+  const handleRecovered = () => {
+    // Correct recovery code: unlock and let the user set a fresh PIN.
+    setShowRecovery(false);
+    setLocked(false);
+    setShowSetPin(true);
   };
   const handleToggleBiometric = async () => {
     if (!security.pin) { window.alert('Set a PIN first, then you can enable biometric unlock.'); return; }
@@ -1053,6 +1070,9 @@ export default function App() {
 
       <SettingsGroup title="Security">
         <SettingsItem icon={<Icons.Lock size={20} />} label="App Lock (PIN)" toggle isToggled={!!security.pin} onToggle={handleToggleAppLock} />
+        {security.pin && (
+          <SettingsItem icon={<Icons.Edit size={20} />} label="Change PIN" onClick={handleChangePin} />
+        )}
         <SettingsItem icon={<Icons.Fingerprint size={20} />} label="Face ID / Touch ID" toggle isToggled={security.biometric} onToggle={handleToggleBiometric} isLast />
       </SettingsGroup>
 
@@ -1129,16 +1149,24 @@ export default function App() {
         </div>
       )}
 
-      {/* Security: set-PIN sheet + lock overlay */}
+      {/* Security: set-PIN sheet, recovery, and lock overlay */}
       <SetPinSheet isOpen={showSetPin} onClose={() => setShowSetPin(false)} onSet={handleSetPin} />
+      <RecoveryCodeSheet code={recoveryCode} onClose={() => setRecoveryCode(null)} />
       {locked && security.pin && (
         <LockScreen
           expectedHash={security.pin}
           biometric={security.biometric}
           biometricId={security.biometricId}
           onUnlock={() => setLocked(false)}
+          onForgot={security.recoveryHash ? () => setShowRecovery(true) : undefined}
         />
       )}
+      <RecoverySheet
+        isOpen={showRecovery}
+        onClose={() => setShowRecovery(false)}
+        expectedHash={security.recoveryHash}
+        onSuccess={handleRecovered}
+      />
 
       {/* Dynamic Slide-Up Modal */}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
