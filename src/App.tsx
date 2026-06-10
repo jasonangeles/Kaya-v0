@@ -810,7 +810,7 @@ export default function App() {
                     onClick={() => setShowStreakTooltip(!showStreakTooltip)} 
                     className="flex items-center gap-1.5 glass-panel px-3 py-1.5 rounded-full text-xs font-medium text-textMuted shadow-sm hover:text-white transition-colors"
                 >
-                    <Icons.Fire className="w-3.5 h-3.5 animate-pulse text-[#F7931A]" fill="#F7931A" />
+                    <Icons.Fire className="w-3.5 h-3.5 animate-pulse text-[#F7931A]" weight="fill" />
                     <span>{settings.streakDays}</span>
                 </button>
                 {showStreakTooltip && (
@@ -1185,16 +1185,16 @@ export default function App() {
         {/* Bottom Navigation (icons only) */}
         <nav className="w-full glass-panel pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-8 flex justify-around items-center">
           <button aria-label="Overview" onClick={() => goTab('HOME')} className={`p-2 ${activeTab === 'HOME' ? 'text-primary' : 'text-zinc-600'}`}>
-              <Icons.Dashboard className="w-6 h-6" strokeWidth={activeTab === 'HOME' ? 2.5 : 2} />
+              <Icons.Dashboard className="w-6 h-6" weight={activeTab === 'HOME' ? 'fill' : 'regular'} />
           </button>
           <button aria-label="Portfolio" onClick={() => goTab('ASSETS')} className={`p-2 ${activeTab === 'ASSETS' ? 'text-primary' : 'text-zinc-600'}`}>
-              <Icons.Wallet className="w-6 h-6" strokeWidth={activeTab === 'ASSETS' ? 2.5 : 2} />
+              <Icons.Wallet className="w-6 h-6" weight={activeTab === 'ASSETS' ? 'fill' : 'regular'} />
           </button>
           <button aria-label="Income" onClick={() => goTab('INCOME')} className={`p-2 ${activeTab === 'INCOME' ? 'text-primary' : 'text-zinc-600'}`}>
-              <Icons.BarChart className="w-6 h-6" strokeWidth={activeTab === 'INCOME' ? 2.5 : 2} />
+              <Icons.BarChart className="w-6 h-6" weight={activeTab === 'INCOME' ? 'fill' : 'regular'} />
           </button>
           <button aria-label="Settings" onClick={() => goTab('SETTINGS')} className={`p-2 ${(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'text-primary' : 'text-zinc-600'}`}>
-              <Icons.Settings className="w-6 h-6" strokeWidth={(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 2.5 : 2} />
+              <Icons.Settings className="w-6 h-6" weight={(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'fill' : 'regular'} />
           </button>
         </nav>
       </div>
