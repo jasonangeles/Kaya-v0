@@ -337,6 +337,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
 
       {/* Add / Edit sheet */}
       <Sheet isOpen={isOpen} onClose={closeSheet}>
+        {isOpen && (<>
         <h2 className="text-2xl font-medium mb-6 text-white">{editingId ? 'Edit Income' : 'Add Income'}</h2>
         <form onSubmit={save} className="space-y-5">
           <div>
@@ -431,6 +432,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
             </button>
           )}
         </form>
+        </>)}
       </Sheet>
     </div>
   );

@@ -21,7 +21,7 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
       >
         <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
         <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-white">✕</button>
-        {children}
+        {isOpen ? children : null}
       </div>
     </>
   );
@@ -278,6 +278,7 @@ export default function App() {
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [incomeAddTick, setIncomeAddTick] = useState(0);
   const mainRef = useRef<HTMLElement>(null);
+  const restoreInputRef = useRef<HTMLInputElement>(null);
 
   const [lastDeletedAsset, setLastDeletedAsset] = useState<Asset | null>(null);
   const [showUndoToast, setShowUndoToast] = useState(false);
@@ -600,12 +601,69 @@ export default function App() {
     setActiveTab('HOME');
   };
 
-  // Switch tab and always scroll the view back to the top.
+  // --- Data: backup / restore / CSV export ---
+  const downloadFile = (filename: string, content: string, type: string) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const readIncome = (): any[] => {
+    try { return JSON.parse(localStorage.getItem('kaya.income.v1') || '[]'); } catch { return []; }
+  };
+  const csvCell = (v: any) => {
+    const s = String(v ?? '');
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const today = () => new Date().toISOString().split('T')[0];
+
+  const handleExportCSV = () => {
+    const rows: any[][] = [['Type', 'Name/Source', 'Category', 'Currency', 'Amount', 'Date', 'Note']];
+    assets.forEach(a => rows.push(['Asset', a.name, a.category, a.currency, a.amount, a.lastUpdated, a.institution || '']));
+    readIncome().forEach(r => rows.push(['Income', r.source, r.category, r.currency, r.amount, r.date, r.note || '']));
+    const csv = rows.map(r => r.map(csvCell).join(',')).join('\n');
+    downloadFile(`kaya-export-${today()}.csv`, csv, 'text/csv;charset=utf-8');
+  };
+
+  const handleBackup = () => {
+    const data = { app: 'kaya', version: 1, exportedAt: new Date().toISOString(), assets, income: readIncome(), settings };
+    downloadFile(`kaya-backup-${today()}.json`, JSON.stringify(data, null, 2), 'application/json');
+  };
+
+  const handleRestoreFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string);
+        if (Array.isArray(data.assets)) setAssets(data.assets);
+        if (Array.isArray(data.income)) localStorage.setItem('kaya.income.v1', JSON.stringify(data.income));
+        if (data.settings) setSettings(data.settings);
+        window.alert('Backup restored. Reopen the Income tab to see restored income.');
+      } catch {
+        window.alert('That file could not be read as a Kaya backup.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  // Switch tab; the effect below guarantees the view starts at the top.
   const goTab = (tab: typeof activeTab) => {
     setActiveTab(tab);
     setSelectedAssetId(null);
-    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Always anchor the scroll to the top on any navigation.
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [activeTab, selectedAssetId]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
@@ -1077,8 +1135,9 @@ export default function App() {
       </SettingsGroup>
 
       <SettingsGroup title="Data">
-        <SettingsItem icon={<Icons.Cloud size={20} />} label="Backup" value="On this device" onClick={() => {}} />
-        <SettingsItem icon={<Icons.Download size={20} />} label="Export CSV" onClick={() => {}} />
+        <SettingsItem icon={<Icons.Cloud size={20} />} label="Backup (download .json)" onClick={handleBackup} />
+        <SettingsItem icon={<Icons.Upload size={20} />} label="Restore from backup" onClick={() => restoreInputRef.current?.click()} />
+        <SettingsItem icon={<Icons.Download size={20} />} label="Export CSV" onClick={handleExportCSV} />
         <SettingsItem icon={<Icons.Delete size={20} />} label="Clear all data & start fresh" onClick={handleClearData} isLast />
       </SettingsGroup>
 
@@ -1148,6 +1207,9 @@ export default function App() {
             <button onClick={() => setShowUndoToast(false)} className="text-zinc-500 hover:text-white">✕</button>
         </div>
       )}
+
+      {/* Hidden input for restoring a backup file */}
+      <input ref={restoreInputRef} type="file" accept="application/json,.json" onChange={handleRestoreFile} className="hidden" />
 
       {/* Security: set-PIN sheet, recovery, and lock overlay */}
       <SetPinSheet isOpen={showSetPin} onClose={() => setShowSetPin(false)} onSet={handleSetPin} />
