@@ -3,7 +3,10 @@ import { Icons } from './components/icons';
 import { NetWorthChart } from './components/NetWorthChart';
 import { IncomeTracker } from './components/IncomeTracker';
 import { LockScreen, SetPinSheet, RecoverySheet, RecoveryCodeSheet, generateRecoveryCode, hashRecoveryCode, isBiometricAvailable, registerBiometric } from './components/AppLock';
-import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry } from './types';
+import { AuthScreen } from './components/AuthScreen';
+import { supabase, isSupabaseEnabled } from './services/supabaseClient';
+import type { Session } from '@supabase/supabase-js';
+import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry, IncomeRecord } from './types';
 import { RATES, INITIAL_ASSETS, generateHistory, BTC_PRICE_USD } from './services/mockDataService';
 import { getWealthInsights } from './services/geminiService';
 
@@ -242,6 +245,7 @@ const recomputeAsset = (asset: Asset, history: AssetHistoryEntry[]): Asset => {
 
 export default function App() {
   const [assets, setAssets] = useState<Asset[]>(() => loadStored(STORAGE_KEYS.assets, INITIAL_ASSETS));
+  const [income, setIncome] = useState<IncomeRecord[]>(() => loadStored<IncomeRecord[]>('kaya.income.v1', []));
   const [settings, setSettings] = useState<UserSettings>(() => loadStored(STORAGE_KEYS.settings, {
     displayCurrency: Currency.PHP,
     showInBTC: false,
@@ -257,6 +261,67 @@ export default function App() {
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings)); } catch {}
   }, [settings]);
+  useEffect(() => {
+    try { localStorage.setItem('kaya.income.v1', JSON.stringify(income)); } catch {}
+  }, [income]);
+
+  // --- Supabase auth + cloud sync (no-op unless env keys are set) ---
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(isSupabaseEnabled);
+  const [cloudLoaded, setCloudLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!isSupabaseEnabled || !supabase) return;
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setAuthLoading(false); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s);
+      if (!s) setCloudLoaded(false);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  // On login: pull this user's cloud data, or seed the cloud from local on first run.
+  useEffect(() => {
+    if (!isSupabaseEnabled || !supabase || !session) return;
+    let active = true;
+    (async () => {
+      const { data } = await supabase!.from('kaya_data').select('data').eq('user_id', session.user.id).maybeSingle();
+      if (!active) return;
+      const d: any = data?.data;
+      if (d && (Array.isArray(d.assets) || Array.isArray(d.income))) {
+        if (Array.isArray(d.assets)) setAssets(d.assets);
+        if (Array.isArray(d.income)) setIncome(d.income);
+        if (d.settings) setSettings(d.settings);
+      } else {
+        // First login on this account: migrate whatever is local up to the cloud.
+        await supabase!.from('kaya_data').upsert({
+          user_id: session.user.id,
+          data: { assets, income, settings },
+          updated_at: new Date().toISOString()
+        });
+      }
+      setCloudLoaded(true);
+    })();
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  // Push changes to the cloud (debounced) once the initial load is done.
+  useEffect(() => {
+    if (!isSupabaseEnabled || !supabase || !session || !cloudLoaded) return;
+    const t = setTimeout(() => {
+      supabase!.from('kaya_data').upsert({
+        user_id: session.user.id,
+        data: { assets, income, settings },
+        updated_at: new Date().toISOString()
+      });
+    }, 800);
+    return () => clearTimeout(t);
+  }, [assets, income, settings, session, cloudLoaded]);
+
+  const handleSignOut = async () => {
+    if (supabase) await supabase.auth.signOut();
+  };
   
   const [activeTab, setActiveTab] = useState<'HOME' | 'ASSETS' | 'INCOME' | 'SETTINGS' | 'SETTINGS_CURRENCY'>('HOME');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -1146,11 +1211,26 @@ export default function App() {
         <SettingsItem icon={<Icons.Mail size={20} />} label="Contact Us" onClick={() => {}} isLast />
       </SettingsGroup>
 
+      {isSupabaseEnabled && session && (
+        <SettingsGroup title="Account">
+          <SettingsItem icon={<Icons.Mail size={20} />} label="Signed in" value={session.user.email || ''} />
+          <SettingsItem icon={<Icons.ArrowLeftRight size={20} />} label="Sign out" onClick={handleSignOut} isLast />
+        </SettingsGroup>
+      )}
+
       <div className="text-center mt-8 text-zinc-600 text-xs">
         <p>Kaya Wealth v1.1.0</p>
+        <p className="mt-1">{isSupabaseEnabled ? 'Cloud sync on' : 'Local only'}</p>
       </div>
     </div>
   );
+
+  if (isSupabaseEnabled && authLoading) {
+    return <div className="h-[100dvh] bg-black" />;
+  }
+  if (isSupabaseEnabled && !session) {
+    return <AuthScreen />;
+  }
 
   return (
     <div className="h-[100dvh] flex flex-col bg-transparent text-textMain max-w-md mx-auto relative shadow-2xl overflow-hidden font-sans">
@@ -1159,7 +1239,7 @@ export default function App() {
       <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
         {activeTab === 'SETTINGS' ? renderSettings() :
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
-         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} /> :
+         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} records={income} onRecordsChange={setIncome} /> :
          selectedAssetId ? renderAssetDetail() :
          activeTab === 'ASSETS' ? renderPortfolioList() :
          renderHome()}

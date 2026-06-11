@@ -80,6 +80,8 @@ interface Props {
   displayCurrency: Currency;
   privacyMode: boolean;
   addTick: number;
+  records: IncomeRecord[];
+  onRecordsChange: (records: IncomeRecord[]) => void;
 }
 
 const emptyDraft = (currency: Currency): IncomeRecord => ({
@@ -92,16 +94,18 @@ const emptyDraft = (currency: Currency): IncomeRecord => ({
   note: ''
 });
 
-export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, addTick }) => {
-  const [records, setRecords] = useState<IncomeRecord[]>(loadStored);
+export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, addTick, records, onRecordsChange }) => {
   const [mode, setMode] = useState<Mode>('MONTH');
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<IncomeRecord>(emptyDraft(displayCurrency));
 
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch {}
-  }, [records]);
+  // Controlled by App (which persists + syncs). Shim keeps the existing
+  // setRecords(prev => ...) call sites working unchanged.
+  const setRecords = (updater: IncomeRecord[] | ((prev: IncomeRecord[]) => IncomeRecord[])) => {
+    const next = typeof updater === 'function' ? (updater as (p: IncomeRecord[]) => IncomeRecord[])(records) : updater;
+    onRecordsChange(next);
+  };
 
   // Build a continuous set of periods for the chart (last 12 months, or all years present).
   const chartData = useMemo(() => {
