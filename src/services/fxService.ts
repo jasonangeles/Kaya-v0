@@ -27,11 +27,13 @@ const writeCache = (snap: FxSnapshot) => {
 
 const fetchFiat = async (): Promise<Record<string, number> | null> => {
   try {
-    const res = await fetch('https://api.frankfurter.app/latest?from=USD');
+    // Canonical endpoint (api.frankfurter.app now 308-redirects here, which
+    // breaks the browser CORS fetch — so call .dev directly).
+    const res = await fetch('https://api.frankfurter.dev/v1/latest?from=USD');
     if (!res.ok) return null;
     const json = await res.json();
-    const rates: Record<string, number> = { USD: 1, ...(json.rates || {}) };
-    return rates;
+    if (!json.rates || typeof json.rates !== 'object') return null;
+    return { USD: 1, ...json.rates };
   } catch {
     return null;
   }
@@ -54,16 +56,24 @@ const fetchBtc = async (): Promise<number | null> => {
 // (or null, in which case callers keep their static fallback).
 export const getLiveRates = async (): Promise<FxSnapshot | null> => {
   const cached = readCache();
-  if (cached && cached.fetchedAt === todayStr()) return cached;
+  // Reuse today's cache only if it actually holds real fiat rates (more than USD),
+  // so a previously failed fetch never gets stuck for the rest of the day.
+  if (cached && cached.fetchedAt === todayStr() && cached.rates && Object.keys(cached.rates).length > 1) {
+    return cached;
+  }
 
   const [fiat, btc] = await Promise.all([fetchFiat(), fetchBtc()]);
-  if (!fiat && !btc) return cached; // offline → fall back to stale cache (may be null)
 
   const snap: FxSnapshot = {
     fetchedAt: todayStr(),
     rates: fiat || cached?.rates || { USD: 1 },
     btcUsd: btc || cached?.btcUsd || 0
   };
-  writeCache(snap);
-  return snap;
+
+  // Only persist (and thus skip re-fetching today) when we actually got fiat
+  // rates. A failed fiat fetch returns the best we have but is NOT cached, so
+  // the next app open retries instead of locking in the static fallback.
+  if (fiat) writeCache(snap);
+
+  return (fiat || btc || cached) ? snap : null;
 };

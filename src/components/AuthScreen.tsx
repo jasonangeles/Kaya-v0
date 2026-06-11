@@ -29,18 +29,16 @@ const AppPreview: React.FC = () => (
           <span className="text-emerald-400 text-[11px] font-medium">▲ 3.1%</span>
           <span className="text-zinc-600 text-[10px]">past month</span>
         </div>
-        <div className="px-2">
-          <svg viewBox="0 0 200 56" className="w-full h-12" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="authChart" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path d="M0,42 C18,38 26,40 40,34 S70,30 86,32 110,20 128,22 158,12 176,14 200,8 L200,56 L0,56 Z" fill="url(#authChart)" />
-            <path d="M0,42 C18,38 26,40 40,34 S70,30 86,32 110,20 128,22 158,12 176,14 200,8" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+        <svg viewBox="0 0 200 56" className="w-full h-12" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="authChart" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M0,44 C20,40 34,42 52,36 S96,34 120,26 S168,14 200,10 L200,56 L0,56 Z" fill="url(#authChart)" />
+          <path d="M0,44 C20,40 34,42 52,36 S96,34 120,26 S168,14 200,10" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
         <div className="flex justify-between mt-2">
           {['1D', '1W', '1M', '3M', '1Y', 'ALL'].map((r, i) => (
             <span key={r} className={`text-[8px] px-1.5 py-0.5 rounded-full ${i === 5 ? 'bg-zinc-800 text-white' : 'text-zinc-600'}`}>{r}</span>
