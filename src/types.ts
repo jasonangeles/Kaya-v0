@@ -75,4 +75,5 @@ export interface UserSettings {
   streakDays: number;
   lastStreakDate?: string; // YYYY-MM-DD of the last day activity was logged
   lastLogin: string;
+  fxPairs?: { first: string; second: string }[]; // currency-rate widget pairs
 }

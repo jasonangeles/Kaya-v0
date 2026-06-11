@@ -194,6 +194,11 @@ const SettingsItem = ({
 );
 
 const STORAGE_KEYS = { assets: 'kaya.assets.v1', settings: 'kaya.settings.v1' };
+const DEFAULT_FX_PAIRS = [
+  { first: 'USD', second: 'PHP' },
+  { first: 'CAD', second: 'PHP' },
+  { first: 'USD', second: 'CAD' }
+];
 const SYNC_KEY = 'kaya.syncedAt';
 const getSyncedAt = () => { try { return localStorage.getItem(SYNC_KEY) || ''; } catch { return ''; } };
 const setSyncedAt = (t: string) => { try { localStorage.setItem(SYNC_KEY, t); } catch {} };
@@ -367,6 +372,8 @@ export default function App() {
   const [updateDate, setUpdateDate] = useState(new Date().toISOString().split('T')[0]);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [incomeAddTick, setIncomeAddTick] = useState(0);
+  const [showFxEdit, setShowFxEdit] = useState(false);
+  const [fxDraft, setFxDraft] = useState<{ first: string; second: string }[]>(DEFAULT_FX_PAIRS);
   const mainRef = useRef<HTMLElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
 
@@ -706,6 +713,21 @@ export default function App() {
     setSettings(prev => ({ ...prev, displayCurrency: currency }));
     setIsCurrencyDropdownOpen(false);
   };
+
+  // --- Currency rates widget ---
+  const fxPairs = (settings.fxPairs && settings.fxPairs.length) ? settings.fxPairs : DEFAULT_FX_PAIRS;
+  const fxRate = (first: string, second: string): string => {
+    const rf = RATES[first];
+    const rs = RATES[second];
+    if (!rf || !rs) return '—';
+    const r = rs / rf; // how many `second` per 1 `first`
+    if (!isFinite(r) || r <= 0) return '—';
+    return r >= 1 ? r.toFixed(2) : r.toFixed(4);
+  };
+  const openFxEdit = () => { setFxDraft(fxPairs.map(p => ({ ...p }))); setShowFxEdit(true); };
+  const updateFxDraft = (i: number, key: 'first' | 'second', code: string) =>
+    setFxDraft(prev => prev.map((p, idx) => idx === i ? { ...p, [key]: code } : p));
+  const saveFx = () => { setSettings(prev => ({ ...prev, fxPairs: fxDraft })); setShowFxEdit(false); };
 
   // Count a day toward the streak when the user logs activity (add asset, add
   // balance, or add income). Same-day repeats don't double-count; a gap resets.
@@ -1107,6 +1129,28 @@ export default function App() {
       </div>
 
       <div className="px-1">
+          <div className="flex justify-between items-end mb-3">
+             <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Currency Rates</h3>
+             <button
+                onClick={openFxEdit}
+                className="text-xs text-primary font-medium hover:text-white transition-colors"
+             >
+                Edit
+             </button>
+          </div>
+          <div className="glass-panel rounded-3xl p-5 shadow-lg">
+             <div className="grid grid-cols-3 gap-2">
+                {fxPairs.map((p, i) => (
+                    <div key={i} className="text-center">
+                        <p className="text-[11px] text-textMuted mb-1">{p.first}/{p.second}</p>
+                        <p className="text-lg font-semibold text-white tabular-nums">{fxRate(p.first, p.second)}</p>
+                    </div>
+                ))}
+             </div>
+          </div>
+      </div>
+
+      <div className="px-1">
         <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-3">Insights</h3>
         {isLoadingInsights ? (
             <div className="p-4 rounded-3xl glass-panel animate-pulse h-24"></div>
@@ -1398,6 +1442,31 @@ export default function App() {
 
       {/* Hidden input for restoring a backup file */}
       <input ref={restoreInputRef} type="file" accept="application/json,.json" onChange={handleRestoreFile} className="hidden" />
+
+      {/* Currency Rates editor */}
+      <Modal isOpen={showFxEdit} onClose={() => setShowFxEdit(false)}>
+        <h2 className="text-2xl font-medium mb-6 text-white">Currency Rates</h2>
+        <div className="space-y-6">
+          {fxDraft.map((p, i) => (
+            <div key={i}>
+              <h4 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2">Rate {i + 1}</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-textMuted mb-1.5">First currency</label>
+                  <CurrencyPicker value={p.first} onChange={(c) => updateFxDraft(i, 'first', c)} />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-textMuted mb-1.5">Second currency</label>
+                  <CurrencyPicker value={p.second} onChange={(c) => updateFxDraft(i, 'second', c)} />
+                </div>
+              </div>
+            </div>
+          ))}
+          <button onClick={saveFx} className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+            Save
+          </button>
+        </div>
+      </Modal>
 
       {/* Security: set-PIN sheet, recovery, and lock overlay */}
       <SetPinSheet isOpen={showSetPin} onClose={() => setShowSetPin(false)} onSet={handleSetPin} />
