@@ -5,7 +5,7 @@ import { IncomeTracker } from './components/IncomeTracker';
 import { LockScreen, SetPinSheet, RecoverySheet, RecoveryCodeSheet, generateRecoveryCode, hashRecoveryCode, isBiometricAvailable, registerBiometric } from './components/AppLock';
 import { AuthScreen } from './components/AuthScreen';
 import { CurrencyPicker } from './components/CurrencyPicker';
-import { ORDERED_CURRENCIES, symbolFor } from './data/currencies';
+import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
 import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry, IncomeRecord } from './types';
@@ -403,7 +403,6 @@ export default function App() {
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [privacyMode, setPrivacyMode] = useState(false);
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
-  const [comparisonMode, setComparisonMode] = useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('1M');
   const [showStreakTooltip, setShowStreakTooltip] = useState(false);
   const [historySwipeHintShown, setHistorySwipeHintShown] = useState(false);
@@ -539,24 +538,21 @@ export default function App() {
 
   const totalValueParts = useMemo(() => {
     if (privacyMode) return { symbol: '', value: '••••••' };
-    if (comparisonMode) {
-      return { symbol: '₿', value: (btcUsd ? totalValueUSD / btcUsd : 0).toFixed(6) };
+    const display = settings.displayCurrency;
+    // BTC needs its own formatting (Intl currency would round it to 0.00).
+    if (display === Currency.BTC) {
+      const btc = btcUsd ? totalValueUSD / btcUsd : 0;
+      return { symbol: '₿', value: btc.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 6 }) };
     }
-    let val = totalValueUSD;
-    if (settings.displayCurrency !== Currency.USD) {
-         val = totalValueUSD * (rates[settings.displayCurrency] || 1);
-    }
-    const parts = new Intl.NumberFormat('en-PH', { 
-      style: 'currency', 
-      currency: settings.displayCurrency 
-    }).formatToParts(val);
+    const val = display === Currency.USD ? totalValueUSD : totalValueUSD * (rates[display] || 1);
+    const parts = new Intl.NumberFormat('en-PH', { style: 'currency', currency: display }).formatToParts(val);
     const symbol = parts.find(p => p.type === 'currency')?.value || '';
     const value = parts
       .filter(p => p.type !== 'currency' && p.type !== 'literal')
       .map(p => p.value)
       .join('');
     return { symbol, value };
-  }, [totalValueUSD, settings.displayCurrency, comparisonMode, privacyMode, rates, btcUsd]);
+  }, [totalValueUSD, settings.displayCurrency, privacyMode, rates, btcUsd]);
 
   const topAssets = useMemo(() => {
     return [...assets]
@@ -1088,77 +1084,56 @@ export default function App() {
          <div className="flex justify-between items-start mb-0 relative">
             <div className="flex-1">
                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-textMuted text-xs font-medium tracking-widest uppercase">
-                        {comparisonMode ? 'BTC Equivalent' : 'Net Worth'}
-                    </p>
-                    <button 
+                    <p className="text-textMuted text-xs font-medium tracking-widest uppercase">Net Worth</p>
+                    <button
                         onClick={() => setPrivacyMode(!privacyMode)}
                         className="text-textMuted hover:text-white transition-colors p-1"
                     >
                         {privacyMode ? <Icons.EyeOff size={14} /> : <Icons.Eye size={14} />}
                     </button>
                  </div>
-                 
-                 <div className="flex items-center justify-between w-full pr-1">
-                    <div className="relative inline-block">
-                        <h2 
-                            onClick={() => !comparisonMode && setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
-                            className={`flex items-baseline cursor-pointer hover:opacity-80 transition-opacity gap-1 ${comparisonMode ? 'text-[#F7931A]' : 'text-white'}`}
-                        >
-                            <span className="text-3xl font-normal text-zinc-500 font-sans">{totalValueParts.symbol}</span>
-                            <span className="text-4xl font-medium font-sans tracking-tight">{totalValueParts.value}</span>
-                        </h2>
-                        {isCurrencyDropdownOpen && (
-                            <div className="absolute top-full left-0 mt-2 w-32 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-[fadeIn_0.1s_ease-out]">
-                                {[Currency.PHP, Currency.USD, Currency.CAD].map(curr => (
-                                    <button
-                                        key={curr}
-                                        onClick={() => handleCurrencySelect(curr)}
-                                        className={`w-full text-left px-4 py-3 text-sm hover:bg-white/5 transition-colors ${
-                                            settings.displayCurrency === curr 
-                                            ? 'text-primary font-bold bg-white/5' 
-                                            : 'text-textMuted'
-                                        }`}
-                                    >
-                                        {curr}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    <button 
-                        onClick={() => setComparisonMode(!comparisonMode)}
-                        className={`p-2 rounded-full transition-all border ${comparisonMode ? 'bg-[#F7931A] border-[#F7931A] text-white shadow-[0_0_15px_rgba(247,147,26,0.5)]' : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'}`}
-                    >
-                        <Icons.Crypto size={24} />
-                    </button>
-                 </div>
 
-                 <div className="mt-1">
-                    {comparisonMode ? (
-                        <div className="animate-[fadeIn_0.3s_ease-out]">
-                            <p className="text-white text-xs font-medium mb-0.5">
-                                1 BTC = <span className="text-emerald-400">${Math.round(btcUsd).toLocaleString()}</span>
-                            </p>
-                            <p className="text-[10px] text-textMuted leading-tight">
-                                Your net worth in BTC shifts; showing <span className="text-rose-400">USD value erosion</span>.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2">
-                            <span className="text-emerald-400 text-sm font-medium flex items-center gap-1">
-                                <Icons.Trend size={14} /> +2.4%
-                            </span>
-                            <span className="text-textMuted text-xs">past month</span>
+                 <div className="relative inline-block">
+                    <h2
+                        onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
+                        className={`flex items-baseline cursor-pointer hover:opacity-80 transition-opacity gap-1 ${settings.displayCurrency === Currency.BTC ? 'text-[#F7931A]' : 'text-white'}`}
+                    >
+                        <span className="text-3xl font-normal text-zinc-500 font-sans">{totalValueParts.symbol}</span>
+                        <span className="text-4xl font-medium font-sans tracking-tight">{totalValueParts.value}</span>
+                        <Icons.ChevronDown className="w-4 h-4 self-center text-zinc-600 ml-0.5" />
+                    </h2>
+                    {isCurrencyDropdownOpen && (
+                        <div className="absolute top-full left-0 mt-2 w-44 max-h-64 overflow-y-auto no-scrollbar bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-50 animate-[fadeIn_0.1s_ease-out]">
+                            {COMMON_CURRENCY_CODES.map(curr => (
+                                <button
+                                    key={curr}
+                                    onClick={() => handleCurrencySelect(curr)}
+                                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 transition-colors flex items-center justify-between ${
+                                        settings.displayCurrency === curr
+                                        ? 'text-primary font-bold bg-white/5'
+                                        : 'text-textMuted'
+                                    }`}
+                                >
+                                    <span>{curr === Currency.BTC ? 'BTC (Bitcoin)' : curr}</span>
+                                    {settings.displayCurrency === curr && <Icons.Check size={14} />}
+                                </button>
+                            ))}
                         </div>
                     )}
+                 </div>
+
+                 <div className="mt-1 flex items-center gap-2">
+                    <span className="text-emerald-400 text-sm font-medium flex items-center gap-1">
+                        <Icons.Trend size={14} /> +2.4%
+                    </span>
+                    <span className="text-textMuted text-xs">past month</span>
                  </div>
             </div>
          </div>
          <div className="h-28 -mx-4 mt-2">
-            <NetWorthChart 
-                data={historyData} 
-                mode={comparisonMode ? 'COMPARISON' : 'FIAT'} 
+            <NetWorthChart
+                data={historyData}
+                mode={settings.displayCurrency === Currency.BTC ? 'BTC' : 'FIAT'}
                 displayCurrency={settings.displayCurrency}
                 timeRange={selectedTimeRange}
             />
