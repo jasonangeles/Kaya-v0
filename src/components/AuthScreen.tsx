@@ -142,8 +142,8 @@ export const AuthScreen: React.FC = () => {
         </div>
       </div>
 
-      <p className="text-zinc-600 text-[11px] text-center px-6 pb-8 pt-3 relative z-10 w-full max-w-md mx-auto">
-        By continuing, you agree to track your finances privately. No password needed — we email you a secure link.
+      <p className="text-zinc-600 text-[11px] leading-relaxed text-center px-6 pb-8 pt-3 relative z-10 w-full max-w-md mx-auto">
+        Kaya never connects to your bank — you enter everything yourself. Your data is stored on your device and synced privately to your account over an encrypted connection. No passwords, no ads.
       </p>
     </div>
   );

@@ -395,6 +395,7 @@ export default function App() {
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [incomeAddTick, setIncomeAddTick] = useState(0);
   const [showFxEdit, setShowFxEdit] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [fxDraft, setFxDraft] = useState<{ first: string; second: string }[]>(DEFAULT_FX_PAIRS);
   const mainRef = useRef<HTMLElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
@@ -1367,6 +1368,7 @@ export default function App() {
       </SettingsGroup>
 
       <SettingsGroup title="Support">
+        <SettingsItem icon={<Icons.Shield size={20} />} label="Privacy & Data" onClick={() => setShowPrivacy(true)} />
         <SettingsItem icon={<Icons.Star size={20} />} label="Rate Kaya" onClick={() => {}} />
         <SettingsItem icon={<Icons.Mail size={20} />} label="Contact Us" onClick={() => {}} isLast />
       </SettingsGroup>
@@ -1450,6 +1452,19 @@ export default function App() {
 
       {/* Hidden input for restoring a backup file */}
       <input ref={restoreInputRef} type="file" accept="application/json,.json" onChange={handleRestoreFile} className="hidden" />
+
+      {/* Privacy & Data info */}
+      <Modal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)}>
+        <h2 className="text-2xl font-medium mb-4 text-white">Privacy & Data</h2>
+        <div className="space-y-4 text-sm text-zinc-300 leading-relaxed">
+          <p><span className="text-white font-medium">Your data, your control.</span> Kaya is a manual tracker — it never links to your bank, so there are no banking logins or account access to expose. You enter your balances and income yourself.</p>
+          <p>A copy is kept on your device so the app works offline. When you sign in, your data syncs to your private account, isolated so no other user can read it, and encrypted in transit and at rest.</p>
+          <p>We use passwordless email sign-in, so there's no password to steal. You can export a backup or wipe everything anytime in <span className="text-white">Settings → Data</span>. No ads, ever.</p>
+        </div>
+        <button onClick={() => setShowPrivacy(false)} className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-6">
+          Got it
+        </button>
+      </Modal>
 
       {/* Currency Rates editor */}
       <Modal isOpen={showFxEdit} onClose={() => setShowFxEdit(false)}>
