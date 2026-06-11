@@ -10,6 +10,7 @@ import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
 import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry, IncomeRecord } from './types';
 import { RATES, INITIAL_ASSETS, generateHistory, BTC_PRICE_USD } from './services/mockDataService';
+import { getLiveRates } from './services/fxService';
 import { getWealthInsights } from './services/geminiService';
 
 // --- Helper Components ---
@@ -247,6 +248,27 @@ const recomputeAsset = (asset: Asset, history: AssetHistoryEntry[]): Asset => {
 export default function App() {
   const [assets, setAssets] = useState<Asset[]>(() => loadStored(STORAGE_KEYS.assets, INITIAL_ASSETS));
   const [income, setIncome] = useState<IncomeRecord[]>(() => loadStored<IncomeRecord[]>('kaya.income.v1', []));
+  const [liveRates, setLiveRates] = useState<Record<string, number>>({});
+  const [btcUsd, setBtcUsd] = useState<number>(BTC_PRICE_USD);
+
+  // Fetch live FX once on load (cached daily; falls back to static rates offline).
+  useEffect(() => {
+    let active = true;
+    getLiveRates().then(snap => {
+      if (!active || !snap) return;
+      if (snap.rates) setLiveRates(snap.rates);
+      if (snap.btcUsd) setBtcUsd(snap.btcUsd);
+    });
+    return () => { active = false; };
+  }, []);
+
+  // Merged rate table (units of currency per 1 USD): live where available,
+  // static fallback otherwise, BTC derived from its live USD price.
+  const rates = useMemo<Record<string, number>>(() => ({
+    ...RATES,
+    ...liveRates,
+    BTC: btcUsd ? 1 / btcUsd : RATES.BTC
+  }), [liveRates, btcUsd]);
   const [settings, setSettings] = useState<UserSettings>(() => loadStored(STORAGE_KEYS.settings, {
     displayCurrency: Currency.PHP,
     showInBTC: false,
@@ -472,46 +494,33 @@ export default function App() {
     return selectedAsset.history
         .filter(h => new Date(h.date) >= cutoff)
         .map(h => {
-            let valUSD = 0;
-            if (selectedAsset.currency === Currency.BTC) {
-                valUSD = h.amount * BTC_PRICE_USD;
-            } else {
-                const rate = RATES[selectedAsset.currency] || 1;
-                valUSD = h.amount / rate;
-            }
+            // Use the rate locked when the entry was logged; fall back to live.
+            const rate = h.rateUsd || rates[selectedAsset.currency] || 1;
+            const valUSD = h.amount / rate;
             return {
                 date: h.date,
                 totalValueUSD: valUSD,
-                totalValuePHP: valUSD * RATES.PHP,
+                totalValuePHP: valUSD * (rates.PHP || 1),
                 totalValueBTC: 0,
                 btcPrice: 0,
                 inflationIndex: 0
             };
         })
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [selectedAsset, selectedTimeRange]);
+  }, [selectedAsset, selectedTimeRange, rates]);
 
   const totalValueUSD = useMemo(() => {
-    return assets.reduce((acc, curr) => {
-      let usdVal = 0;
-      if (curr.currency === Currency.BTC) {
-        usdVal = curr.amount * BTC_PRICE_USD;
-      } else {
-        const rate = RATES[curr.currency] || 1;
-        usdVal = curr.amount / rate;
-      }
-      return acc + usdVal;
-    }, 0);
-  }, [assets]);
+    return assets.reduce((acc, curr) => acc + curr.amount / (rates[curr.currency] || 1), 0);
+  }, [assets, rates]);
 
   const totalValueParts = useMemo(() => {
     if (privacyMode) return { symbol: '', value: '••••••' };
     if (comparisonMode) {
-      return { symbol: '₿', value: (totalValueUSD / BTC_PRICE_USD).toFixed(6) };
+      return { symbol: '₿', value: (btcUsd ? totalValueUSD / btcUsd : 0).toFixed(6) };
     }
     let val = totalValueUSD;
     if (settings.displayCurrency !== Currency.USD) {
-         val = totalValueUSD * (RATES[settings.displayCurrency] || 1);
+         val = totalValueUSD * (rates[settings.displayCurrency] || 1);
     }
     const parts = new Intl.NumberFormat('en-PH', { 
       style: 'currency', 
@@ -523,30 +532,26 @@ export default function App() {
       .map(p => p.value)
       .join('');
     return { symbol, value };
-  }, [totalValueUSD, settings.displayCurrency, comparisonMode, privacyMode]);
+  }, [totalValueUSD, settings.displayCurrency, comparisonMode, privacyMode, rates, btcUsd]);
 
   const topAssets = useMemo(() => {
     return [...assets]
       .sort((a, b) => {
-        const getVal = (asset: Asset) => {
-           if (asset.currency === Currency.BTC) return asset.amount * BTC_PRICE_USD;
-           const rate = RATES[asset.currency] || 1;
-           return asset.amount / rate;
-        }
+        const getVal = (asset: Asset) => asset.amount / (rates[asset.currency] || 1);
         return getVal(b) - getVal(a);
       })
       .slice(0, 3);
-  }, [assets]);
+  }, [assets, rates]);
 
-  // The live streak — 0 (hidden) if the last logged day is older than yesterday.
+  // The live streak (in months) — 0 (hidden) if the last logged month is older
+  // than last month (i.e., a full month was skipped).
   const currentStreak = useMemo(() => {
-    if (!settings.lastStreakDate || !settings.streakDays) return 0;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const diff = Math.round(
-      (new Date(todayStr + 'T00:00:00').getTime() - new Date(settings.lastStreakDate + 'T00:00:00').getTime()) / 86400000
-    );
+    if (!settings.lastStreakMonth || !settings.streakDays) return 0;
+    const [py, pm] = settings.lastStreakMonth.split('-').map(Number);
+    const now = new Date();
+    const diff = (now.getFullYear() - py) * 12 + (now.getMonth() + 1 - pm);
     return diff <= 1 ? settings.streakDays : 0;
-  }, [settings.lastStreakDate, settings.streakDays]);
+  }, [settings.lastStreakMonth, settings.streakDays]);
 
   // Passive income received in the last 12 months, in the display currency.
   // Informational only — deliberately NOT added to net worth (avoids double-counting).
@@ -557,11 +562,10 @@ export default function App() {
     return income
       .filter(r => new Date(r.date) >= cutoff)
       .reduce((sum, r) => {
-        const usd = r.currency === Currency.BTC ? r.amount * BTC_PRICE_USD : r.amount / (RATES[r.currency] || 1);
-        const val = display === Currency.BTC ? usd / BTC_PRICE_USD : usd * (RATES[display] || 1);
-        return sum + val;
+        const usd = r.amount / (r.rateUsd || rates[r.currency] || 1); // locked source rate
+        return sum + usd * (rates[display] || 1);
       }, 0);
-  }, [income, settings.displayCurrency]);
+  }, [income, settings.displayCurrency, rates]);
 
   useEffect(() => {
     const fetchAdvice = async () => {
@@ -637,7 +641,8 @@ export default function App() {
                 date: isoFromDate(dateStr),
                 amount: newAmount,
                 change: 0,
-                type: updateType
+                type: updateType,
+                rateUsd: rates[selectedAsset.currency]
             };
             history = [newEntry, ...selectedAsset.history];
         }
@@ -663,13 +668,14 @@ export default function App() {
                 currency: currency,
                 lastUpdated: new Date().toISOString(),
                 history: [
-                    { 
-                        id: Date.now().toString(), 
-                        date: new Date().toISOString(), 
-                        amount: amount, 
-                        change: amount, 
+                    {
+                        id: Date.now().toString(),
+                        date: new Date().toISOString(),
+                        amount: amount,
+                        change: amount,
                         type: 'TRANSACTION',
-                        note: 'Initial Entry'
+                        note: 'Initial Entry',
+                        rateUsd: rates[currency]
                     }
                 ]
             };
@@ -717,8 +723,8 @@ export default function App() {
   // --- Currency rates widget ---
   const fxPairs = (settings.fxPairs && settings.fxPairs.length) ? settings.fxPairs : DEFAULT_FX_PAIRS;
   const fxRate = (first: string, second: string): string => {
-    const rf = RATES[first];
-    const rs = RATES[second];
+    const rf = rates[first];
+    const rs = rates[second];
     if (!rf || !rs) return '—';
     const r = rs / rf; // how many `second` per 1 `first`
     if (!isFinite(r) || r <= 0) return '—';
@@ -729,20 +735,22 @@ export default function App() {
     setFxDraft(prev => prev.map((p, idx) => idx === i ? { ...p, [key]: code } : p));
   const saveFx = () => { setSettings(prev => ({ ...prev, fxPairs: fxDraft })); setShowFxEdit(false); };
 
-  // Count a day toward the streak when the user logs activity (add asset, add
-  // balance, or add income). Same-day repeats don't double-count; a gap resets.
+  // Count a month toward the streak when the user logs activity (add asset, add
+  // balance, or add income). Repeats within a month don't double-count; skipping
+  // a whole month resets it. Fits the monthly cadence of wealth tracking.
+  const monthKeyOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   const registerStreakActivity = () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const mk = monthKeyOf(new Date());
     setSettings(prev => {
-      if (prev.lastStreakDate === todayStr) return prev;
-      let days = 1;
-      if (prev.lastStreakDate) {
-        const diff = Math.round(
-          (new Date(todayStr + 'T00:00:00').getTime() - new Date(prev.lastStreakDate + 'T00:00:00').getTime()) / 86400000
-        );
-        days = diff === 1 ? (prev.streakDays || 0) + 1 : 1;
+      if (prev.lastStreakMonth === mk) return prev;
+      let count = 1;
+      if (prev.lastStreakMonth) {
+        const [py, pm] = prev.lastStreakMonth.split('-').map(Number);
+        const now = new Date();
+        const diff = (now.getFullYear() - py) * 12 + (now.getMonth() + 1 - pm);
+        count = diff === 1 ? (prev.streakDays || 0) + 1 : 1;
       }
-      return { ...prev, streakDays: days, lastStreakDate: todayStr };
+      return { ...prev, streakDays: count, lastStreakMonth: mk };
     });
   };
 
@@ -971,9 +979,9 @@ export default function App() {
                     <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowStreakTooltip(false)}></div>
                         <div className="absolute top-full right-0 mt-2 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-50 p-3 animate-[fadeIn_0.1s_ease-out]">
-                            <p className="text-white text-xs font-semibold mb-1">Daily Streak</p>
+                            <p className="text-white text-xs font-semibold mb-1">Monthly Streak</p>
                             <p className="text-[10px] text-textMuted leading-relaxed">
-                                You've logged your wealth {currentStreak} {currentStreak === 1 ? 'day' : 'days'} in a row. Log again tomorrow to keep it going!
+                                You've logged your wealth {currentStreak} {currentStreak === 1 ? 'month' : 'months'} in a row. Log again next month to keep it going!
                             </p>
                         </div>
                     </>
@@ -1037,7 +1045,7 @@ export default function App() {
                     {comparisonMode ? (
                         <div className="animate-[fadeIn_0.3s_ease-out]">
                             <p className="text-white text-xs font-medium mb-0.5">
-                                1 BTC = <span className="text-emerald-400">${BTC_PRICE_USD.toLocaleString()}</span>
+                                1 BTC = <span className="text-emerald-400">${Math.round(btcUsd).toLocaleString()}</span>
                             </p>
                             <p className="text-[10px] text-textMuted leading-tight">
                                 Your net worth in BTC shifts; showing <span className="text-rose-400">USD value erosion</span>.
@@ -1391,7 +1399,7 @@ export default function App() {
       <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
         {activeTab === 'SETTINGS' ? renderSettings() :
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
-         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} records={income} onRecordsChange={(next) => { if (next.length > income.length) registerStreakActivity(); setIncome(next); }} /> :
+         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} rates={rates} records={income} onRecordsChange={(next) => { if (next.length > income.length) registerStreakActivity(); setIncome(next); }} /> :
          selectedAssetId ? renderAssetDetail() :
          activeTab === 'ASSETS' ? renderPortfolioList() :
          renderHome()}

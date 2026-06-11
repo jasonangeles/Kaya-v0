@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Icons } from './icons';
-import { Currency, IncomeRecord } from '../types';
-import { RATES, BTC_PRICE_USD } from '../services/mockDataService';
+import { IncomeRecord } from '../types';
 import { symbolFor } from '../data/currencies';
 import { CurrencyPicker } from './CurrencyPicker';
 
@@ -10,15 +9,16 @@ const CATEGORY_OPTIONS = ['Dividend', 'Interest', 'Rental income', 'Royalties', 
 
 const symbolOf = (c: string) => symbolFor(c);
 
-// Convert any (amount, currency) into the chosen display currency.
-const toDisplay = (amount: number, from: string, display: string): number => {
-  const usd = from === Currency.BTC ? amount * BTC_PRICE_USD : amount / (RATES[from] || 1);
-  if (display === Currency.BTC) return usd / BTC_PRICE_USD;
-  return usd * (RATES[display] || 1);
+// Convert (amount, currency) into the display currency using the live rate map.
+// `lockedUsd` (the rate captured when the record was logged) keeps past income
+// stable rather than drifting with today's rates.
+const toDisplay = (amount: number, from: string, display: string, rates: Record<string, number>, lockedUsd?: number): number => {
+  const usd = amount / (lockedUsd || rates[from] || 1);
+  return usd * (rates[display] || 1);
 };
 
 const fmt = (val: number, display: string) => {
-  if (display === Currency.BTC) return `₿${val.toFixed(6)}`;
+  if (display === 'BTC') return `₿${val.toFixed(6)}`;
   return `${symbolOf(display)}${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 };
 
@@ -59,6 +59,7 @@ interface Props {
   displayCurrency: string;
   privacyMode: boolean;
   addTick: number;
+  rates: Record<string, number>;
   records: IncomeRecord[];
   onRecordsChange: (records: IncomeRecord[]) => void;
 }
@@ -73,7 +74,7 @@ const emptyDraft = (currency: string): IncomeRecord => ({
   note: ''
 });
 
-export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, addTick, records, onRecordsChange }) => {
+export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, addTick, rates, records, onRecordsChange }) => {
   const [mode, setMode] = useState<Mode>('MONTH');
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -92,7 +93,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
     records.forEach(r => {
       const d = new Date(r.date);
       const key = mode === 'MONTH' ? monthKey(d) : yearKey(d);
-      totals.set(key, (totals.get(key) || 0) + toDisplay(r.amount, r.currency, displayCurrency));
+      totals.set(key, (totals.get(key) || 0) + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd));
     });
 
     const keys: string[] = [];
@@ -112,14 +113,14 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
       label: mode === 'MONTH' ? monthLabel(key) : key,
       total: Math.round((totals.get(key) || 0) * 100) / 100
     }));
-  }, [records, mode, displayCurrency]);
+  }, [records, mode, displayCurrency, rates]);
 
   const current = chartData[chartData.length - 1]?.total || 0;
   const previous = chartData[chartData.length - 2]?.total || 0;
   const growth = previous > 0 ? ((current - previous) / previous) * 100 : (current > 0 ? 100 : 0);
   const allTimeTotal = useMemo(
-    () => records.reduce((s, r) => s + toDisplay(r.amount, r.currency, displayCurrency), 0),
-    [records, displayCurrency]
+    () => records.reduce((s, r) => s + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd), 0),
+    [records, displayCurrency, rates]
   );
 
   // Group records by period for the list, newest first.
@@ -138,10 +139,10 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
       label: mode === 'MONTH'
         ? new Date(Number(key.split('-')[0]), Number(key.split('-')[1]) - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
         : key,
-      subtotal: items.reduce((s, r) => s + toDisplay(r.amount, r.currency, displayCurrency), 0),
+      subtotal: items.reduce((s, r) => s + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd), 0),
       items
     }));
-  }, [records, mode, displayCurrency]);
+  }, [records, mode, displayCurrency, rates]);
 
   const openAdd = () => {
     setEditingId(null);
@@ -167,7 +168,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
     if (editingId) {
       setRecords(prev => prev.map(r => r.id === editingId ? { ...draft, date: isoFromDate(draft.date, r.date) } : r));
     } else {
-      setRecords(prev => [...prev, { ...draft, id: Date.now().toString(), date: isoFromDate(draft.date) }]);
+      setRecords(prev => [...prev, { ...draft, id: Date.now().toString(), date: isoFromDate(draft.date), rateUsd: rates[draft.currency] }]);
     }
     closeSheet();
   };
@@ -209,7 +210,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               {mode === 'MONTH' ? 'This month' : 'This year'}
             </p>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-normal text-zinc-500">{displayCurrency === Currency.BTC ? '₿' : symbolOf(displayCurrency)}</span>
+              <span className="text-2xl font-normal text-zinc-500">{symbolOf(displayCurrency)}</span>
               <span className="text-4xl font-medium text-white tracking-tight">
                 {privacyMode ? '••••••' : Math.round(current).toLocaleString()}
               </span>

@@ -32,6 +32,7 @@ export interface AssetHistoryEntry {
   change: number; // The difference from previous
   type: 'TRANSACTION' | 'MARKET'; // Money Moved vs Market Change
   note?: string;
+  rateUsd?: number; // FX rate locked at input time (units of this currency per USD)
 }
 
 export interface Asset {
@@ -53,6 +54,7 @@ export interface IncomeRecord {
   category: string; // e.g. "Dividend", "Interest"
   date: string;     // ISO date
   note?: string;
+  rateUsd?: number; // FX rate locked at input time (units of this currency per USD)
 }
 
 export interface HistoricalPoint {
@@ -72,8 +74,8 @@ export interface UserSettings {
   displayCurrency: string; // The currency showing on the dashboard (ISO code)
   showInBTC: boolean; // The toggle to flip everything to BTC
   onboardingComplete: boolean;
-  streakDays: number;
-  lastStreakDate?: string; // YYYY-MM-DD of the last day activity was logged
+  streakDays: number; // count of consecutive months with activity
+  lastStreakMonth?: string; // YYYY-MM of the last month activity was logged
   lastLogin: string;
   fxPairs?: { first: string; second: string }[]; // currency-rate widget pairs
 }
