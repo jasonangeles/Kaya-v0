@@ -200,11 +200,13 @@ const setSyncedAt = (t: string) => { try { localStorage.setItem(SYNC_KEY, t); } 
 
 // Build an ISO timestamp from a YYYY-MM-DD date, attaching a time-of-day so
 // multiple entries on the same date keep a stable, log-order sort.
-// `preserveFrom` keeps an existing entry's time when only its date is edited.
+// Anchored to the LOCAL calendar date so the stored instant renders back to the
+// same day the user picked (avoids timezone off-by-one). `preserveFrom` keeps
+// an existing entry's time-of-day when only its date is edited.
 const isoFromDate = (dateStr: string, preserveFrom?: string) => {
-  const day = dateStr.split('T')[0];
-  const time = preserveFrom ? new Date(preserveFrom).toISOString().split('T')[1] : new Date().toISOString().split('T')[1];
-  return `${day}T${time}`;
+  const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+  const t = preserveFrom ? new Date(preserveFrom) : new Date();
+  return new Date(y, (m || 1) - 1, d || 1, t.getHours(), t.getMinutes(), t.getSeconds(), t.getMilliseconds()).toISOString();
 };
 
 const loadStored = <T,>(key: string, fallback: T): T => {

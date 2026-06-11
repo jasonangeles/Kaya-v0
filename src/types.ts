@@ -17,8 +17,9 @@ export enum AssetCategory {
   BANK_PH = 'Philippine Banks',
   BANK_INTL = 'International Banks',
   CRYPTO = 'Crypto Assets',
-  STOCKS = 'Equities (US/CAD)',
+  STOCKS = 'Equities',
   REAL_ESTATE = 'Real Estate',
+  OTHER = 'Other',
   DEBT = 'Liabilities'
 }
 

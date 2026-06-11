@@ -23,11 +23,12 @@ const fmt = (val: number, display: string) => {
 };
 
 // ISO timestamp from a YYYY-MM-DD date + a time-of-day, so same-date entries
-// keep a stable log-order sort. `preserveFrom` keeps an entry's time on edit.
+// keep a stable log-order sort. Anchored to the LOCAL calendar date so it
+// renders back to the picked day (avoids timezone off-by-one).
 const isoFromDate = (dateStr: string, preserveFrom?: string) => {
-  const day = dateStr.split('T')[0];
-  const time = preserveFrom ? new Date(preserveFrom).toISOString().split('T')[1] : new Date().toISOString().split('T')[1];
-  return `${day}T${time}`;
+  const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+  const t = preserveFrom ? new Date(preserveFrom) : new Date();
+  return new Date(y, (m || 1) - 1, d || 1, t.getHours(), t.getMinutes(), t.getSeconds(), t.getMilliseconds()).toISOString();
 };
 
 type Mode = 'MONTH' | 'YEAR';
