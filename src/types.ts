@@ -72,5 +72,6 @@ export interface UserSettings {
   showInBTC: boolean; // The toggle to flip everything to BTC
   onboardingComplete: boolean;
   streakDays: number;
+  lastStreakDate?: string; // YYYY-MM-DD of the last day activity was logged
   lastLogin: string;
 }

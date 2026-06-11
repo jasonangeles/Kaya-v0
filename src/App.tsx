@@ -244,7 +244,7 @@ export default function App() {
     displayCurrency: Currency.PHP,
     showInBTC: false,
     onboardingComplete: true,
-    streakDays: 12,
+    streakDays: 0,
     lastLogin: new Date().toISOString()
   }));
 
@@ -529,6 +529,16 @@ export default function App() {
       .slice(0, 3);
   }, [assets]);
 
+  // The live streak — 0 (hidden) if the last logged day is older than yesterday.
+  const currentStreak = useMemo(() => {
+    if (!settings.lastStreakDate || !settings.streakDays) return 0;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const diff = Math.round(
+      (new Date(todayStr + 'T00:00:00').getTime() - new Date(settings.lastStreakDate + 'T00:00:00').getTime()) / 86400000
+    );
+    return diff <= 1 ? settings.streakDays : 0;
+  }, [settings.lastStreakDate, settings.streakDays]);
+
   // Passive income received in the last 12 months, in the display currency.
   // Informational only — deliberately NOT added to net worth (avoids double-counting).
   const passiveIncome12mo = useMemo(() => {
@@ -624,6 +634,7 @@ export default function App() {
         }
         const updatedAsset = recomputeAsset(selectedAsset, history);
         setAssets(prev => prev.map(a => a.id === selectedAsset.id ? updatedAsset : a));
+        if (!editingEntryId) registerStreakActivity(); // adding a balance counts
         setEditingEntryId(null);
     } else {
         const assetData = {
@@ -654,6 +665,7 @@ export default function App() {
                 ]
             };
             setAssets(prev => [...prev, newAsset]);
+            registerStreakActivity(); // adding a new asset counts
         }
     }
     setIsModalOpen(false);
@@ -691,6 +703,23 @@ export default function App() {
   const handleCurrencySelect = (currency: string) => {
     setSettings(prev => ({ ...prev, displayCurrency: currency }));
     setIsCurrencyDropdownOpen(false);
+  };
+
+  // Count a day toward the streak when the user logs activity (add asset, add
+  // balance, or add income). Same-day repeats don't double-count; a gap resets.
+  const registerStreakActivity = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    setSettings(prev => {
+      if (prev.lastStreakDate === todayStr) return prev;
+      let days = 1;
+      if (prev.lastStreakDate) {
+        const diff = Math.round(
+          (new Date(todayStr + 'T00:00:00').getTime() - new Date(prev.lastStreakDate + 'T00:00:00').getTime()) / 86400000
+        );
+        days = diff === 1 ? (prev.streakDays || 0) + 1 : 1;
+      }
+      return { ...prev, streakDays: days, lastStreakDate: todayStr };
+    });
   };
 
   const handleClearData = () => {
@@ -905,13 +934,14 @@ export default function App() {
             </div>
         </div>
         <div className="flex items-center gap-3">
+            {currentStreak > 0 && (
             <div className="relative">
                 <button
-                    onClick={() => setShowStreakTooltip(!showStreakTooltip)} 
+                    onClick={() => setShowStreakTooltip(!showStreakTooltip)}
                     className="flex items-center gap-1.5 glass-panel px-3 py-1.5 rounded-full text-xs font-medium text-textMuted shadow-sm hover:text-white transition-colors"
                 >
                     <Icons.Fire className="w-3.5 h-3.5 animate-pulse text-[#F7931A]" weight="fill" />
-                    <span>{settings.streakDays}</span>
+                    <span>{currentStreak}</span>
                 </button>
                 {showStreakTooltip && (
                     <>
@@ -919,12 +949,13 @@ export default function App() {
                         <div className="absolute top-full right-0 mt-2 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-50 p-3 animate-[fadeIn_0.1s_ease-out]">
                             <p className="text-white text-xs font-semibold mb-1">Daily Streak</p>
                             <p className="text-[10px] text-textMuted leading-relaxed">
-                                You've tracked your wealth for {settings.streakDays} days in a row. Keep checking in to build your habit!
+                                You've logged your wealth {currentStreak} {currentStreak === 1 ? 'day' : 'days'} in a row. Log again tomorrow to keep it going!
                             </p>
                         </div>
                     </>
                 )}
             </div>
+            )}
         </div>
       </header>
 
@@ -1312,7 +1343,7 @@ export default function App() {
       <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
         {activeTab === 'SETTINGS' ? renderSettings() :
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
-         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} records={income} onRecordsChange={setIncome} /> :
+         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} records={income} onRecordsChange={(next) => { if (next.length > income.length) registerStreakActivity(); setIncome(next); }} /> :
          selectedAssetId ? renderAssetDetail() :
          activeTab === 'ASSETS' ? renderPortfolioList() :
          renderHome()}
