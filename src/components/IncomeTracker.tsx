@@ -38,7 +38,7 @@ const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
       className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       onClick={onClose}
     />
-    <div className={`fixed bottom-0 left-0 w-full z-50 bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transform transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+    <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 left-0 w-full z-50 bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto">
       <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
       <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-white">✕</button>
       {children}
