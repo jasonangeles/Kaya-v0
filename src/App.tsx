@@ -194,6 +194,28 @@ const SettingsItem = ({
   </div>
 );
 
+// Minimal RFC-4180-ish CSV parser (handles quoted fields, commas, newlines).
+const parseCSV = (text: string): string[][] => {
+  const rows: string[][] = [];
+  let row: string[] = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c !== '\r') field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+};
+
 const STORAGE_KEYS = { assets: 'kaya.assets.v1', settings: 'kaya.settings.v1' };
 const DEFAULT_FX_PAIRS = [
   { first: 'USD', second: 'PHP' },
@@ -399,6 +421,7 @@ export default function App() {
   const [fxDraft, setFxDraft] = useState<{ first: string; second: string }[]>(DEFAULT_FX_PAIRS);
   const mainRef = useRef<HTMLElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   const [lastDeletedAsset, setLastDeletedAsset] = useState<Asset | null>(null);
   const [showUndoToast, setShowUndoToast] = useState(false);
@@ -795,6 +818,75 @@ export default function App() {
   const handleBackup = () => {
     const data = { app: 'kaya', version: 1, exportedAt: new Date().toISOString(), assets, income: readIncome(), settings };
     downloadFile(`kaya-backup-${today()}.json`, JSON.stringify(data, null, 2), 'application/json');
+  };
+
+  // Import a CSV (same column shape as Export CSV / the Kaya template).
+  // Replaces current data so the sheet can act as the source of truth.
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const rows = parseCSV(String(reader.result || '')).filter(r => r.some(c => c.trim() !== ''));
+        if (rows.length < 2) { window.alert('That CSV looks empty.'); return; }
+        const header = rows[0].map(h => h.trim().toLowerCase());
+        const find = (re: RegExp) => header.findIndex(h => re.test(h));
+        const iType = find(/type/), iName = find(/name|source/), iCat = find(/categ/),
+              iCur = find(/curr/), iAmt = find(/amount|balance/), iDate = find(/date/), iNote = find(/note|institution/);
+        if (iName < 0 || iAmt < 0) { window.alert('CSV needs at least a Name/Source and an Amount column.'); return; }
+
+        const catValues = Object.values(AssetCategory) as string[];
+        const newAssets: Asset[] = [];
+        const newIncome: IncomeRecord[] = [];
+
+        rows.slice(1).forEach(r => {
+          const amount = parseFloat((r[iAmt] || '').replace(/[, ]/g, ''));
+          if (isNaN(amount)) return;
+          const name = (r[iName] || '').trim();
+          if (!name) return;
+          const currency = ((iCur >= 0 ? r[iCur] : '') || 'PHP').trim().toUpperCase();
+          const cat = (iCat >= 0 ? r[iCat] : '').trim();
+          const note = (iNote >= 0 ? r[iNote] : '').trim();
+          const dateRaw = (iDate >= 0 ? r[iDate] : '').trim();
+          const d = dateRaw ? new Date(dateRaw) : new Date();
+          const iso = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+          const type = (iType >= 0 ? r[iType] : '').trim().toLowerCase();
+
+          if (type.startsWith('income')) {
+            newIncome.push({
+              id: `${Date.now()}-${newIncome.length}`,
+              amount, currency,
+              source: name,
+              category: cat || 'Dividend',
+              date: iso,
+              note: note || undefined,
+              rateUsd: rates[currency]
+            });
+          } else {
+            const category = (catValues.includes(cat) ? cat : AssetCategory.OTHER) as AssetCategory;
+            newAssets.push({
+              id: `${Date.now()}-${newAssets.length}`,
+              name, category, amount, currency,
+              institution: note || undefined,
+              lastUpdated: iso,
+              history: [{ id: `${Date.now()}-h-${newAssets.length}`, date: iso, amount, change: amount, type: 'TRANSACTION', rateUsd: rates[currency] }]
+            });
+          }
+        });
+
+        if (!newAssets.length && !newIncome.length) { window.alert('No valid rows found to import.'); return; }
+        if (!window.confirm(`Import will REPLACE your current data with ${newAssets.length} asset(s) and ${newIncome.length} income record(s). Continue?`)) return;
+        setSelectedAssetId(null);
+        setAssets(newAssets);
+        setIncome(newIncome);
+        window.alert('Import complete.');
+      } catch {
+        window.alert('Could not read that CSV file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   const handleRestoreFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1363,7 +1455,8 @@ export default function App() {
       <SettingsGroup title="Data">
         <SettingsItem icon={<Icons.Cloud size={20} />} label="Backup (download .json)" onClick={handleBackup} />
         <SettingsItem icon={<Icons.Upload size={20} />} label="Restore from backup" onClick={() => restoreInputRef.current?.click()} />
-        <SettingsItem icon={<Icons.Download size={20} />} label="Export CSV" onClick={handleExportCSV} />
+        <SettingsItem icon={<Icons.Download size={20} />} label="Export CSV / Sheets" onClick={handleExportCSV} />
+        <SettingsItem icon={<Icons.Upload size={20} />} label="Import CSV / Sheets" onClick={() => csvInputRef.current?.click()} />
         <SettingsItem icon={<Icons.Delete size={20} />} label="Clear all data & start fresh" onClick={handleClearData} isLast />
       </SettingsGroup>
 
@@ -1450,8 +1543,9 @@ export default function App() {
         </div>
       )}
 
-      {/* Hidden input for restoring a backup file */}
+      {/* Hidden inputs for restoring a backup / importing a CSV */}
       <input ref={restoreInputRef} type="file" accept="application/json,.json" onChange={handleRestoreFile} className="hidden" />
+      <input ref={csvInputRef} type="file" accept=".csv,text/csv" onChange={handleImportCSV} className="hidden" />
 
       {/* Privacy & Data info */}
       <Modal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)}>
