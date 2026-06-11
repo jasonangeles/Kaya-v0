@@ -1125,7 +1125,9 @@ export default function App() {
                 >
                     {insights.map((tip, idx) => (
                         <div key={idx} className="w-full flex-shrink-0 flex gap-4 items-start px-6 pt-6">
-                             <div className="mt-1.5 w-2 h-2 rounded-full bg-primary flex-shrink-0 shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
+                             <span className="shrink-0 flex items-center h-[1.625rem]">
+                                <span className="w-2 h-2 rounded-full bg-white/90 animate-[subtlePulse_2.8s_ease-in-out_infinite]" />
+                             </span>
                              <p className="text-base text-slate-200 font-light leading-relaxed flex-1 min-w-0 break-words whitespace-normal">{tip}</p>
                         </div>
                     ))}
