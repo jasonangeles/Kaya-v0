@@ -506,6 +506,21 @@ export default function App() {
       .slice(0, 3);
   }, [assets]);
 
+  // Passive income received in the last 12 months, in the display currency.
+  // Informational only — deliberately NOT added to net worth (avoids double-counting).
+  const passiveIncome12mo = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - 12);
+    const display = settings.displayCurrency;
+    return income
+      .filter(r => new Date(r.date) >= cutoff)
+      .reduce((sum, r) => {
+        const usd = r.currency === Currency.BTC ? r.amount * BTC_PRICE_USD : r.amount / (RATES[r.currency] || 1);
+        const val = display === Currency.BTC ? usd / BTC_PRICE_USD : usd * (RATES[display] || 1);
+        return sum + val;
+      }, 0);
+  }, [income, settings.displayCurrency]);
+
   useEffect(() => {
     const fetchAdvice = async () => {
       setIsLoadingInsights(true);
@@ -1000,9 +1015,15 @@ export default function App() {
              </button>
           </div>
           <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+             {topAssets.length === 0 && (
+                <div className="p-6 text-center">
+                    <p className="text-white text-sm font-medium mb-0.5">No assets yet</p>
+                    <p className="text-textMuted text-xs">Tap the + button to add your first one.</p>
+                </div>
+             )}
              {topAssets.map((asset, index) => (
-                <div 
-                    key={asset.id} 
+                <div
+                    key={asset.id}
                     onClick={() => setSelectedAssetId(asset.id)}
                     className={`p-4 flex justify-between items-center hover:bg-white/5 transition-colors cursor-pointer group ${index !== topAssets.length - 1 ? 'border-b border-white/5' : ''}`}
                 >
@@ -1082,10 +1103,42 @@ export default function App() {
 
   const renderPortfolioList = () => (
     <div className="pb-28 space-y-4 animate-[fadeIn_0.5s_ease-out]">
-         <header className="mb-8 px-1">
+         <header className="mb-6 px-1">
             <h1 className="text-3xl font-medium text-white mb-2">Portfolio</h1>
             <p className="text-sm text-textMuted">Tap to view details</p>
         </header>
+
+        {/* Read-only passive-income summary (not counted in net worth) */}
+        <button
+            onClick={() => goTab('INCOME')}
+            className="w-full text-left glass-panel rounded-3xl p-4 shadow-lg flex items-center justify-between hover:bg-white/5 transition-colors mb-2"
+        >
+            <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-white/5">
+                    <Icons.BarChart size={18} />
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-white">Passive income</p>
+                    <p className="text-[11px] text-textMuted">Last 12 months · not in net worth</p>
+                </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-emerald-400">
+                    {privacyMode ? '••••' : `${getCurrencySymbol(settings.displayCurrency)}${Math.round(passiveIncome12mo).toLocaleString()}`}
+                </span>
+                <Icons.ChevronRight className="w-4 h-4 text-zinc-600" />
+            </div>
+        </button>
+
+        {assets.length === 0 && (
+            <div className="glass-panel rounded-3xl p-8 text-center shadow-lg mt-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 text-white flex items-center justify-center mx-auto mb-3">
+                    <Icons.Wallet size={22} />
+                </div>
+                <p className="text-white font-medium mb-1">No assets yet</p>
+                <p className="text-textMuted text-sm">Tap the + button to add your first account, investment, or holding.</p>
+            </div>
+        )}
 
         {Object.values(AssetCategory).map(category => {
             const categoryAssets = assets.filter(a => a.category === category);
