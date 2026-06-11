@@ -23,7 +23,7 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
       />
       <div
         style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }}
-        className="fixed bottom-0 left-0 w-full z-50 bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto"
+        className="fixed bottom-0 inset-x-0 z-50 bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto"
       >
         <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
         <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-white">✕</button>
