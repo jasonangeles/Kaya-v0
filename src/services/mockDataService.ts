@@ -1,19 +1,11 @@
 import { Asset, AssetCategory, Currency, HistoricalPoint, TimeRange } from '../types';
+import { ALL_CURRENCIES } from '../data/currencies';
 
-// Mock Exchange Rates (Base USD)
-export const RATES: Record<string, number> = {
-  USD: 1,
-  PHP: 56.50, // 1 USD = 56.50 PHP
-  CAD: 1.36,  // 1 USD = 1.36 CAD
-  BTC: 0.000016, // 1 USD = ~0.000016 BTC
-  AED: 3.67,  // UAE Dirham
-  SAR: 3.75,  // Saudi Riyal
-  SGD: 1.35,  // Singapore Dollar
-  HKD: 7.82,  // Hong Kong Dollar
-  JPY: 150.0, // Japanese Yen
-  EUR: 0.92,  // Euro
-  GBP: 0.79   // British Pound
-};
+// Static exchange rates (units per 1 USD), derived from the currency dataset.
+// Placeholder until live FX is added. BTC is handled via BTC_PRICE_USD below.
+export const RATES: Record<string, number> = Object.fromEntries(
+  ALL_CURRENCIES.map(c => [c.code, c.usd])
+);
 
 export const BTC_PRICE_USD = 62500;
 

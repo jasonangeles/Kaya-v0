@@ -3,53 +3,23 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { Icons } from './icons';
 import { Currency, IncomeRecord } from '../types';
 import { RATES, BTC_PRICE_USD } from '../services/mockDataService';
-
-const STORAGE_KEY = 'kaya.income.v1';
-
-const CURRENCY_OPTIONS: Currency[] = [
-  Currency.PHP, Currency.USD, Currency.CAD, Currency.AED,
-  Currency.SAR, Currency.SGD, Currency.HKD, Currency.JPY,
-  Currency.EUR, Currency.GBP
-];
+import { symbolFor } from '../data/currencies';
+import { CurrencyPicker } from './CurrencyPicker';
 
 const CATEGORY_OPTIONS = ['Dividend', 'Interest', 'Rental income', 'Royalties', 'Other'];
 
-const symbolOf = (c: Currency) => {
-  switch (c) {
-    case Currency.PHP: return '₱';
-    case Currency.USD: return '$';
-    case Currency.CAD: return 'C$';
-    case Currency.AED: return 'د.إ';
-    case Currency.SAR: return '﷼';
-    case Currency.SGD: return 'S$';
-    case Currency.HKD: return 'HK$';
-    case Currency.JPY: return '¥';
-    case Currency.EUR: return '€';
-    case Currency.GBP: return '£';
-    case Currency.BTC: return '₿';
-    default: return '';
-  }
-};
+const symbolOf = (c: string) => symbolFor(c);
 
 // Convert any (amount, currency) into the chosen display currency.
-const toDisplay = (amount: number, from: Currency, display: Currency): number => {
+const toDisplay = (amount: number, from: string, display: string): number => {
   const usd = from === Currency.BTC ? amount * BTC_PRICE_USD : amount / (RATES[from] || 1);
   if (display === Currency.BTC) return usd / BTC_PRICE_USD;
   return usd * (RATES[display] || 1);
 };
 
-const fmt = (val: number, display: Currency) => {
+const fmt = (val: number, display: string) => {
   if (display === Currency.BTC) return `₿${val.toFixed(6)}`;
   return `${symbolOf(display)}${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-};
-
-const loadStored = (): IncomeRecord[] => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
 };
 
 type Mode = 'MONTH' | 'YEAR';
@@ -77,14 +47,14 @@ const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
 );
 
 interface Props {
-  displayCurrency: Currency;
+  displayCurrency: string;
   privacyMode: boolean;
   addTick: number;
   records: IncomeRecord[];
   onRecordsChange: (records: IncomeRecord[]) => void;
 }
 
-const emptyDraft = (currency: Currency): IncomeRecord => ({
+const emptyDraft = (currency: string): IncomeRecord => ({
   id: '',
   amount: 0,
   currency,
@@ -347,13 +317,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
           <div>
             <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Amount</label>
             <div className="flex items-center bg-black/50 border border-white/10 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-white/40 transition-all">
-              <select
-                value={draft.currency}
-                onChange={(e) => setDraft({ ...draft, currency: e.target.value as Currency })}
-                className="bg-zinc-800 text-zinc-300 text-sm rounded-lg px-2 py-1 mr-3 outline-none"
-              >
-                {CURRENCY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <CurrencyPicker value={draft.currency} onChange={(code) => setDraft({ ...draft, currency: code })} variant="inline" />
               <input
                 required
                 type="number"

@@ -4,6 +4,8 @@ import { NetWorthChart } from './components/NetWorthChart';
 import { IncomeTracker } from './components/IncomeTracker';
 import { LockScreen, SetPinSheet, RecoverySheet, RecoveryCodeSheet, generateRecoveryCode, hashRecoveryCode, isBiometricAvailable, registerBiometric } from './components/AppLock';
 import { AuthScreen } from './components/AuthScreen';
+import { CurrencyPicker } from './components/CurrencyPicker';
+import { ORDERED_CURRENCIES, symbolFor } from './data/currencies';
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
 import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry, IncomeRecord } from './types';
@@ -32,7 +34,7 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
 
 interface HistoryItemProps {
   entry: AssetHistoryEntry;
-  currency: Currency;
+  currency: string;
   isLast: boolean;
   onDelete: () => void;
   onEdit: () => void;
@@ -197,20 +199,6 @@ const SettingsItem = ({
   </div>
 );
 
-const CURRENCY_OPTIONS = [
-  { code: Currency.PHP, name: 'Philippine Peso' },
-  { code: Currency.USD, name: 'US Dollar' },
-  { code: Currency.CAD, name: 'Canadian Dollar' },
-  { code: Currency.AED, name: 'UAE Dirham' },
-  { code: Currency.SAR, name: 'Saudi Riyal' },
-  { code: Currency.SGD, name: 'Singapore Dollar' },
-  { code: Currency.HKD, name: 'Hong Kong Dollar' },
-  { code: Currency.JPY, name: 'Japanese Yen' },
-  { code: Currency.EUR, name: 'Euro' },
-  { code: Currency.GBP, name: 'British Pound' },
-  { code: Currency.BTC, name: 'Bitcoin' },
-];
-
 const STORAGE_KEYS = { assets: 'kaya.assets.v1', settings: 'kaya.settings.v1' };
 
 const loadStored = <T,>(key: string, fallback: T): T => {
@@ -335,9 +323,7 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [modalCategory, setModalCategory] = useState<AssetCategory>(AssetCategory.BANK_PH);
-  const [modalCurrency, setModalCurrency] = useState<Currency>(Currency.PHP);
-  const [currencySearch, setCurrencySearch] = useState('');
-  const [isCurrencySearchOpen, setIsCurrencySearchOpen] = useState(false);
+  const [modalCurrency, setModalCurrency] = useState<string>(Currency.PHP);
   const [updateType, setUpdateType] = useState<'TRANSACTION' | 'MARKET'>('TRANSACTION');
   const [updateDate, setUpdateDate] = useState(new Date().toISOString().split('T')[0]);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
@@ -546,7 +532,6 @@ export default function App() {
     setIsEditMode(false);
     setModalCategory(AssetCategory.BANK_PH);
     setModalCurrency(Currency.PHP);
-    setCurrencySearch('PHP');
     setIsModalOpen(true);
   };
 
@@ -573,7 +558,6 @@ export default function App() {
     setIsEditMode(true); 
     setModalCategory(asset.category);
     setModalCurrency(asset.currency);
-    setCurrencySearch(asset.currency);
     setIsModalOpen(true);
   };
 
@@ -615,7 +599,7 @@ export default function App() {
              setAssets(prev => prev.map(a => a.id === selectedAsset.id ? { ...a, ...assetData } : a));
         } else {
             const amount = parseFloat(formData.get('amount') as string);
-            const currency = formData.get('currency') as Currency;
+            const currency = formData.get('currency') as string;
             const newAsset: Asset = {
                 id: Date.now().toString(),
                 ...assetData,
@@ -668,7 +652,7 @@ export default function App() {
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
   };
 
-  const handleCurrencySelect = (currency: Currency) => {
+  const handleCurrencySelect = (currency: string) => {
     setSettings(prev => ({ ...prev, displayCurrency: currency }));
     setIsCurrencyDropdownOpen(false);
   };
@@ -1200,17 +1184,17 @@ export default function App() {
         </header>
 
         <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
-            {CURRENCY_OPTIONS.map((option, index) => (
-                <div 
+            {ORDERED_CURRENCIES.map((option, index) => (
+                <div
                     key={option.code}
                     onClick={() => {
                         setSettings(prev => ({ ...prev, displayCurrency: option.code }));
                         setActiveTab('SETTINGS');
                     }}
-                    className={`p-4 flex justify-between items-center cursor-pointer hover:bg-white/5 transition-colors ${index !== CURRENCY_OPTIONS.length - 1 ? 'border-b border-white/5' : ''}`}
+                    className={`p-4 flex justify-between items-center cursor-pointer hover:bg-white/5 transition-colors ${index !== ORDERED_CURRENCIES.length - 1 ? 'border-b border-white/5' : ''}`}
                 >
                     <div className="flex items-center gap-3">
-                         <span className={`font-medium w-8 ${settings.displayCurrency === option.code ? 'text-primary' : 'text-white'}`}>{option.code}</span>
+                         <span className={`font-medium w-10 ${settings.displayCurrency === option.code ? 'text-primary' : 'text-white'}`}>{option.code}</span>
                          <span className="text-sm text-textMuted">{option.name}</span>
                     </div>
                     {settings.displayCurrency === option.code && (
@@ -1442,24 +1426,8 @@ export default function App() {
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Currency</label>
-                                <div className="relative">
-                                    <input type="hidden" name="currency" value={modalCurrency} />
-                                    <input type="text" value={currencySearch} onChange={(e) => { setCurrencySearch(e.target.value); setIsCurrencySearchOpen(true); }} onFocus={() => setIsCurrencySearchOpen(true)} placeholder="Select..." className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-zinc-700 pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0" />
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-textMuted" onClick={() => setIsCurrencySearchOpen(!isCurrencySearchOpen)}><Icons.ChevronDown size={20} /></div>
-                                    {isCurrencySearchOpen && (
-                                        <>
-                                            <div className="fixed inset-0 z-10" onClick={() => setIsCurrencySearchOpen(false)}></div>
-                                            <div className="absolute top-full left-0 right-0 mt-2 max-h-48 overflow-y-auto bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-20">
-                                                {CURRENCY_OPTIONS.filter(c => c.code.toLowerCase().includes(currencySearch.toLowerCase()) || c.name.toLowerCase().includes(currencySearch.toLowerCase())).map(c => (
-                                                    <div key={c.code} onClick={() => { setModalCurrency(c.code); setCurrencySearch(c.code); setIsCurrencySearchOpen(false); }} className="px-4 py-3 hover:bg-white/5 cursor-pointer text-sm border-b border-white/5 flex items-center gap-3">
-                                                        <span className={`font-medium min-w-[32px] ${modalCurrency === c.code ? 'text-primary' : 'text-white'}`}>{c.code}</span>
-                                                        <span className="text-xs text-textMuted truncate">{c.name}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+                                <input type="hidden" name="currency" value={modalCurrency} />
+                                <CurrencyPicker value={modalCurrency} onChange={setModalCurrency} />
                             </div>
                         </div>
                     )}
@@ -1510,19 +1478,6 @@ function getInstitutionLabel(category: AssetCategory) {
     }
 }
 
-function getCurrencySymbol(currency: Currency) {
-    switch (currency) {
-        case Currency.PHP: return '₱';
-        case Currency.USD: return '$';
-        case Currency.CAD: return 'C$';
-        case Currency.AED: return 'د.إ';
-        case Currency.SAR: return '﷼';
-        case Currency.SGD: return 'S$';
-        case Currency.HKD: return 'HK$';
-        case Currency.JPY: return '¥';
-        case Currency.EUR: return '€';
-        case Currency.GBP: return '£';
-        case Currency.BTC: return '₿';
-        default: return currency;
-    }
+function getCurrencySymbol(currency: string) {
+    return symbolFor(currency);
 }

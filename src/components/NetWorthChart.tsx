@@ -5,7 +5,7 @@ import { HistoricalPoint, Currency, TimeRange } from '../types';
 interface NetWorthChartProps {
   data: HistoricalPoint[];
   mode: 'FIAT' | 'BTC' | 'COMPARISON' | 'EXCHANGE'; // Comparison shows BTC vs USD Erosion
-  displayCurrency: Currency;
+  displayCurrency: string;
   timeRange: TimeRange;
 }
 

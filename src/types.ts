@@ -38,7 +38,7 @@ export interface Asset {
   name: string;
   category: AssetCategory;
   amount: number; // Current Balance (Stored in original currency)
-  currency: Currency;
+  currency: string; // ISO currency code (e.g. 'PHP', 'USD', 'BTC')
   institution?: string; // e.g., "BDO", "Wealthsimple"
   lastUpdated: string;
   history: AssetHistoryEntry[];
@@ -47,7 +47,7 @@ export interface Asset {
 export interface IncomeRecord {
   id: string;
   amount: number;
-  currency: Currency;
+  currency: string; // ISO currency code
   source: string;   // e.g. "FB", "RCR" — the payer / ticker
   category: string; // e.g. "Dividend", "Interest"
   date: string;     // ISO date
@@ -68,7 +68,7 @@ export interface ExchangeRates {
 }
 
 export interface UserSettings {
-  displayCurrency: Currency; // The currency showing on the dashboard
+  displayCurrency: string; // The currency showing on the dashboard (ISO code)
   showInBTC: boolean; // The toggle to flip everything to BTC
   onboardingComplete: boolean;
   streakDays: number;
