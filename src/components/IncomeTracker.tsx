@@ -22,6 +22,14 @@ const fmt = (val: number, display: string) => {
   return `${symbolOf(display)}${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 };
 
+// ISO timestamp from a YYYY-MM-DD date + a time-of-day, so same-date entries
+// keep a stable log-order sort. `preserveFrom` keeps an entry's time on edit.
+const isoFromDate = (dateStr: string, preserveFrom?: string) => {
+  const day = dateStr.split('T')[0];
+  const time = preserveFrom ? new Date(preserveFrom).toISOString().split('T')[1] : new Date().toISOString().split('T')[1];
+  return `${day}T${time}`;
+};
+
 type Mode = 'MONTH' | 'YEAR';
 
 const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -155,11 +163,10 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
   const save = (e: React.FormEvent) => {
     e.preventDefault();
     if (!draft.amount || !draft.source.trim()) return;
-    const isoDate = new Date(draft.date.split('T')[0] + 'T12:00:00Z').toISOString();
     if (editingId) {
-      setRecords(prev => prev.map(r => r.id === editingId ? { ...draft, date: isoDate } : r));
+      setRecords(prev => prev.map(r => r.id === editingId ? { ...draft, date: isoFromDate(draft.date, r.date) } : r));
     } else {
-      setRecords(prev => [...prev, { ...draft, id: Date.now().toString(), date: isoDate }]);
+      setRecords(prev => [...prev, { ...draft, id: Date.now().toString(), date: isoFromDate(draft.date) }]);
     }
     closeSheet();
   };
@@ -290,17 +297,10 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="shrink-0 text-right">
                     <p className="text-sm font-medium text-emerald-400">
                       {privacyMode ? '••••' : `+${symbolOf(r.currency)}${r.amount.toLocaleString()}`}
                     </p>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setRecords(prev => prev.filter(x => x.id !== r.id)); }}
-                      aria-label="Delete record"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
-                    >
-                      <Icons.Delete size={16} />
-                    </button>
                   </div>
                 </div>
               ))}

@@ -132,17 +132,10 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-right">
-          <p className="text-sm font-medium text-zinc-300 pointer-events-none">
+        <div className="text-right pointer-events-none">
+          <p className="text-sm font-medium text-zinc-300">
             {currency === Currency.BTC ? '₿' : getCurrencySymbol(currency)}{entry.amount.toLocaleString()}
           </p>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            aria-label="Delete entry"
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
-          >
-            <Icons.Delete size={16} />
-          </button>
         </div>
       </div>
     </div>
@@ -201,6 +194,18 @@ const SettingsItem = ({
 );
 
 const STORAGE_KEYS = { assets: 'kaya.assets.v1', settings: 'kaya.settings.v1' };
+const SYNC_KEY = 'kaya.syncedAt';
+const getSyncedAt = () => { try { return localStorage.getItem(SYNC_KEY) || ''; } catch { return ''; } };
+const setSyncedAt = (t: string) => { try { localStorage.setItem(SYNC_KEY, t); } catch {} };
+
+// Build an ISO timestamp from a YYYY-MM-DD date, attaching a time-of-day so
+// multiple entries on the same date keep a stable, log-order sort.
+// `preserveFrom` keeps an existing entry's time when only its date is edited.
+const isoFromDate = (dateStr: string, preserveFrom?: string) => {
+  const day = dateStr.split('T')[0];
+  const time = preserveFrom ? new Date(preserveFrom).toISOString().split('T')[1] : new Date().toISOString().split('T')[1];
+  return `${day}T${time}`;
+};
 
 const loadStored = <T,>(key: string, fallback: T): T => {
   try {
@@ -281,27 +286,47 @@ export default function App() {
     return () => { clearTimeout(t); sub.subscription.unsubscribe(); };
   }, []);
 
-  // On login: pull this user's cloud data, or seed the cloud from local on first run.
+  // On login: reconcile local vs cloud WITHOUT clobbering newer local data.
   useEffect(() => {
     if (!isSupabaseEnabled || !supabase || !session) return;
     let active = true;
+    const uid = session.user.id;
+
+    const pushLocal = async () => {
+      const now = new Date().toISOString();
+      await supabase!.from('kaya_data').upsert({ user_id: uid, data: { assets, income, settings }, updated_at: now });
+      setSyncedAt(now);
+    };
+    const adopt = (d: any, cloudUpdated: string) => {
+      if (Array.isArray(d.assets)) setAssets(d.assets);
+      if (Array.isArray(d.income)) setIncome(d.income);
+      if (d.settings) setSettings(d.settings);
+      setSyncedAt(cloudUpdated);
+    };
+
     (async () => {
-      const { data } = await supabase!.from('kaya_data').select('data').eq('user_id', session.user.id).maybeSingle();
+      const { data } = await supabase!.from('kaya_data').select('data, updated_at').eq('user_id', uid).maybeSingle();
       if (!active) return;
-      const d: any = data?.data;
-      if (d && (Array.isArray(d.assets) || Array.isArray(d.income))) {
-        if (Array.isArray(d.assets)) setAssets(d.assets);
-        if (Array.isArray(d.income)) setIncome(d.income);
-        if (d.settings) setSettings(d.settings);
+
+      if (!data) {
+        await pushLocal();                       // no cloud row yet → seed from local
       } else {
-        // First login on this account: migrate whatever is local up to the cloud.
-        await supabase!.from('kaya_data').upsert({
-          user_id: session.user.id,
-          data: { assets, income, settings },
-          updated_at: new Date().toISOString()
-        });
+        const d: any = data.data || {};
+        const cloudUpdated: string = data.updated_at || '';
+        const localSynced = getSyncedAt();
+        if (!localSynced) {
+          // First reconcile under this logic: trust whichever side has more data.
+          const localCount = assets.length + income.length;
+          const cloudCount = (d.assets?.length || 0) + (d.income?.length || 0);
+          if (cloudCount >= localCount) adopt(d, cloudUpdated);
+          else await pushLocal();
+        } else if (cloudUpdated > localSynced) {
+          adopt(d, cloudUpdated);                // cloud changed elsewhere → adopt
+        } else {
+          await pushLocal();                     // local is newer/equal → keep + push
+        }
       }
-      setCloudLoaded(true);
+      if (active) setCloudLoaded(true);
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -311,11 +336,10 @@ export default function App() {
   useEffect(() => {
     if (!isSupabaseEnabled || !supabase || !session || !cloudLoaded) return;
     const t = setTimeout(() => {
-      supabase!.from('kaya_data').upsert({
-        user_id: session.user.id,
-        data: { assets, income, settings },
-        updated_at: new Date().toISOString()
-      });
+      const now = new Date().toISOString();
+      supabase!.from('kaya_data')
+        .upsert({ user_id: session.user.id, data: { assets, income, settings }, updated_at: now })
+        .then(() => setSyncedAt(now));
     }, 800);
     return () => clearTimeout(t);
   }, [assets, income, settings, session, cloudLoaded]);
@@ -581,18 +605,17 @@ export default function App() {
     if (selectedAsset && !isEditMode) {
         const newAmount = parseFloat(formData.get('amount') as string);
         const dateStr = formData.get('date') as string;
-        const isoDate = new Date(dateStr + 'T12:00:00Z').toISOString();
         let history: AssetHistoryEntry[];
         if (editingEntryId) {
-            // Edit an existing saved entry (date and/or amount).
+            // Edit an existing saved entry; keep its original time-of-day for stable order.
             history = selectedAsset.history.map(h =>
-                h.id === editingEntryId ? { ...h, amount: newAmount, date: isoDate } : h
+                h.id === editingEntryId ? { ...h, amount: newAmount, date: isoFromDate(dateStr, h.date) } : h
             );
         } else {
-            // Add a new balance entry.
+            // Add a new balance entry, stamped with the current time-of-day.
             const newEntry: AssetHistoryEntry = {
                 id: Date.now().toString(),
-                date: isoDate,
+                date: isoFromDate(dateStr),
                 amount: newAmount,
                 change: 0,
                 type: updateType
