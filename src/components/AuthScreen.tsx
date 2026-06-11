@@ -6,7 +6,13 @@ import { Icons } from './icons';
 // phone silhouette, so new users can see what Kaya looks like before signing in.
 const AppPreview: React.FC = () => (
   <div className="relative mx-auto w-full max-w-[268px]">
-    <div className="rounded-[2.4rem] border border-white/10 bg-[#0a0a0a] p-3 shadow-2xl">
+    <div
+      className="rounded-[2.4rem] border border-white/10 bg-[#0a0a0a] p-3 shadow-2xl"
+      style={{
+        WebkitMaskImage: 'linear-gradient(to bottom, #000 58%, transparent 98%)',
+        maskImage: 'linear-gradient(to bottom, #000 58%, transparent 98%)'
+      }}
+    >
       <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-white/10" />
 
       {/* Net worth + chart */}
@@ -23,19 +29,21 @@ const AppPreview: React.FC = () => (
           <span className="text-emerald-400 text-[11px] font-medium">▲ 3.1%</span>
           <span className="text-zinc-600 text-[10px]">past month</span>
         </div>
-        <svg viewBox="0 0 200 56" className="w-full h-12" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="authChart" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d="M0,42 C18,38 26,40 40,34 S70,30 86,32 110,20 128,22 158,12 176,14 200,8 L200,56 L0,56 Z" fill="url(#authChart)" />
-          <path d="M0,42 C18,38 26,40 40,34 S70,30 86,32 110,20 128,22 158,12 176,14 200,8" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <div className="px-2">
+          <svg viewBox="0 0 200 56" className="w-full h-12" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="authChart" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d="M0,42 C18,38 26,40 40,34 S70,30 86,32 110,20 128,22 158,12 176,14 200,8 L200,56 L0,56 Z" fill="url(#authChart)" />
+            <path d="M0,42 C18,38 26,40 40,34 S70,30 86,32 110,20 128,22 158,12 176,14 200,8" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
         <div className="flex justify-between mt-2">
           {['1D', '1W', '1M', '3M', '1Y', 'ALL'].map((r, i) => (
-            <span key={r} className={`text-[8px] px-1.5 py-0.5 rounded-full ${i === 2 ? 'bg-zinc-800 text-white' : 'text-zinc-600'}`}>{r}</span>
+            <span key={r} className={`text-[8px] px-1.5 py-0.5 rounded-full ${i === 5 ? 'bg-zinc-800 text-white' : 'text-zinc-600'}`}>{r}</span>
           ))}
         </div>
       </div>
@@ -81,14 +89,14 @@ export const AuthScreen: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-black text-white max-w-md mx-auto relative overflow-hidden">
-      {/* Green ambient glow (matches the chart hue) */}
+    <div className="h-[100dvh] flex flex-col bg-black text-white relative overflow-hidden">
+      {/* Green ambient glow (matches the chart hue) — spans the full viewport width */}
       <div
         className="absolute top-0 inset-x-0 h-2/3 pointer-events-none z-0"
-        style={{ background: 'radial-gradient(circle at 50% 0%, rgba(16,185,129,0.30) 0%, rgba(16,185,129,0.08) 28%, transparent 60%)' }}
+        style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, rgba(16,185,129,0.30) 0%, rgba(16,185,129,0.08) 32%, transparent 62%)' }}
       />
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-10 flex flex-col relative z-10">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-10 flex flex-col relative z-10 w-full max-w-md mx-auto">
         <div className="flex items-center justify-center gap-2 mb-7">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <h1 className="text-lg font-medium tracking-wide uppercase">Kaya</h1>
@@ -118,13 +126,13 @@ export const AuthScreen: React.FC = () => {
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setStatus('idle'); }}
                   placeholder="you@email.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white text-center focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-zinc-600"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white text-center focus:ring-1 focus:ring-white/40 focus:border-white/40 outline-none transition-all placeholder:text-zinc-600"
                 />
                 {status === 'error' && <p className="text-rose-400 text-sm text-center">{message}</p>}
                 <button
                   type="submit"
                   disabled={status === 'sending'}
-                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-4 rounded-xl transition-colors disabled:opacity-50"
+                  className="w-full bg-white hover:opacity-90 text-black font-bold py-4 rounded-xl transition-opacity disabled:opacity-50"
                 >
                   {status === 'sending' ? 'Sending…' : 'Send magic link'}
                 </button>
@@ -134,7 +142,7 @@ export const AuthScreen: React.FC = () => {
         </div>
       </div>
 
-      <p className="text-zinc-600 text-[11px] text-center px-6 pb-8 pt-3 relative z-10">
+      <p className="text-zinc-600 text-[11px] text-center px-6 pb-8 pt-3 relative z-10 w-full max-w-md mx-auto">
         By continuing, you agree to track your finances privately. No password needed — we email you a secure link.
       </p>
     </div>
