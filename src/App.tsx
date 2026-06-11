@@ -222,6 +222,18 @@ const DEFAULT_FX_PAIRS = [
   { first: 'CAD', second: 'PHP' },
   { first: 'USD', second: 'CAD' }
 ];
+
+// Muted, on-brand allocation colors. Crypto/BTC keeps its signature orange.
+const TYPE_COLORS: Record<string, string> = {
+  [AssetCategory.CRYPTO]: '#F7931A',
+  [AssetCategory.BANK_PH]: '#10b981',
+  [AssetCategory.BANK_INTL]: '#5eead4',
+  [AssetCategory.STOCKS]: '#e4e4e7',
+  [AssetCategory.CASH]: '#a1a1aa',
+  [AssetCategory.REAL_ESTATE]: '#71717a',
+  [AssetCategory.OTHER]: '#52525b'
+};
+const ALLOC_PALETTE = ['#10b981', '#e4e4e7', '#5eead4', '#a1a1aa', '#71717a', '#34d399', '#d4d4d8', '#52525b'];
 const SYNC_KEY = 'kaya.syncedAt';
 const getSyncedAt = () => { try { return localStorage.getItem(SYNC_KEY) || ''; } catch { return ''; } };
 const setSyncedAt = (t: string) => { try { localStorage.setItem(SYNC_KEY, t); } catch {} };
@@ -417,6 +429,7 @@ export default function App() {
   const [incomeAddTick, setIncomeAddTick] = useState(0);
   const [showFxEdit, setShowFxEdit] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [allocMode, setAllocMode] = useState<'TYPE' | 'CURRENCY'>('TYPE');
   const [fxDraft, setFxDraft] = useState<{ first: string; second: string }[]>(DEFAULT_FX_PAIRS);
   const mainRef = useRef<HTMLElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
@@ -572,6 +585,34 @@ export default function App() {
     const diff = (now.getFullYear() - py) * 12 + (now.getMonth() + 1 - pm);
     return diff <= 1 ? settings.streakDays : 0;
   }, [settings.lastStreakMonth, settings.streakDays]);
+
+  // Net-worth allocation by asset type or by currency (positive holdings only).
+  const allocation = useMemo(() => {
+    const usdOf = (a: Asset) => a.amount / (rates[a.currency] || 1);
+    const map = new Map<string, number>();
+    assets.filter(a => a.category !== AssetCategory.DEBT && a.amount > 0).forEach(a => {
+      const key = allocMode === 'TYPE' ? a.category : a.currency;
+      map.set(key, (map.get(key) || 0) + usdOf(a));
+    });
+    const total = [...map.values()].reduce((s, v) => s + v, 0) || 1;
+    const segs = [...map.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([key, usd], i) => ({
+        key,
+        pct: (usd / total) * 100,
+        usd,
+        color: allocMode === 'TYPE'
+          ? (TYPE_COLORS[key] || ALLOC_PALETTE[i % ALLOC_PALETTE.length])
+          : (key === Currency.BTC ? '#F7931A' : ALLOC_PALETTE[i % ALLOC_PALETTE.length])
+      }));
+    return segs;
+  }, [assets, rates, allocMode]);
+
+  const fmtDisplay = (usd: number) => {
+    const display = settings.displayCurrency;
+    if (display === Currency.BTC) return `₿${(btcUsd ? usd / btcUsd : 0).toFixed(4)}`;
+    return `${getCurrencySymbol(display)}${Math.round(usd * (rates[display] || 1)).toLocaleString()}`;
+  };
 
   // Passive income received in the last 12 months, in the display currency.
   // Informational only — deliberately NOT added to net worth (avoids double-counting).
@@ -974,10 +1015,13 @@ export default function App() {
                 </div>
 
                 <div className="flex flex-col items-start mb-2 relative z-10">
-                    <p className="text-textMuted text-xs font-medium tracking-widest uppercase mb-1">
+                    <p className="text-textMuted text-xs font-medium tracking-widest uppercase">
                         {selectedAsset.name}
                     </p>
-                    <div className="flex items-baseline gap-1">
+                    {selectedAsset.institution && (
+                        <p className="text-zinc-500 text-sm font-medium mb-1">{selectedAsset.institution}</p>
+                    )}
+                    <div className={`flex items-baseline gap-1 ${selectedAsset.institution ? '' : 'mt-1'}`}>
                         <span className="text-2xl font-normal text-zinc-500">
                             {selectedAsset.currency === Currency.BTC ? '₿' : getCurrencySymbol(selectedAsset.currency)}
                         </span>
@@ -1193,7 +1237,7 @@ export default function App() {
                         <p className="font-semibold text-white text-sm tracking-wide">
                             {privacyMode ? '•••••' : (
                                 <>
-                                    {asset.currency === Currency.BTC ? '₿' : asset.currency + ' '} 
+                                    {getCurrencySymbol(asset.currency)}{asset.currency === Currency.BTC ? '' : ' '}
                                     {asset.amount.toLocaleString()}
                                 </>
                             )}
@@ -1283,6 +1327,47 @@ export default function App() {
             <p className="text-sm text-textMuted">Tap to view details</p>
         </header>
 
+        {/* Allocation breakdown */}
+        {assets.length > 0 && (
+        <div className="glass-panel rounded-3xl p-5 shadow-lg mb-2">
+            <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Allocation</h3>
+                <div className="flex bg-black/30 rounded-full p-0.5">
+                    {(['TYPE', 'CURRENCY'] as const).map(m => (
+                        <button
+                            key={m}
+                            onClick={() => setAllocMode(m)}
+                            className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${allocMode === m ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            {m === 'TYPE' ? 'By type' : 'By currency'}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="flex h-2.5 rounded-full overflow-hidden mb-4 bg-black/30">
+                {allocation.map(s => (
+                    <div key={s.key} style={{ width: `${s.pct}%`, backgroundColor: s.color }} className="h-full" title={`${s.key} ${s.pct.toFixed(0)}%`} />
+                ))}
+            </div>
+
+            <div className="space-y-2.5">
+                {allocation.map(s => (
+                    <div key={s.key} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                            <span className="text-sm text-white truncate">{s.key}</span>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                            <span className="text-xs text-textMuted">{privacyMode ? '••••' : fmtDisplay(s.usd)}</span>
+                            <span className="text-sm font-medium text-white w-10 text-right">{s.pct.toFixed(0)}%</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+        )}
+
         {/* Read-only passive-income summary (not counted in net worth) */}
         <button
             onClick={() => goTab('INCOME')}
@@ -1344,7 +1429,7 @@ export default function App() {
                                     <p className="font-semibold text-white tracking-wide">
                                         {privacyMode ? '••••••' : (
                                             <>
-                                                {asset.currency === Currency.BTC ? '₿' : asset.currency + ' '} 
+                                                {getCurrencySymbol(asset.currency)}{asset.currency === Currency.BTC ? '' : ' '}
                                                 {asset.amount.toLocaleString()}
                                             </>
                                         )}

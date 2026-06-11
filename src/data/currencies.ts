@@ -33,7 +33,7 @@ export const ALL_CURRENCIES: CurrencyInfo[] = [
   { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM', usd: 4.7 },
   { code: 'THB', name: 'Thai Baht', symbol: '฿', usd: 36 },
   { code: 'VND', name: 'Vietnamese Dong', symbol: '₫', usd: 24500 },
-  { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', usd: 3.67 },
+  { code: 'AED', name: 'UAE Dirham', symbol: 'Dh', usd: 3.67 },
   { code: 'SAR', name: 'Saudi Riyal', symbol: '﷼', usd: 3.75 },
   { code: 'QAR', name: 'Qatari Riyal', symbol: 'ر.ق', usd: 3.64 },
   { code: 'KWD', name: 'Kuwaiti Dinar', symbol: 'د.ك', usd: 0.31 },
