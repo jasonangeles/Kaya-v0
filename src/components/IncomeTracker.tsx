@@ -4,6 +4,7 @@ import { Icons } from './icons';
 import { IncomeRecord } from '../types';
 import { symbolFor } from '../data/currencies';
 import { CurrencyPicker } from './CurrencyPicker';
+import { Sym } from './DirhamSign';
 
 const CATEGORY_OPTIONS = ['Dividend', 'Interest', 'Rental income', 'Royalties', 'Other'];
 
@@ -210,7 +211,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               {mode === 'MONTH' ? 'This month' : 'This year'}
             </p>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-normal text-zinc-500">{symbolOf(displayCurrency)}</span>
+              <span className="text-2xl font-normal text-zinc-500"><Sym code={displayCurrency} /></span>
               <span className="text-4xl font-medium text-white tracking-tight">
                 {privacyMode ? '••••••' : Math.round(current).toLocaleString()}
               </span>
@@ -301,7 +302,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-sm font-medium text-emerald-400">
-                      {privacyMode ? '••••' : `+${symbolOf(r.currency)}${r.amount.toLocaleString()}`}
+                      {privacyMode ? '••••' : <>+<Sym code={r.currency} />{r.amount.toLocaleString()}</>}
                     </p>
                   </div>
                 </div>

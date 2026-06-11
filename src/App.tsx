@@ -5,6 +5,7 @@ import { IncomeTracker } from './components/IncomeTracker';
 import { LockScreen, SetPinSheet, RecoverySheet, RecoveryCodeSheet, generateRecoveryCode, hashRecoveryCode, isBiometricAvailable, registerBiometric } from './components/AppLock';
 import { AuthScreen } from './components/AuthScreen';
 import { CurrencyPicker } from './components/CurrencyPicker';
+import { Sym, DirhamSign } from './components/DirhamSign';
 import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
@@ -135,7 +136,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
         </div>
         <div className="text-right pointer-events-none">
           <p className="text-sm font-medium text-zinc-300">
-            {currency === Currency.BTC ? '₿' : getCurrencySymbol(currency)}{entry.amount.toLocaleString()}
+            <Sym code={currency} />{entry.amount.toLocaleString()}
           </p>
         </div>
       </div>
@@ -1019,11 +1020,11 @@ export default function App() {
                         {selectedAsset.name}
                     </p>
                     {selectedAsset.institution && (
-                        <p className="text-zinc-500 text-sm font-medium mb-1">{selectedAsset.institution}</p>
+                        <p className="text-zinc-600 text-xs font-medium tracking-widest uppercase">{selectedAsset.institution}</p>
                     )}
-                    <div className={`flex items-baseline gap-1 ${selectedAsset.institution ? '' : 'mt-1'}`}>
+                    <div className="flex items-baseline gap-1 mt-1.5">
                         <span className="text-2xl font-normal text-zinc-500">
-                            {selectedAsset.currency === Currency.BTC ? '₿' : getCurrencySymbol(selectedAsset.currency)}
+                            <Sym code={selectedAsset.currency} />
                         </span>
                         <span className="text-4xl font-medium text-white tracking-tight">
                             {selectedAsset.amount.toLocaleString()}
@@ -1142,7 +1143,7 @@ export default function App() {
                         onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
                         className={`flex items-baseline cursor-pointer hover:opacity-80 transition-opacity gap-1 ${settings.displayCurrency === Currency.BTC ? 'text-[#F7931A]' : 'text-white'}`}
                     >
-                        <span className="text-3xl font-normal text-zinc-500 font-sans">{totalValueParts.symbol}</span>
+                        <span className="text-3xl font-normal text-zinc-500 font-sans">{settings.displayCurrency === 'AED' ? <DirhamSign /> : totalValueParts.symbol}</span>
                         <span className="text-4xl font-medium font-sans tracking-tight">{totalValueParts.value}</span>
                         <Icons.ChevronDown className="w-4 h-4 self-center text-zinc-600 ml-0.5" />
                     </h2>
@@ -1237,7 +1238,7 @@ export default function App() {
                         <p className="font-semibold text-white text-sm tracking-wide">
                             {privacyMode ? '•••••' : (
                                 <>
-                                    {getCurrencySymbol(asset.currency)}{asset.currency === Currency.BTC ? '' : ' '}
+                                    <Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}
                                     {asset.amount.toLocaleString()}
                                 </>
                             )}
@@ -1429,7 +1430,7 @@ export default function App() {
                                     <p className="font-semibold text-white tracking-wide">
                                         {privacyMode ? '••••••' : (
                                             <>
-                                                {getCurrencySymbol(asset.currency)}{asset.currency === Currency.BTC ? '' : ' '}
+                                                <Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}
                                                 {asset.amount.toLocaleString()}
                                             </>
                                         )}
