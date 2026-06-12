@@ -218,6 +218,12 @@ const parseCSV = (text: string): string[][] => {
 };
 
 const STORAGE_KEYS = { assets: 'kaya.assets.v1', settings: 'kaya.settings.v1' };
+
+// Migrate legacy category labels (e.g. old "Equities (US/CAD)" → "Equities").
+const normalizeAssets = (arr: Asset[]): Asset[] =>
+  (Array.isArray(arr) ? arr : []).map(a =>
+    (a.category as string) === 'Equities (US/CAD)' ? { ...a, category: AssetCategory.STOCKS } : a
+  );
 const DEFAULT_FX_PAIRS = [
   { first: 'USD', second: 'PHP' },
   { first: 'CAD', second: 'PHP' },
@@ -281,7 +287,7 @@ const recomputeAsset = (asset: Asset, history: AssetHistoryEntry[]): Asset => {
 };
 
 export default function App() {
-  const [assets, setAssets] = useState<Asset[]>(() => loadStored(STORAGE_KEYS.assets, INITIAL_ASSETS));
+  const [assets, setAssets] = useState<Asset[]>(() => normalizeAssets(loadStored(STORAGE_KEYS.assets, INITIAL_ASSETS)));
   const [income, setIncome] = useState<IncomeRecord[]>(() => loadStored<IncomeRecord[]>('kaya.income.v1', []));
   const [liveRates, setLiveRates] = useState<Record<string, number>>({});
   const [btcUsd, setBtcUsd] = useState<number>(BTC_PRICE_USD);
@@ -362,7 +368,7 @@ export default function App() {
       setSyncedAt(now);
     };
     const adopt = (d: any, cloudUpdated: string) => {
-      if (Array.isArray(d.assets)) setAssets(d.assets);
+      if (Array.isArray(d.assets)) setAssets(normalizeAssets(d.assets));
       if (Array.isArray(d.income)) setIncome(d.income);
       if (d.settings) setSettings(d.settings);
       setSyncedAt(cloudUpdated);
@@ -934,7 +940,7 @@ export default function App() {
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result as string);
-        if (Array.isArray(data.assets)) setAssets(data.assets);
+        if (Array.isArray(data.assets)) setAssets(normalizeAssets(data.assets));
         if (Array.isArray(data.income)) localStorage.setItem('kaya.income.v1', JSON.stringify(data.income));
         if (data.settings) setSettings(data.settings);
         window.alert('Backup restored. Reopen the Income tab to see restored income.');

@@ -101,12 +101,12 @@ const Keypad = ({
   biometric?: boolean;
   onBiometric?: () => void;
 }) => (
-  <div className="grid grid-cols-3 gap-4 max-w-[280px] mx-auto">
+  <div className="grid grid-cols-3 gap-5 max-w-[310px] mx-auto">
     {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(n => (
       <button
         key={n}
         onClick={() => onDigit(n)}
-        className="h-16 w-16 mx-auto rounded-full bg-white/5 hover:bg-white/10 active:scale-95 text-white text-2xl font-medium transition-all flex items-center justify-center"
+        className="h-20 w-20 mx-auto rounded-full bg-white/5 hover:bg-white/10 active:scale-95 text-white text-3xl font-normal transition-all flex items-center justify-center"
       >
         {n}
       </button>
@@ -114,23 +114,23 @@ const Keypad = ({
     <button
       onClick={onBiometric}
       disabled={!biometric}
-      className={`h-16 w-16 mx-auto rounded-full flex items-center justify-center transition-all ${biometric ? 'text-white hover:bg-white/10 active:scale-95' : 'opacity-0 pointer-events-none'}`}
+      className={`h-20 w-20 mx-auto rounded-full flex items-center justify-center transition-all ${biometric ? 'text-white hover:bg-white/10 active:scale-95' : 'opacity-0 pointer-events-none'}`}
       aria-label="Use biometrics"
     >
-      <Icons.Fingerprint size={26} />
+      <Icons.Fingerprint size={30} />
     </button>
     <button
       onClick={() => onDigit('0')}
-      className="h-16 w-16 mx-auto rounded-full bg-white/5 hover:bg-white/10 active:scale-95 text-white text-2xl font-medium transition-all flex items-center justify-center"
+      className="h-20 w-20 mx-auto rounded-full bg-white/5 hover:bg-white/10 active:scale-95 text-white text-3xl font-normal transition-all flex items-center justify-center"
     >
       0
     </button>
     <button
       onClick={onBackspace}
-      className="h-16 w-16 mx-auto rounded-full text-white hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center"
+      className="h-20 w-20 mx-auto rounded-full text-white hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center"
       aria-label="Delete"
     >
-      <Icons.Backspace size={24} />
+      <Icons.Backspace size={28} />
     </button>
   </div>
 );
