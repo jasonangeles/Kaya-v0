@@ -4,6 +4,7 @@ import { NetWorthChart } from './components/NetWorthChart';
 import { IncomeTracker } from './components/IncomeTracker';
 import { LockScreen, SetPinSheet, RecoverySheet, RecoveryCodeSheet, generateRecoveryCode, hashRecoveryCode, isBiometricAvailable, registerBiometric } from './components/AppLock';
 import { AuthScreen } from './components/AuthScreen';
+import { Landing } from './components/Landing';
 import { CurrencyPicker } from './components/CurrencyPicker';
 import { Sym, DirhamSign } from './components/DirhamSign';
 import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
@@ -517,6 +518,7 @@ export default function App() {
   });
   const [showSetPin, setShowSetPin] = useState(false);
   const [showAutoLock, setShowAutoLock] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
 
@@ -1654,7 +1656,9 @@ export default function App() {
     return <div className="h-[100dvh] bg-paper" />;
   }
   if (isSupabaseEnabled && !session) {
-    return <AuthScreen />;
+    return showSignIn
+      ? <AuthScreen onBack={() => setShowSignIn(false)} />
+      : <Landing onGetStarted={() => setShowSignIn(true)} />;
   }
 
   return (

@@ -69,7 +69,7 @@ const AppPreview: React.FC = () => (
   </div>
 );
 
-export const AuthScreen: React.FC = () => {
+export const AuthScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -93,6 +93,12 @@ export const AuthScreen: React.FC = () => {
         className="absolute top-0 inset-x-0 h-2/3 pointer-events-none z-0"
         style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, rgba(16,185,129,0.30) 0%, rgba(16,185,129,0.08) 32%, transparent 62%)' }}
       />
+
+      {onBack && (
+        <button onClick={onBack} aria-label="Back" className="absolute top-5 left-5 z-20 p-2 -ml-1 rounded-full text-zinc-400 hover:text-white transition-colors">
+          <Icons.ArrowLeft className="w-6 h-6" />
+        </button>
+      )}
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-10 flex flex-col relative z-10 w-full max-w-md mx-auto">
         <div className="flex items-center justify-center gap-2 mb-7">
