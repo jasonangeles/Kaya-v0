@@ -42,6 +42,35 @@ const Phone: React.FC<{ children: React.ReactNode; tilt?: number; float?: boolea
   </div>
 );
 
+// Larger, realistic iPhone-style hero device with a bottom fade-to-black.
+const HeroPhone: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="relative mx-auto w-[330px] sm:w-[372px]">
+    <div className="absolute inset-0 blur-3xl" style={{ background: 'radial-gradient(circle at 50% 38%, rgba(16,185,129,0.22), transparent 66%)' }} />
+    <div
+      className="relative animate-[floatY_7s_ease-in-out_infinite]"
+      style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 70%, transparent 100%)', maskImage: 'linear-gradient(to bottom, #000 70%, transparent 100%)' }}
+    >
+      <div
+        className="relative rounded-[3.2rem] p-[11px] bg-gradient-to-b from-zinc-600/90 via-zinc-800 to-zinc-900"
+        style={{ boxShadow: '0 60px 120px -30px rgba(16,185,129,0.22), 0 50px 90px -40px rgba(0,0,0,0.9)' }}
+      >
+        <div className="rounded-[2.7rem] bg-black p-[2px]">
+          <div className="relative rounded-[2.6rem] overflow-hidden bg-black">
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 w-[32%] h-[26px] bg-black rounded-full ring-1 ring-white/5" />
+            <div className="h-12" />
+            {children}
+            <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 38%)' }} />
+          </div>
+        </div>
+        <span className="absolute left-[-2px] top-[120px] w-[2px] h-7 rounded-l bg-zinc-600" />
+        <span className="absolute left-[-2px] top-[165px] w-[2px] h-12 rounded-l bg-zinc-600" />
+        <span className="absolute left-[-2px] top-[225px] w-[2px] h-12 rounded-l bg-zinc-600" />
+        <span className="absolute right-[-2px] top-[185px] w-[2px] h-16 rounded-r bg-zinc-600" />
+      </div>
+    </div>
+  </div>
+);
+
 const GlowPhone: React.FC<{ children: React.ReactNode; tilt?: number }> = ({ children, tilt }) => (
   <div className="relative flex justify-center">
     <div className="absolute inset-0 blur-3xl" style={{ background: 'radial-gradient(circle at 50% 45%, rgba(16,185,129,0.20), transparent 68%)' }} />
@@ -179,11 +208,8 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
             <p className="text-xs text-zinc-600 mt-4">No bank linking · passwordless · your data stays yours</p>
           </Reveal>
 
-          <Reveal delay={150} className="flex justify-center mt-16">
-            <div className="relative">
-              <div className="absolute inset-0 blur-3xl" style={{ background: 'radial-gradient(circle at 50% 40%, rgba(16,185,129,0.22), transparent 65%)' }} />
-              <div className="relative"><Phone float><OverviewScreen /></Phone></div>
-            </div>
+          <Reveal delay={150} className="flex justify-center mt-12">
+            <HeroPhone><OverviewScreen /></HeroPhone>
           </Reveal>
         </div>
       </section>
