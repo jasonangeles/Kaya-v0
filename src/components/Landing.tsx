@@ -237,9 +237,9 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative">
-        <div className="absolute inset-x-0 top-0 h-[640px] pointer-events-none" style={{ background: 'radial-gradient(ellipse 65% 55% at 50% 0%, rgba(16,185,129,0.18) 0%, transparent 62%)' }} />
+      {/* Hero — pulled up under the sticky header so the green glow reaches the very top edge */}
+      <section className="relative -mt-16 pt-16">
+        <div className="absolute inset-x-0 top-0 h-[700px] pointer-events-none" style={{ background: 'radial-gradient(ellipse 65% 55% at 50% 0%, rgba(16,185,129,0.18) 0%, transparent 62%)' }} />
         <div className="max-w-6xl mx-auto px-6 pt-20 pb-24 relative">
           <Reveal className="text-center max-w-2xl mx-auto">
             <span className="inline-block text-[11px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-6">Privacy-first wealth tracker</span>
