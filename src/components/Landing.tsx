@@ -177,7 +177,7 @@ const AllocationScreen = () => (
 export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) => {
   const props = [
     { icon: <Icons.Global size={22} />, title: 'Every currency', desc: 'Hold pesos, dollars, dirhams, even sats. Kaya converts it all live, so your total always makes sense.' },
-    { icon: <Icons.Crypto size={22} />, title: 'Net worth in Bitcoin', desc: 'Flip your whole net worth into BTC with one tap — and see your wealth through a different lens.' },
+    { icon: <Icons.Trend size={22} />, title: 'Passive income', desc: 'Log dividends and interest as they arrive and watch them grow month over month — the quiet habit that builds wealth.' },
     { icon: <Icons.Lock size={22} />, title: 'Privacy-first', desc: 'Manual by design. No bank connections, no scraping. Export or wipe your data anytime.' }
   ];
   const steps = [
