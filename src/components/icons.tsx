@@ -40,6 +40,7 @@ import {
   PencilSimple,
   ChartBar,
   Fingerprint,
+  Sun,
   Backspace
 } from '@phosphor-icons/react';
 
@@ -83,5 +84,6 @@ export const Icons = {
   Edit: PencilSimple,
   BarChart: ChartBar,
   Fingerprint: Fingerprint,
+  Sun: Sun,
   Backspace: Backspace
 };

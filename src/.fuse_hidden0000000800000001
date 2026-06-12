@@ -21,15 +21,15 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
   return (
     <>
       <div 
-        className={`fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
       <div
         style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }}
-        className="fixed bottom-0 inset-x-0 z-50 bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto"
+        className="fixed bottom-0 inset-x-0 z-50 bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto"
       >
         <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
-        <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
+        <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-white">✕</button>
         {isOpen ? children : null}
       </div>
     </>
@@ -111,7 +111,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
       </div>
 
       <div
-        className={`relative bg-surface2 p-4 flex justify-between items-center transition-transform duration-200 ease-out cursor-pointer select-none ${!isLast ? 'border-b border-ink/5' : ''}`}
+        className={`relative bg-[#0e0e0e] p-4 flex justify-between items-center transition-transform duration-200 ease-out cursor-pointer select-none ${!isLast ? 'border-b border-white/5' : ''}`}
         style={{ transform: `translateX(${offset}px)` }}
         onTouchStart={(e) => begin(e.targetTouches[0].clientX)}
         onTouchMove={(e) => drag(e.targetTouches[0].clientX)}
@@ -123,11 +123,11 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
         onClick={handleClick}
       >
         <div className="flex items-center gap-3 pointer-events-none">
-          <div className={`p-2 rounded-xl border border-ink/5 ${iconBgClass} ${iconColorClass}`}>
+          <div className={`p-2 rounded-xl border border-white/5 ${iconBgClass} ${iconColorClass}`}>
             <Icon size={18} />
           </div>
           <div>
-            <p className="text-sm font-medium text-ink">
+            <p className="text-sm font-medium text-white">
               {new Date(entry.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
             <p className={`text-xs ${entry.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -136,7 +136,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
           </div>
         </div>
         <div className="text-right pointer-events-none">
-          <p className="text-sm font-medium text-ink">
+          <p className="text-sm font-medium text-zinc-300">
             <Sym code={currency} />{entry.amount.toLocaleString()}
           </p>
         </div>
@@ -175,23 +175,23 @@ const SettingsItem = ({
 }) => (
   <div 
     onClick={!toggle ? onClick : undefined}
-    className={`p-4 flex items-center justify-between cursor-pointer hover:bg-ink/5 transition-colors ${!isLast ? 'border-b border-ink/5' : ''}`}
+    className={`p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors ${!isLast ? 'border-b border-white/5' : ''}`}
   >
     <div className="flex items-center gap-3">
       {icon && <div className="text-primary">{icon}</div>}
-      <span className="text-ink text-sm font-medium">{label}</span>
+      <span className="text-white text-sm font-medium">{label}</span>
     </div>
     <div className="flex items-center gap-2">
       {value && <span className="text-textMuted text-sm">{value}</span>}
       {toggle && (
         <div
           onClick={(e) => { e.stopPropagation(); onToggle && onToggle(); }}
-          className={`w-11 h-6 rounded-full relative transition-colors duration-200 ${isToggled ? 'bg-ink' : 'bg-zinc-700'}`}
+          className={`w-11 h-6 rounded-full relative transition-colors duration-200 ${isToggled ? 'bg-white' : 'bg-zinc-700'}`}
         >
-          <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-200 shadow-sm ${isToggled ? 'left-6 bg-paper' : 'left-1 bg-ink'}`} />
+          <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-200 shadow-sm ${isToggled ? 'left-6 bg-black' : 'left-1 bg-white'}`} />
         </div>
       )}
-      {!toggle && <Icons.ChevronRight className="w-4 h-4 text-textFaint" />}
+      {!toggle && <Icons.ChevronRight className="w-4 h-4 text-zinc-600" />}
     </div>
   </div>
 );
@@ -466,20 +466,6 @@ export default function App() {
   const insightsMouseDown = useRef(false);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
-  // Appearance (light / dark). The no-flash script in index.html applies the
-  // saved theme before paint; here we just keep state + toggle in sync.
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    try { return localStorage.getItem('kaya.theme') === 'light' ? 'light' : 'dark'; } catch { return 'dark'; }
-  });
-  const toggleTheme = () => {
-    setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      try { localStorage.setItem('kaya.theme', next); } catch {}
-      document.documentElement.classList.toggle('light', next === 'light');
-      return next;
-    });
-  };
 
   // Security: PIN + optional biometric unlock, persisted locally.
   const [security, setSecurity] = useState<{ pin: string | null; biometric: boolean; biometricId: string | null; recoveryHash: string | null; lockDelaySec?: number }>(
@@ -1075,13 +1061,13 @@ export default function App() {
                 <div className="flex justify-between items-center mb-2 -mt-1">
                      <button 
                         onClick={() => setSelectedAssetId(null)}
-                        className="p-2 -ml-2 rounded-full hover:bg-ink/5 text-textMuted hover:text-ink transition-colors"
+                        className="p-2 -ml-2 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
                     >
                         <Icons.ArrowLeft className="w-6 h-6" />
                     </button>
                     <button 
                         onClick={() => handleOpenEditAssetDetails(selectedAsset)}
-                        className="p-2 -mr-2 text-textMuted hover:text-ink"
+                        className="p-2 -mr-2 text-zinc-400 hover:text-white"
                     >
                         <Icons.Edit className="w-5 h-5" />
                     </button>
@@ -1092,13 +1078,13 @@ export default function App() {
                         {selectedAsset.name}
                     </p>
                     {selectedAsset.institution && (
-                        <p className="text-textFaint text-xs font-medium tracking-widest uppercase">{selectedAsset.institution}</p>
+                        <p className="text-zinc-600 text-xs font-medium tracking-widest uppercase">{selectedAsset.institution}</p>
                     )}
                     <div className="flex items-baseline gap-1 mt-1.5">
-                        <span className="text-2xl font-normal text-textFaint">
+                        <span className="text-2xl font-normal text-zinc-500">
                             <Sym code={selectedAsset.currency} />
                         </span>
-                        <span className="text-4xl font-medium text-ink tracking-tight">
+                        <span className="text-4xl font-medium text-white tracking-tight">
                             {selectedAsset.amount.toLocaleString()}
                         </span>
                     </div>
@@ -1113,15 +1099,15 @@ export default function App() {
                     />
                 </div>
 
-                <div className="flex justify-between items-center bg-surface2 rounded-full p-0.5 mt-2">
+                <div className="flex justify-between items-center bg-black/30 rounded-full p-0.5 mt-2">
                     {(['1D', '1W', '1M', '3M', 'YTD', '1Y', 'ALL'] as TimeRange[]).map((range) => (
                         <button
                             key={range}
                             onClick={() => setSelectedTimeRange(range)}
                             className={`flex-1 py-1.5 text-[10px] font-medium rounded-full transition-all ${
                                 selectedTimeRange === range 
-                                ? 'bg-surfaceHi text-ink shadow-sm' 
-                                : 'text-textFaint hover:text-ink'
+                                ? 'bg-zinc-800 text-white shadow-sm' 
+                                : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                         >
                             {range}
@@ -1135,13 +1121,13 @@ export default function App() {
                     <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Value History</h3>
                     <button 
                         onClick={handleOpenUpdateBalance}
-                        className="px-3 py-1.5 rounded-full bg-ink/5 text-xs font-medium text-ink hover:bg-ink/10 transition-colors border border-ink/5"
+                        className="px-3 py-1.5 rounded-full bg-white/5 text-xs font-medium text-white hover:bg-white/10 transition-colors border border-white/5"
                     >
                         Add
                     </button>
                 </div>
 
-                <div className="rounded-3xl overflow-hidden shadow-lg bg-surface2 border border-ink/5">
+                <div className="rounded-3xl overflow-hidden shadow-lg bg-[#0e0e0e] border border-white/5">
                     {selectedAsset.history.length === 0 && (
                         <div className="p-6 text-center text-textMuted text-sm">No history yet.</div>
                     )}
@@ -1168,22 +1154,15 @@ export default function App() {
         <div>
             <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                <h1 className="text-lg font-medium tracking-wide text-ink uppercase">Kaya</h1>
+                <h1 className="text-lg font-medium tracking-wide text-white uppercase">Kaya</h1>
             </div>
         </div>
         <div className="flex items-center gap-3">
-            <button
-                onClick={toggleTheme}
-                aria-label="Toggle light or dark mode"
-                className="glass-panel w-8 h-8 flex items-center justify-center rounded-full text-textMuted hover:text-ink transition-colors shadow-sm"
-            >
-                {theme === 'dark' ? <Icons.Moon size={15} /> : <Icons.Sun size={15} />}
-            </button>
             {currentStreak > 0 && (
             <div className="relative">
                 <button
                     onClick={() => setShowStreakTooltip(!showStreakTooltip)}
-                    className="flex items-center gap-1.5 glass-panel px-3 py-1.5 rounded-full text-xs font-medium text-textMuted shadow-sm hover:text-ink transition-colors"
+                    className="flex items-center gap-1.5 glass-panel px-3 py-1.5 rounded-full text-xs font-medium text-textMuted shadow-sm hover:text-white transition-colors"
                 >
                     <Icons.Fire className="w-3.5 h-3.5 animate-pulse text-[#F7931A]" weight="fill" />
                     <span>{currentStreak}</span>
@@ -1191,8 +1170,8 @@ export default function App() {
                 {showStreakTooltip && (
                     <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowStreakTooltip(false)}></div>
-                        <div className="absolute top-full right-0 mt-2 w-48 bg-surface3 border border-ink/10 rounded-xl shadow-2xl z-50 p-3 animate-[fadeIn_0.1s_ease-out]">
-                            <p className="text-ink text-xs font-semibold mb-1">Monthly Streak</p>
+                        <div className="absolute top-full right-0 mt-2 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-50 p-3 animate-[fadeIn_0.1s_ease-out]">
+                            <p className="text-white text-xs font-semibold mb-1">Monthly Streak</p>
                             <p className="text-[10px] text-textMuted leading-relaxed">
                                 You've logged your wealth {currentStreak} {currentStreak === 1 ? 'month' : 'months'} in a row. Log again next month to keep it going!
                             </p>
@@ -1211,7 +1190,7 @@ export default function App() {
                     <p className="text-textMuted text-xs font-medium tracking-widest uppercase">Net Worth</p>
                     <button
                         onClick={() => setPrivacyMode(!privacyMode)}
-                        className="text-textMuted hover:text-ink transition-colors p-1"
+                        className="text-textMuted hover:text-white transition-colors p-1"
                     >
                         {privacyMode ? <Icons.EyeOff size={14} /> : <Icons.Eye size={14} />}
                     </button>
@@ -1220,21 +1199,21 @@ export default function App() {
                  <div className="relative inline-block">
                     <h2
                         onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
-                        className={`flex items-baseline cursor-pointer hover:opacity-80 transition-opacity gap-1 ${settings.displayCurrency === Currency.BTC ? 'text-[#F7931A]' : 'text-ink'}`}
+                        className={`flex items-baseline cursor-pointer hover:opacity-80 transition-opacity gap-1 ${settings.displayCurrency === Currency.BTC ? 'text-[#F7931A]' : 'text-white'}`}
                     >
-                        <span className="text-3xl font-normal text-textFaint font-sans">{settings.displayCurrency === 'AED' ? <DirhamSign /> : totalValueParts.symbol}</span>
+                        <span className="text-3xl font-normal text-zinc-500 font-sans">{settings.displayCurrency === 'AED' ? <DirhamSign /> : totalValueParts.symbol}</span>
                         <span className="text-4xl font-medium font-sans tracking-tight">{totalValueParts.value}</span>
-                        <Icons.ChevronDown className="w-4 h-4 self-center text-textFaint ml-0.5" />
+                        <Icons.ChevronDown className="w-4 h-4 self-center text-zinc-600 ml-0.5" />
                     </h2>
                     {isCurrencyDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-44 max-h-64 overflow-y-auto no-scrollbar bg-surface3 border border-ink/10 rounded-xl shadow-2xl z-50 animate-[fadeIn_0.1s_ease-out]">
+                        <div className="absolute top-full left-0 mt-2 w-44 max-h-64 overflow-y-auto no-scrollbar bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-50 animate-[fadeIn_0.1s_ease-out]">
                             {COMMON_CURRENCY_CODES.map(curr => (
                                 <button
                                     key={curr}
                                     onClick={() => handleCurrencySelect(curr)}
-                                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-ink/5 transition-colors flex items-center justify-between ${
+                                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 transition-colors flex items-center justify-between ${
                                         settings.displayCurrency === curr
-                                        ? 'text-primary font-bold bg-ink/5'
+                                        ? 'text-primary font-bold bg-white/5'
                                         : 'text-textMuted'
                                     }`}
                                 >
@@ -1264,15 +1243,15 @@ export default function App() {
                 timeRange={selectedTimeRange}
             />
          </div>
-         <div className="flex justify-between items-center bg-surface2 rounded-full p-0.5 mt-2">
+         <div className="flex justify-between items-center bg-black/30 rounded-full p-0.5 mt-2">
             {(['1D', '1W', '1M', '3M', 'YTD', '1Y', 'ALL'] as TimeRange[]).map((range) => (
                 <button
                     key={range}
                     onClick={() => setSelectedTimeRange(range)}
                     className={`flex-1 py-1.5 text-[10px] font-medium rounded-full transition-all ${
                         selectedTimeRange === range 
-                        ? 'bg-surfaceHi text-ink shadow-sm' 
-                        : 'text-textFaint hover:text-ink'
+                        ? 'bg-zinc-800 text-white shadow-sm' 
+                        : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                 >
                     {range}
@@ -1286,7 +1265,7 @@ export default function App() {
              <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Top Assets</h3>
              <button 
                 onClick={() => setActiveTab('ASSETS')}
-                className="text-xs text-primary font-medium hover:text-ink transition-colors"
+                className="text-xs text-primary font-medium hover:text-white transition-colors"
              >
                 See All
              </button>
@@ -1294,7 +1273,7 @@ export default function App() {
           <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
              {topAssets.length === 0 && (
                 <div className="p-6 text-center">
-                    <p className="text-ink text-sm font-medium mb-0.5">No assets yet</p>
+                    <p className="text-white text-sm font-medium mb-0.5">No assets yet</p>
                     <p className="text-textMuted text-xs">Tap the + button to add your first one.</p>
                 </div>
              )}
@@ -1302,21 +1281,21 @@ export default function App() {
                 <div
                     key={asset.id}
                     onClick={() => setSelectedAssetId(asset.id)}
-                    className={`p-4 flex justify-between items-center hover:bg-ink/5 transition-colors cursor-pointer group ${index !== topAssets.length - 1 ? 'border-b border-ink/5' : ''}`}
+                    className={`p-4 flex justify-between items-center hover:bg-white/5 transition-colors cursor-pointer group ${index !== topAssets.length - 1 ? 'border-b border-white/5' : ''}`}
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-surface2 border border-ink/5 text-textMuted">
+                        <div className="p-2 rounded-lg bg-black/40 border border-white/5 text-textMuted">
                             {asset.category === AssetCategory.BANK_PH ? <Icons.Bank size={18} /> : 
                              asset.category === AssetCategory.CRYPTO ? <Icons.Crypto size={18} /> : 
                              <Icons.Wallet size={18} />}
                         </div>
                         <div>
-                            <p className="font-medium text-ink text-sm">{asset.name}</p>
+                            <p className="font-medium text-white text-sm">{asset.name}</p>
                             <p className="text-[10px] text-textMuted">{asset.institution}</p>
                         </div>
                     </div>
                     <div className="text-right">
-                        <p className="font-semibold text-ink text-sm tracking-wide">
+                        <p className="font-semibold text-white text-sm tracking-wide">
                             {privacyMode ? '•••••' : (
                                 <>
                                     <Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}
@@ -1335,7 +1314,7 @@ export default function App() {
              <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Currency Rates</h3>
              <button
                 onClick={openFxEdit}
-                className="text-xs text-primary font-medium hover:text-ink transition-colors"
+                className="text-xs text-primary font-medium hover:text-white transition-colors"
              >
                 Edit
              </button>
@@ -1345,7 +1324,7 @@ export default function App() {
                 {fxPairs.map((p, i) => (
                     <div key={i} className="text-center">
                         <p className="text-[11px] text-textMuted mb-1">{p.first}/{p.second}</p>
-                        <p className="text-lg font-semibold text-ink tabular-nums">{fxRate(p.first, p.second)}</p>
+                        <p className="text-lg font-semibold text-white tabular-nums">{fxRate(p.first, p.second)}</p>
                     </div>
                 ))}
              </div>
@@ -1374,9 +1353,9 @@ export default function App() {
                     {insights.map((tip, idx) => (
                         <div key={idx} className="w-full flex-shrink-0 flex gap-4 items-start px-6 pt-6">
                              <span className="shrink-0 flex items-center h-[1.625rem]">
-                                <span className="w-2 h-2 rounded-full bg-ink/90 animate-[subtlePulse_2.8s_ease-in-out_infinite]" />
+                                <span className="w-2 h-2 rounded-full bg-white/90 animate-[subtlePulse_2.8s_ease-in-out_infinite]" />
                              </span>
-                             <p className="text-base text-ink font-light leading-relaxed flex-1 min-w-0 break-words whitespace-normal">{tip}</p>
+                             <p className="text-base text-slate-200 font-light leading-relaxed flex-1 min-w-0 break-words whitespace-normal">{tip}</p>
                         </div>
                     ))}
                     {insights.length === 0 && (
@@ -1405,7 +1384,7 @@ export default function App() {
   const renderPortfolioList = () => (
     <div className="pb-28 space-y-4 animate-[fadeIn_0.5s_ease-out]">
          <header className="mb-6 px-1">
-            <h1 className="text-3xl font-medium text-ink mb-2">Portfolio</h1>
+            <h1 className="text-3xl font-medium text-white mb-2">Portfolio</h1>
             <p className="text-sm text-textMuted">Tap to view details</p>
         </header>
 
@@ -1414,12 +1393,12 @@ export default function App() {
         <div className="glass-panel rounded-3xl p-5 shadow-lg mb-2">
             <div className="flex justify-between items-center mb-3">
                 <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Allocation</h3>
-                <div className="flex bg-surface2 rounded-full p-0.5">
+                <div className="flex bg-black/30 rounded-full p-0.5">
                     {(['TYPE', 'CURRENCY'] as const).map(m => (
                         <button
                             key={m}
                             onClick={() => setAllocMode(m)}
-                            className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${allocMode === m ? 'bg-surfaceHi text-ink' : 'text-textFaint hover:text-ink'}`}
+                            className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${allocMode === m ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                         >
                             {m === 'TYPE' ? 'By type' : 'By currency'}
                         </button>
@@ -1427,7 +1406,7 @@ export default function App() {
                 </div>
             </div>
 
-            <div className="flex h-2.5 rounded-full overflow-hidden mb-4 bg-surface2">
+            <div className="flex h-2.5 rounded-full overflow-hidden mb-4 bg-black/30">
                 {allocation.map(s => (
                     <div key={s.key} style={{ width: `${s.pct}%`, backgroundColor: s.color }} className="h-full" title={`${s.key} ${s.pct.toFixed(0)}%`} />
                 ))}
@@ -1438,11 +1417,11 @@ export default function App() {
                     <div key={s.key} className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5 min-w-0">
                             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-                            <span className="text-sm text-ink truncate">{s.key}</span>
+                            <span className="text-sm text-white truncate">{s.key}</span>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                             <span className="text-xs text-textMuted">{privacyMode ? '••••' : fmtDisplay(s.usd)}</span>
-                            <span className="text-sm font-medium text-ink w-10 text-right">{s.pct.toFixed(0)}%</span>
+                            <span className="text-sm font-medium text-white w-10 text-right">{s.pct.toFixed(0)}%</span>
                         </div>
                     </div>
                 ))}
@@ -1453,14 +1432,14 @@ export default function App() {
         {/* Read-only passive-income summary (not counted in net worth) */}
         <button
             onClick={() => goTab('INCOME')}
-            className="w-full text-left glass-panel rounded-3xl p-4 shadow-lg flex items-center justify-between hover:bg-ink/5 transition-colors mb-2"
+            className="w-full text-left glass-panel rounded-3xl p-4 shadow-lg flex items-center justify-between hover:bg-white/5 transition-colors mb-2"
         >
             <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-ink/5">
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-white/5">
                     <Icons.BarChart size={18} />
                 </div>
                 <div>
-                    <p className="text-sm font-medium text-ink">Passive income</p>
+                    <p className="text-sm font-medium text-white">Passive income</p>
                     <p className="text-[11px] text-textMuted">Last 12 months · not in net worth</p>
                 </div>
             </div>
@@ -1468,16 +1447,16 @@ export default function App() {
                 <span className="text-sm font-medium text-emerald-400">
                     {privacyMode ? '••••' : `${getCurrencySymbol(settings.displayCurrency)}${Math.round(passiveIncome12mo).toLocaleString()}`}
                 </span>
-                <Icons.ChevronRight className="w-4 h-4 text-textFaint" />
+                <Icons.ChevronRight className="w-4 h-4 text-zinc-600" />
             </div>
         </button>
 
         {assets.length === 0 && (
             <div className="glass-panel rounded-3xl p-8 text-center shadow-lg mt-4">
-                <div className="w-12 h-12 rounded-2xl bg-ink/5 text-ink flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 text-white flex items-center justify-center mx-auto mb-3">
                     <Icons.Wallet size={22} />
                 </div>
-                <p className="text-ink font-medium mb-1">No assets yet</p>
+                <p className="text-white font-medium mb-1">No assets yet</p>
                 <p className="text-textMuted text-sm">Tap the + button to add your first account, investment, or holding.</p>
             </div>
         )}
@@ -1494,21 +1473,21 @@ export default function App() {
                             <div 
                                 key={asset.id} 
                                 onClick={() => setSelectedAssetId(asset.id)}
-                                className={`p-5 flex justify-between items-center hover:bg-ink/5 transition-colors cursor-pointer group ${index !== categoryAssets.length - 1 ? 'border-b border-ink/5' : ''}`}
+                                className={`p-5 flex justify-between items-center hover:bg-white/5 transition-colors cursor-pointer group ${index !== categoryAssets.length - 1 ? 'border-b border-white/5' : ''}`}
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="p-2.5 rounded-xl bg-surface2 border border-ink/5 group-hover:border-primary/50 transition-colors">
+                                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 group-hover:border-primary/50 transition-colors">
                                          {asset.category === AssetCategory.BANK_PH ? <Icons.Bank size={18} /> : 
                                           asset.category === AssetCategory.CRYPTO ? <Icons.Crypto size={18} /> : 
                                           <Icons.Wallet size={18} />}
                                     </div>
                                     <div>
-                                        <p className="font-medium text-ink text-base">{asset.name}</p>
+                                        <p className="font-medium text-white text-base">{asset.name}</p>
                                         <p className="text-xs text-textMuted mt-0.5">{asset.institution}</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-semibold text-ink tracking-wide">
+                                    <p className="font-semibold text-white tracking-wide">
                                         {privacyMode ? '••••••' : (
                                             <>
                                                 <Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}
@@ -1534,11 +1513,11 @@ export default function App() {
         <header className="flex items-center gap-4 mb-6 px-1">
             <button 
                 onClick={() => setActiveTab('SETTINGS')}
-                className="p-2 -ml-2 rounded-full hover:bg-ink/5 text-textMuted hover:text-ink transition-colors"
+                className="p-2 -ml-2 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
             >
                 <Icons.ArrowLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-2xl font-medium text-ink">Select Currency</h1>
+            <h1 className="text-2xl font-medium text-white">Select Currency</h1>
         </header>
 
         <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
@@ -1549,10 +1528,10 @@ export default function App() {
                         setSettings(prev => ({ ...prev, displayCurrency: option.code }));
                         setActiveTab('SETTINGS');
                     }}
-                    className={`p-4 flex justify-between items-center cursor-pointer hover:bg-ink/5 transition-colors ${index !== ORDERED_CURRENCIES.length - 1 ? 'border-b border-ink/5' : ''}`}
+                    className={`p-4 flex justify-between items-center cursor-pointer hover:bg-white/5 transition-colors ${index !== ORDERED_CURRENCIES.length - 1 ? 'border-b border-white/5' : ''}`}
                 >
                     <div className="flex items-center gap-3">
-                         <span className={`font-medium w-10 ${settings.displayCurrency === option.code ? 'text-primary' : 'text-ink'}`}>{option.code}</span>
+                         <span className={`font-medium w-10 ${settings.displayCurrency === option.code ? 'text-primary' : 'text-white'}`}>{option.code}</span>
                          <span className="text-sm text-textMuted">{option.name}</span>
                     </div>
                     {settings.displayCurrency === option.code && (
@@ -1567,14 +1546,14 @@ export default function App() {
   const renderSettings = () => (
     <div className="pb-28 animate-[fadeIn_0.5s_ease-out]">
       <header className="mb-8 px-1">
-        <h1 className="text-3xl font-medium text-ink">Settings</h1>
+        <h1 className="text-3xl font-medium text-white">Settings</h1>
       </header>
 
       {/* Premium Banner */}
-      <div className="mb-8 relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-zinc-800 to-zinc-900 border border-ink/10 shadow-lg cursor-pointer transform transition-transform active:scale-95">
+      <div className="mb-8 relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 shadow-lg cursor-pointer transform transition-transform active:scale-95">
         <div className="relative z-10">
           <h3 className="text-lg font-bold text-white mb-1">Kaya Premium</h3>
-          <p className="text-white/70 text-sm">Unlock unlimited history & AI insights.</p>
+          <p className="text-white/60 text-sm">Unlock unlimited history & AI insights.</p>
         </div>
         <div className="absolute top-0 right-0 p-4 opacity-20 text-white">
            <Icons.Sparkles size={64} />
@@ -1583,7 +1562,6 @@ export default function App() {
 
       <SettingsGroup title="General">
         <SettingsItem icon={<Icons.Global size={20} />} label="Currency" value={settings.displayCurrency} onClick={() => setActiveTab('SETTINGS_CURRENCY')} />
-        <SettingsItem icon={<Icons.Moon size={20} />} label="Light mode" toggle isToggled={theme === 'light'} onToggle={toggleTheme} />
         <SettingsItem icon={<Icons.Bell size={20} />} label="Notifications" toggle isToggled={notificationsEnabled} onToggle={() => setNotificationsEnabled(!notificationsEnabled)} isLast />
       </SettingsGroup>
 
@@ -1619,7 +1597,7 @@ export default function App() {
         </SettingsGroup>
       )}
 
-      <div className="text-center mt-8 text-textFaint text-xs">
+      <div className="text-center mt-8 text-zinc-600 text-xs">
         <p>Kaya Wealth v1.1.0</p>
         <p className="mt-1">{isSupabaseEnabled ? 'Cloud sync on' : 'Local only'}</p>
       </div>
@@ -1627,7 +1605,7 @@ export default function App() {
   );
 
   if (isSupabaseEnabled && authLoading) {
-    return <div className="h-[100dvh] bg-paper" />;
+    return <div className="h-[100dvh] bg-black" />;
   }
   if (isSupabaseEnabled && !session) {
     return <AuthScreen />;
@@ -1656,7 +1634,7 @@ export default function App() {
                   else if (selectedAssetId) handleOpenUpdateBalance();
                   else handleOpenAddAsset();
                 }}
-                className="bg-ink text-paper w-14 h-14 rounded-2xl shadow-lg shadow-black/40 transition-all active:scale-95 flex items-center justify-center"
+                className="bg-white text-black w-14 h-14 rounded-2xl shadow-lg shadow-black/40 transition-all active:scale-95 flex items-center justify-center"
             >
                 <Icons.Add className="w-7 h-7" />
             </button>
@@ -1665,16 +1643,16 @@ export default function App() {
 
         {/* Bottom Navigation (icons only) */}
         <nav className="w-full glass-panel pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-8 flex justify-around items-center">
-          <button aria-label="Overview" onClick={() => goTab('HOME')} className={`p-2 ${activeTab === 'HOME' ? 'text-primary' : 'text-textFaint'}`}>
+          <button aria-label="Overview" onClick={() => goTab('HOME')} className={`p-2 ${activeTab === 'HOME' ? 'text-primary' : 'text-zinc-600'}`}>
               <Icons.Dashboard className="w-6 h-6" weight={activeTab === 'HOME' ? 'fill' : 'regular'} />
           </button>
-          <button aria-label="Portfolio" onClick={() => goTab('ASSETS')} className={`p-2 ${activeTab === 'ASSETS' ? 'text-primary' : 'text-textFaint'}`}>
+          <button aria-label="Portfolio" onClick={() => goTab('ASSETS')} className={`p-2 ${activeTab === 'ASSETS' ? 'text-primary' : 'text-zinc-600'}`}>
               <Icons.Wallet className="w-6 h-6" weight={activeTab === 'ASSETS' ? 'fill' : 'regular'} />
           </button>
-          <button aria-label="Income" onClick={() => goTab('INCOME')} className={`p-2 ${activeTab === 'INCOME' ? 'text-primary' : 'text-textFaint'}`}>
+          <button aria-label="Income" onClick={() => goTab('INCOME')} className={`p-2 ${activeTab === 'INCOME' ? 'text-primary' : 'text-zinc-600'}`}>
               <Icons.BarChart className="w-6 h-6" weight={activeTab === 'INCOME' ? 'fill' : 'regular'} />
           </button>
-          <button aria-label="Settings" onClick={() => goTab('SETTINGS')} className={`p-2 ${(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'text-primary' : 'text-textFaint'}`}>
+          <button aria-label="Settings" onClick={() => goTab('SETTINGS')} className={`p-2 ${(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'text-primary' : 'text-zinc-600'}`}>
               <Icons.Settings className="w-6 h-6" weight={(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'fill' : 'regular'} />
           </button>
         </nav>
@@ -1682,10 +1660,10 @@ export default function App() {
 
       {/* Undo Toast */}
       {showUndoToast && lastDeletedAsset && (
-        <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-surface3 border border-ink/10 shadow-2xl rounded-xl px-6 py-4 flex items-center gap-4 min-w-[320px] animate-[fadeIn_0.3s_ease-out]">
-            <span className="text-ink text-sm font-medium">Deleted {lastDeletedAsset.name}</span>
-            <button onClick={handleUndoDelete} className="ml-auto text-primary font-bold text-sm hover:text-ink tracking-wide">UNDO</button>
-            <button onClick={() => setShowUndoToast(false)} className="text-textFaint hover:text-ink">✕</button>
+        <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-zinc-900 border border-white/10 shadow-2xl rounded-xl px-6 py-4 flex items-center gap-4 min-w-[320px] animate-[fadeIn_0.3s_ease-out]">
+            <span className="text-white text-sm font-medium">Deleted {lastDeletedAsset.name}</span>
+            <button onClick={handleUndoDelete} className="ml-auto text-primary font-bold text-sm hover:text-zinc-300 tracking-wide">UNDO</button>
+            <button onClick={() => setShowUndoToast(false)} className="text-zinc-500 hover:text-white">✕</button>
         </div>
       )}
 
@@ -1695,39 +1673,39 @@ export default function App() {
 
       {/* Auto-lock delay picker */}
       <Modal isOpen={showAutoLock} onClose={() => setShowAutoLock(false)}>
-        <h2 className="text-2xl font-medium mb-1 text-ink">Auto-lock</h2>
+        <h2 className="text-2xl font-medium mb-1 text-white">Auto-lock</h2>
         <p className="text-textMuted text-sm mb-5">Require your PIN after Kaya has been in the background for…</p>
-        <div className="rounded-2xl overflow-hidden bg-surface2 border border-ink/5">
+        <div className="rounded-2xl overflow-hidden bg-[#0e0e0e] border border-white/5">
           {LOCK_DELAY_OPTIONS.map((o, i) => (
             <button
               key={o.sec}
               onClick={() => handleSetLockDelay(o.sec)}
-              className={`w-full text-left px-4 py-3.5 flex items-center justify-between hover:bg-ink/5 transition-colors ${i !== LOCK_DELAY_OPTIONS.length - 1 ? 'border-b border-ink/5' : ''}`}
+              className={`w-full text-left px-4 py-3.5 flex items-center justify-between hover:bg-white/5 transition-colors ${i !== LOCK_DELAY_OPTIONS.length - 1 ? 'border-b border-white/5' : ''}`}
             >
-              <span className="text-ink text-sm">{o.label}</span>
+              <span className="text-white text-sm">{o.label}</span>
               {(security.lockDelaySec || 0) === o.sec && <Icons.Check size={18} className="text-primary" />}
             </button>
           ))}
         </div>
-        <p className="text-textFaint text-[11px] mt-4 leading-relaxed">"Immediately" locks every time you leave the app. Longer delays are more convenient but less private on a shared device.</p>
+        <p className="text-zinc-600 text-[11px] mt-4 leading-relaxed">"Immediately" locks every time you leave the app. Longer delays are more convenient but less private on a shared device.</p>
       </Modal>
 
       {/* Privacy & Data info */}
       <Modal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)}>
-        <h2 className="text-2xl font-medium mb-4 text-ink">Privacy & Data</h2>
-        <div className="space-y-4 text-sm text-ink leading-relaxed">
-          <p><span className="text-ink font-medium">Your data, your control.</span> Kaya is a manual tracker — it never links to your bank, so there are no banking logins or account access to expose. You enter your balances and income yourself.</p>
+        <h2 className="text-2xl font-medium mb-4 text-white">Privacy & Data</h2>
+        <div className="space-y-4 text-sm text-zinc-300 leading-relaxed">
+          <p><span className="text-white font-medium">Your data, your control.</span> Kaya is a manual tracker — it never links to your bank, so there are no banking logins or account access to expose. You enter your balances and income yourself.</p>
           <p>A copy is kept on your device so the app works offline. When you sign in, your data syncs to your private account, isolated so no other user can read it, and encrypted in transit and at rest.</p>
-          <p>We use passwordless email sign-in, so there's no password to steal. You can export a backup or wipe everything anytime in <span className="text-ink">Settings → Data</span>. No ads, ever.</p>
+          <p>We use passwordless email sign-in, so there's no password to steal. You can export a backup or wipe everything anytime in <span className="text-white">Settings → Data</span>. No ads, ever.</p>
         </div>
-        <button onClick={() => setShowPrivacy(false)} className="w-full bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-6">
+        <button onClick={() => setShowPrivacy(false)} className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-6">
           Got it
         </button>
       </Modal>
 
       {/* Currency Rates editor */}
       <Modal isOpen={showFxEdit} onClose={() => setShowFxEdit(false)}>
-        <h2 className="text-2xl font-medium mb-6 text-ink">Currency Rates</h2>
+        <h2 className="text-2xl font-medium mb-6 text-white">Currency Rates</h2>
         <div className="space-y-6">
           {fxDraft.map((p, i) => (
             <div key={i}>
@@ -1744,7 +1722,7 @@ export default function App() {
               </div>
             </div>
           ))}
-          <button onClick={saveFx} className="w-full bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+          <button onClick={saveFx} className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
             Save
           </button>
         </div>
@@ -1774,7 +1752,7 @@ export default function App() {
         {selectedAsset && !isEditMode ? (
             // VIEW: Add Balance OR Edit a saved history entry
             <>
-                <h2 className="text-2xl font-medium mb-6 text-ink">{editingEntryId ? 'Edit Entry' : 'Add Balance'}</h2>
+                <h2 className="text-2xl font-medium mb-6 text-white">{editingEntryId ? 'Edit Entry' : 'Add Balance'}</h2>
                 <form onSubmit={handleSaveAsset} className="space-y-6">
                     <div>
                         <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Date</label>
@@ -1785,16 +1763,16 @@ export default function App() {
                                 name="date"
                                 value={updateDate}
                                 onChange={(e) => setUpdateDate(e.target.value)}
-                                className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" 
+                                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-zinc-700" 
                             />
-                            <Icons.Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-textFaint pointer-events-none" size={20} />
+                            <Icons.Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
                         </div>
                     </div>
 
                     <div>
                         <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">New Balance</label>
-                        <div className="flex items-center bg-surface2 border border-ink/10 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
-                             <span className="text-textFaint font-medium mr-2">{selectedAsset.currency}</span>
+                        <div className="flex items-center bg-black/50 border border-white/10 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+                             <span className="text-zinc-500 font-medium mr-2">{selectedAsset.currency}</span>
                              <input
                                 key={editingEntryId || 'new'}
                                 required
@@ -1803,7 +1781,7 @@ export default function App() {
                                 step="any"
                                 placeholder="0.00"
                                 defaultValue={editingEntry ? editingEntry.amount : undefined}
-                                className="w-full bg-transparent border-none text-ink text-2xl font-medium p-2 outline-none placeholder:text-textFaint"
+                                className="w-full bg-transparent border-none text-white text-2xl font-medium p-2 outline-none placeholder:text-zinc-700"
                                 autoFocus
                             />
                         </div>
@@ -1821,7 +1799,7 @@ export default function App() {
                         )}
                         <button
                             type="submit"
-                            className={`bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity ${editingEntryId ? 'flex-[2]' : 'w-full'}`}
+                            className={`bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity ${editingEntryId ? 'flex-[2]' : 'w-full'}`}
                         >
                             {editingEntryId ? 'Save Entry' : 'Add Balance'}
                         </button>
@@ -1831,20 +1809,20 @@ export default function App() {
         ) : (
             // VIEW: New Asset OR Edit Metadata
             <>
-                <h2 className="text-2xl font-medium mb-6 text-ink">
+                <h2 className="text-2xl font-medium mb-6 text-white">
                     {selectedAsset ? 'Edit Asset' : 'New Asset'}
                 </h2>
                 <form onSubmit={handleSaveAsset} className="space-y-5">
                     <div>
                         <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Asset Name</label>
-                        <input required name="name" defaultValue={selectedAsset?.name} placeholder="e.g., BDO Savings" className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
+                        <input required name="name" defaultValue={selectedAsset?.name} placeholder="e.g., BDO Savings" className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-zinc-700" />
                     </div>
                     
                     {!selectedAsset && (
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Amount</label>
-                                <input required name="amount" type="number" step="any" placeholder="0.00" className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
+                                <input required name="amount" type="number" step="any" placeholder="0.00" className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-zinc-700" />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Currency</label>
@@ -1857,7 +1835,7 @@ export default function App() {
                     <div>
                         <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Category</label>
                         <div className="relative">
-                            <select name="category" value={modalCategory} onChange={(e) => setModalCategory(e.target.value as AssetCategory)} className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none appearance-none focus:border-primary transition-all">
+                            <select name="category" value={modalCategory} onChange={(e) => setModalCategory(e.target.value as AssetCategory)} className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white outline-none appearance-none focus:border-primary transition-all">
                                 {Object.values(AssetCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-textMuted"><Icons.ChevronDown size={20} /></div>
@@ -1866,14 +1844,14 @@ export default function App() {
 
                     <div>
                         <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">{getInstitutionLabel(modalCategory)} (Optional)</label>
-                        <input name="institution" defaultValue={selectedAsset?.institution} placeholder={getInstitutionLabel(modalCategory)} className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
+                        <input name="institution" defaultValue={selectedAsset?.institution} placeholder={getInstitutionLabel(modalCategory)} className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-zinc-700" />
                     </div>
 
                     <div className="flex gap-3 pt-4">
                         {selectedAsset && (
                             <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
                         )}
-                        <button type="submit" className={`flex-[2] bg-ink text-paper shadow-lg shadow-black/40 font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity ${!selectedAsset ? 'w-full' : ''}`}>
+                        <button type="submit" className={`flex-[2] bg-white text-black shadow-lg shadow-black/40 font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity ${!selectedAsset ? 'w-full' : ''}`}>
                             {selectedAsset ? 'Save Changes' : 'Add Asset'}
                         </button>
                     </div>

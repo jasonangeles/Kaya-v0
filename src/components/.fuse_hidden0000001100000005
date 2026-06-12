@@ -32,15 +32,15 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
         const btcVal = payload[0].value;
         const inflationVal = payload[1]?.value;
         return (
-           <div className="bg-surface3/95 backdrop-blur-md border border-ink/10 p-3 rounded-2xl shadow-2xl min-w-[120px]">
-            <p className="text-textMuted text-xs font-medium mb-2">{dateLabel}</p>
+           <div className="bg-zinc-900/95 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-2xl min-w-[120px]">
+            <p className="text-zinc-400 text-xs font-medium mb-2">{dateLabel}</p>
             <div className="flex flex-col gap-2">
               <div>
-                <span className="text-[10px] text-textFaint uppercase tracking-wider block">BTC Price</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">BTC Price</span>
                 <p className="text-[#F7931A] font-bold text-sm">${Math.round(btcVal).toLocaleString()}</p>
               </div>
               <div>
-                <span className="text-[10px] text-textFaint uppercase tracking-wider block">Purchasing Power</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Purchasing Power</span>
                 <p className="text-rose-400 font-bold text-sm">{inflationVal.toFixed(1)}</p>
               </div>
             </div>
@@ -51,8 +51,8 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
       if (isExchange) {
            const val = payload[0].value;
            return (
-            <div className="bg-surface3/90 backdrop-blur-md border border-ink/10 p-3 rounded-xl shadow-2xl">
-              <p className="text-ink font-bold text-sm">{val.toFixed(4)}</p>
+            <div className="bg-zinc-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl shadow-2xl">
+              <p className="text-white font-bold text-sm">{val.toFixed(4)}</p>
             </div>
           );
       }
@@ -64,9 +64,9 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
         : new Intl.NumberFormat('en-PH', { style: 'currency', currency: displayCurrency }).format(val);
 
       return (
-        <div className="bg-surface3/90 backdrop-blur-md border border-ink/10 p-4 rounded-2xl shadow-2xl min-w-[100px]">
-          <p className="text-textMuted text-xs font-medium mb-1">{dateLabel}</p>
-          <p className="text-ink font-bold text-lg tracking-tight leading-none">{formatted}</p>
+        <div className="bg-zinc-900/90 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-2xl min-w-[100px]">
+          <p className="text-zinc-400 text-xs font-medium mb-1">{dateLabel}</p>
+          <p className="text-white font-bold text-lg tracking-tight leading-none">{formatted}</p>
         </div>
       );
     }

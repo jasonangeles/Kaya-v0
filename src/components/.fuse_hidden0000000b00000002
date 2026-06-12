@@ -45,12 +45,12 @@ const monthLabel = (key: string) => {
 const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children?: React.ReactNode }) => (
   <>
     <div
-      className={`fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       onClick={onClose}
     />
-    <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-50 bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto">
+    <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-50 bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto">
       <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
-      <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
+      <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-white">✕</button>
       {children}
     </div>
   </>
@@ -199,7 +199,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
   return (
     <div className="pb-28 space-y-6 animate-[fadeIn_0.4s_ease-out]">
       <header className="px-1">
-        <h1 className="text-3xl font-medium text-ink mb-1">Passive Income</h1>
+        <h1 className="text-3xl font-medium text-white mb-1">Passive Income</h1>
         <p className="text-sm text-textMuted">Track how your dividends & interest grow</p>
       </header>
 
@@ -211,8 +211,8 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               {mode === 'MONTH' ? 'This month' : 'This year'}
             </p>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-normal text-textFaint"><Sym code={displayCurrency} /></span>
-              <span className="text-4xl font-medium text-ink tracking-tight">
+              <span className="text-2xl font-normal text-zinc-500"><Sym code={displayCurrency} /></span>
+              <span className="text-4xl font-medium text-white tracking-tight">
                 {privacyMode ? '••••••' : Math.round(current).toLocaleString()}
               </span>
             </div>
@@ -236,8 +236,8 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                 content={({ active, payload, label }: any) => {
                   if (!active || !payload || !payload.length) return null;
                   return (
-                    <div className="bg-surface3/95 border border-ink/10 p-3 rounded-xl shadow-2xl">
-                      <p className="text-textMuted text-xs mb-1">{label}</p>
+                    <div className="bg-zinc-900/95 border border-white/10 p-3 rounded-xl shadow-2xl">
+                      <p className="text-zinc-400 text-xs mb-1">{label}</p>
                       <p className="text-emerald-400 font-bold text-sm">{fmt(payload[0].value, displayCurrency)}</p>
                     </div>
                   );
@@ -253,12 +253,12 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
         </div>
 
         {/* Mode toggle */}
-        <div className="flex bg-surface2 rounded-full p-0.5 mt-3">
+        <div className="flex bg-black/30 rounded-full p-0.5 mt-3">
           {(['MONTH', 'YEAR'] as Mode[]).map(m => (
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`flex-1 py-1.5 text-xs font-medium rounded-full transition-all ${mode === m ? 'bg-surfaceHi text-ink shadow-sm' : 'text-textFaint hover:text-ink'}`}
+              className={`flex-1 py-1.5 text-xs font-medium rounded-full transition-all ${mode === m ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               {m === 'MONTH' ? 'Monthly' : 'Yearly'}
             </button>
@@ -272,7 +272,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3">
             <Icons.Trend size={22} />
           </div>
-          <p className="text-ink font-medium mb-1">No income logged yet</p>
+          <p className="text-white font-medium mb-1">No income logged yet</p>
           <p className="text-textMuted text-sm">Tap + to add your first dividend or interest payment.</p>
         </div>
       ) : (
@@ -282,19 +282,19 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">{group.label}</h3>
               <span className="text-xs font-medium text-emerald-400">{hide(fmt(group.subtotal, displayCurrency))}</span>
             </div>
-            <div className="rounded-3xl overflow-hidden shadow-lg bg-surface2 border border-ink/5">
+            <div className="rounded-3xl overflow-hidden shadow-lg bg-[#0e0e0e] border border-white/5">
               {group.items.map((r, idx) => (
                 <div
                   key={r.id}
                   onClick={() => openEdit(r)}
-                  className={`group p-4 flex justify-between items-center cursor-pointer hover:bg-ink/5 transition-colors ${idx !== group.items.length - 1 ? 'border-b border-ink/5' : ''}`}
+                  className={`group p-4 flex justify-between items-center cursor-pointer hover:bg-white/5 transition-colors ${idx !== group.items.length - 1 ? 'border-b border-white/5' : ''}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-ink/5">
+                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-white/5">
                       <Icons.ArrowDownLeft size={18} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-ink truncate">{r.source || r.category}</p>
+                      <p className="text-sm font-medium text-white truncate">{r.source || r.category}</p>
                       <p className="text-[11px] text-textMuted truncate">
                         {r.category} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
@@ -315,11 +315,11 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
       {/* Add / Edit sheet */}
       <Sheet isOpen={isOpen} onClose={closeSheet}>
         {isOpen && (<>
-        <h2 className="text-2xl font-medium mb-6 text-ink">{editingId ? 'Edit Income' : 'Add Income'}</h2>
+        <h2 className="text-2xl font-medium mb-6 text-white">{editingId ? 'Edit Income' : 'Add Income'}</h2>
         <form onSubmit={save} className="space-y-5">
           <div>
             <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Amount</label>
-            <div className="flex items-center bg-surface2 border border-ink/10 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-ink/40 transition-all">
+            <div className="flex items-center bg-black/50 border border-white/10 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-white/40 transition-all">
               <CurrencyPicker value={draft.currency} onChange={(code) => setDraft({ ...draft, currency: code })} variant="inline" />
               <input
                 required
@@ -328,7 +328,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                 placeholder="0.00"
                 value={draft.amount || ''}
                 onChange={(e) => setDraft({ ...draft, amount: parseFloat(e.target.value) || 0 })}
-                className="w-full bg-transparent border-none text-emerald-400 text-2xl font-medium p-1 outline-none placeholder:text-textFaint"
+                className="w-full bg-transparent border-none text-emerald-400 text-2xl font-medium p-1 outline-none placeholder:text-zinc-700"
                 autoFocus
               />
             </div>
@@ -341,7 +341,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               placeholder="e.g. FB, RCR, BPI Savings"
               value={draft.source}
               onChange={(e) => setDraft({ ...draft, source: e.target.value })}
-              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-ink/40 outline-none transition-all placeholder:text-textFaint"
+              className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-white/40 outline-none transition-all placeholder:text-zinc-700"
             />
           </div>
 
@@ -351,7 +351,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               <select
                 value={draft.category}
                 onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-                className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none appearance-none focus:border-ink/40 transition-all"
+                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white outline-none appearance-none focus:border-white/40 transition-all"
               >
                 {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -367,9 +367,9 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                 type="date"
                 value={draft.date}
                 onChange={(e) => setDraft({ ...draft, date: e.target.value })}
-                className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-ink/40 outline-none transition-all"
+                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-white/40 outline-none transition-all"
               />
-              <Icons.Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-textFaint pointer-events-none" size={20} />
+              <Icons.Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
             </div>
           </div>
 
@@ -379,17 +379,17 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               placeholder="Anything to remember"
               value={draft.note || ''}
               onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-ink/40 outline-none transition-all placeholder:text-textFaint"
+              className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:ring-1 focus:ring-white/40 outline-none transition-all placeholder:text-zinc-700"
             />
           </div>
 
           {editingId ? (
             <div className="space-y-3 pt-2">
-              <button type="submit" className="w-full bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+              <button type="submit" className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
                 Save
               </button>
               <div className="flex gap-3">
-                <button type="button" onClick={duplicate} className="flex-1 bg-ink/5 hover:bg-ink/10 text-ink border border-ink/10 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                <button type="button" onClick={duplicate} className="flex-1 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
                   <Icons.History size={18} /> Duplicate
                 </button>
                 <button type="button" onClick={remove} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
@@ -398,7 +398,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               </div>
             </div>
           ) : (
-            <button type="submit" className="w-full bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-2">
+            <button type="submit" className="w-full bg-white text-black shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-2">
               Add Income
             </button>
           )}

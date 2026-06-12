@@ -30,14 +30,19 @@
         theme: {
           extend: {
             colors: {
-              background: '#000000',
-              surface: '#0e0e0e',
-              primary: '#ffffff',
+              ink: 'rgb(var(--ink) / <alpha-value>)',
+              paper: 'rgb(var(--paper) / <alpha-value>)',
+              surface: 'rgb(var(--surface) / <alpha-value>)',
+              surface2: 'rgb(var(--surface-2) / <alpha-value>)',
+              surface3: 'rgb(var(--surface-3) / <alpha-value>)',
+              surfaceHi: 'rgb(var(--surface-hi) / <alpha-value>)',
+              primary: 'rgb(var(--ink) / <alpha-value>)',
+              textMain: 'rgb(var(--ink) / <alpha-value>)',
+              textMuted: 'rgb(var(--muted) / <alpha-value>)',
+              textFaint: 'rgb(var(--faint) / <alpha-value>)',
+              background: 'rgb(var(--paper) / <alpha-value>)',
               secondary: '#10b981',
               accent: '#f43f5e',
-              textMain: '#ffffff',
-              textMuted: '#8e8e93',
-              border: '#1f1f1f',
             },
             fontFamily: {
               sans: ['Outfit', 'sans-serif'],
@@ -47,18 +52,50 @@
       }
     </script>
 
+    <!-- Apply saved theme before paint (no flash) -->
+    <script>
+      try { if (localStorage.getItem('kaya.theme') === 'light') document.documentElement.classList.add('light'); } catch (e) {}
+    </script>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+      /* Theme tokens. Channel triplets (R G B) so Tailwind /opacity works.
+         Dark values match the original palette exactly (no visual change). */
+      :root {
+        --ink: 255 255 255;
+        --paper: 0 0 0;
+        --surface: 20 20 20;
+        --surface-2: 14 14 14;
+        --surface-3: 24 24 27;
+        --surface-hi: 39 39 42;
+        --muted: 142 142 147;
+        --faint: 113 113 122;
+        --page-bg: #000000;
+        --page-glow: rgba(255, 255, 255, 0.04);
+      }
+      html.light {
+        --ink: 24 24 27;
+        --paper: 255 255 255;
+        --surface: 255 255 255;
+        --surface-2: 244 244 246;
+        --surface-3: 255 255 255;
+        --surface-hi: 230 230 234;
+        --muted: 107 107 112;
+        --faint: 150 150 156;
+        --page-bg: #f4f4f7;
+        --page-glow: rgba(0, 0, 0, 0.03);
+      }
+
       body {
-        background-color: #000000;
+        background-color: var(--page-bg);
         background-image:
-          radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 45%);
+          radial-gradient(circle at 50% 0%, var(--page-glow) 0%, transparent 45%);
         background-attachment: fixed;
-        color: #ffffff;
+        color: rgb(var(--ink));
         font-family: 'Outfit', sans-serif;
         -webkit-tap-highlight-color: transparent;
         margin: 0;
@@ -93,6 +130,13 @@
         position: relative;
         z-index: 1;
       }
+      html.light .glass-panel {
+        background-color: rgba(255, 255, 255, 0.72);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.07);
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+      }
+      html.light #noice { opacity: 0.015; }
+      html.light .glass-panel::before { opacity: 0.015; }
 
       /* Surface Noise for Widgets */
       .glass-panel::before {
