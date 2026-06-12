@@ -62,6 +62,7 @@ export interface HistoricalPoint {
   totalValuePHP: number;
   totalValueUSD: number;
   totalValueBTC: number;
+  totalValueDisplay?: number; // value in the user's chosen display currency
   btcPrice: number; // Historical price of 1 BTC in USD
   inflationIndex: number; // 100 scale representing purchasing power
 }

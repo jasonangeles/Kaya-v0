@@ -10,7 +10,8 @@ import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/cur
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
 import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry, IncomeRecord } from './types';
-import { RATES, INITIAL_ASSETS, generateHistory, BTC_PRICE_USD } from './services/mockDataService';
+import { RATES, INITIAL_ASSETS, BTC_PRICE_USD } from './services/mockDataService';
+import { buildNetWorthSeries } from './services/history';
 import { getLiveRates } from './services/fxService';
 import { getWealthInsights } from './services/geminiService';
 
@@ -555,7 +556,24 @@ export default function App() {
 
   const selectedAsset = useMemo(() => assets.find(a => a.id === selectedAssetId), [assets, selectedAssetId]);
   const editingEntry = useMemo(() => selectedAsset?.history.find(h => h.id === editingEntryId) || null, [selectedAsset, editingEntryId]);
-  const historyData = useMemo(() => generateHistory(assets, selectedTimeRange), [assets, selectedTimeRange]);
+  const historyData = useMemo(
+    () => buildNetWorthSeries(assets, selectedTimeRange, rates, btcUsd, settings.displayCurrency),
+    [assets, selectedTimeRange, rates, btcUsd, settings.displayCurrency]
+  );
+
+  // Real % change over the selected range (first non-zero point → latest).
+  const netChange = useMemo(() => {
+    const vals = historyData.map(p => p.totalValueDisplay || 0);
+    const first = vals.find(v => v > 0);
+    const last = vals[vals.length - 1];
+    if (!first || last == null) return null;
+    return ((last - first) / first) * 100;
+  }, [historyData]);
+
+  const rangeLabel: Record<TimeRange, string> = {
+    '1D': 'today', '1W': 'past week', '1M': 'past month', '3M': 'past 3 months',
+    'YTD': 'year to date', '1Y': 'past year', 'ALL': 'all time'
+  };
   
   const assetHistoryData = useMemo(() => {
     if (!selectedAsset) return [];
@@ -573,19 +591,16 @@ export default function App() {
 
     return selectedAsset.history
         .filter(h => new Date(h.date) >= cutoff)
-        .map(h => {
-            // Use the rate locked when the entry was logged; fall back to live.
-            const rate = h.rateUsd || rates[selectedAsset.currency] || 1;
-            const valUSD = h.amount / rate;
-            return {
-                date: h.date,
-                totalValueUSD: valUSD,
-                totalValuePHP: valUSD * (rates.PHP || 1),
-                totalValueBTC: 0,
-                btcPrice: 0,
-                inflationIndex: 0
-            };
-        })
+        .map(h => ({
+            // The asset detail chart shows the balance in the asset's own currency.
+            date: h.date,
+            totalValueUSD: h.amount / (rates[selectedAsset.currency] || 1),
+            totalValuePHP: 0,
+            totalValueBTC: h.amount,
+            totalValueDisplay: h.amount,
+            btcPrice: 0,
+            inflationIndex: 0
+        }))
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [selectedAsset, selectedTimeRange, rates]);
 
@@ -1077,10 +1092,10 @@ export default function App() {
 
                 <div className="h-28 -mx-4 mt-2">
                     <NetWorthChart 
-                        data={assetHistoryData} 
-                        mode="FIAT" 
+                        data={assetHistoryData}
+                        mode={selectedAsset.currency === Currency.BTC ? 'BTC' : 'FIAT'}
                         displayCurrency={selectedAsset.currency}
-                        timeRange={selectedTimeRange} 
+                        timeRange={selectedTimeRange}
                     />
                 </div>
 
@@ -1210,12 +1225,14 @@ export default function App() {
                     )}
                  </div>
 
-                 <div className="mt-1 flex items-center gap-2">
-                    <span className="text-emerald-400 text-sm font-medium flex items-center gap-1">
-                        <Icons.Trend size={14} /> +2.4%
-                    </span>
-                    <span className="text-textMuted text-xs">past month</span>
-                 </div>
+                 {netChange !== null && !privacyMode && (
+                   <div className="mt-1 flex items-center gap-2">
+                      <span className={`text-sm font-medium flex items-center gap-1 ${netChange >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {netChange >= 0 ? <Icons.Trend size={14} /> : <Icons.TrendDown size={14} />} {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}%
+                      </span>
+                      <span className="text-textMuted text-xs">{rangeLabel[selectedTimeRange]}</span>
+                   </div>
+                 )}
             </div>
          </div>
          <div className="h-28 -mx-4 mt-2">

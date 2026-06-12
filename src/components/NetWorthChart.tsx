@@ -13,19 +13,16 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
   const isComparison = mode === 'COMPARISON';
   const isExchange = mode === 'EXCHANGE';
   
-  // Standard Chart Data Key
-  // Note: For EXCHANGE mode, we are temporarily reusing 'totalValueUSD' to store the rate
-  const dataKey = mode === 'BTC' ? 'totalValueBTC' : (displayCurrency === Currency.PHP && !isExchange ? 'totalValuePHP' : 'totalValueUSD');
+  // Chart renders the value already in the chosen display currency.
+  const dataKey = mode === 'BTC' ? 'totalValueBTC' : (isExchange ? 'totalValueUSD' : 'totalValueDisplay');
   const color = mode === 'BTC' ? '#F7931A' : (isExchange ? '#e4e4e7' : '#10b981'); // Bitcoin Orange, Neutral, or Emerald Green
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         let dateLabel = label;
-        // Re-format label for tooltip
-        if (timeRange !== '1D' && !isExchange) {
+        if (!isExchange) {
              const d = new Date(label);
              if (!isNaN(d.getTime())) {
-                 // Format: Nov 4
                  dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
              }
         }
