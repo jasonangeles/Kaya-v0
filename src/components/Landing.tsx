@@ -54,11 +54,12 @@ const HeroPhone: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
   return (
     <div className="relative mx-auto w-[282px] sm:w-[316px]" onMouseMove={onMove} onMouseLeave={() => setTilt({ x: 0, y: 0 })}>
-      <div className="absolute inset-x-0 top-0 h-[58%] blur-3xl" style={{ background: 'radial-gradient(circle at 50% 32%, rgba(16,185,129,0.22), transparent 60%)' }} />
+      {/* Green ambience — kept high, behind the chart, so it never lights the bottom */}
+      <div className="absolute inset-x-0 top-0 h-[42%] blur-3xl" style={{ background: 'radial-gradient(ellipse 64% 92% at 50% 20%, rgba(16,185,129,0.20), transparent 72%)' }} />
       <div style={{ transform: `perspective(1100px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`, transition: 'transform .18s ease-out' }}>
         <div
           className="relative rounded-[3rem] p-[6px] bg-gradient-to-b from-zinc-700 via-zinc-900 to-black animate-[floatY_7s_ease-in-out_infinite]"
-          style={{ boxShadow: '0 60px 120px -30px rgba(16,185,129,0.22), 0 50px 90px -40px rgba(0,0,0,0.9)' }}
+          style={{ boxShadow: '0 38px 80px -38px rgba(0,0,0,0.95)' }}
         >
           <div className="rounded-[2.8rem] bg-black p-[1px]">
             <div className="relative rounded-[2.75rem] overflow-hidden bg-black">
@@ -75,7 +76,7 @@ const HeroPhone: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </div>
       {/* Fixed fade overlay — darkens the bottom without clipping the moving device */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] z-20" style={{ background: 'linear-gradient(to bottom, transparent 0%, #000 82%)' }} />
+      <div className="pointer-events-none absolute inset-x-0 -bottom-8 h-[54%] z-20" style={{ background: 'linear-gradient(to bottom, transparent 0%, #000 70%)' }} />
     </div>
   );
 };
@@ -216,9 +217,9 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-black text-white overflow-x-clip">
       {/* Nav */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-black/60 border-b border-white/10 supports-[backdrop-filter]:bg-black/50">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-black/40 supports-[backdrop-filter]:bg-black/30">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
