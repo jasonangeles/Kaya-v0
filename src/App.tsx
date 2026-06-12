@@ -241,6 +241,17 @@ const TYPE_COLORS: Record<string, string> = {
   [AssetCategory.OTHER]: '#52525b'
 };
 const ALLOC_PALETTE = ['#10b981', '#e4e4e7', '#5eead4', '#a1a1aa', '#71717a', '#34d399', '#d4d4d8', '#52525b'];
+const LAST_ACTIVE_KEY = 'kaya.lastActiveAt';
+const readLastActive = () => { try { return parseInt(localStorage.getItem(LAST_ACTIVE_KEY) || '0', 10) || 0; } catch { return 0; } };
+const writeLastActive = () => { try { localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now())); } catch {} };
+
+const LOCK_DELAY_OPTIONS = [
+  { sec: 0, label: 'Immediately' },
+  { sec: 60, label: 'After 1 minute' },
+  { sec: 300, label: 'After 5 minutes' },
+  { sec: 900, label: 'After 15 minutes' }
+];
+
 const SYNC_KEY = 'kaya.syncedAt';
 const getSyncedAt = () => { try { return localStorage.getItem(SYNC_KEY) || ''; } catch { return ''; } };
 const setSyncedAt = (t: string) => { try { localStorage.setItem(SYNC_KEY, t); } catch {} };
@@ -456,11 +467,18 @@ export default function App() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // Security: PIN + optional biometric unlock, persisted locally.
-  const [security, setSecurity] = useState<{ pin: string | null; biometric: boolean; biometricId: string | null; recoveryHash: string | null }>(
-    () => loadStored('kaya.security.v1', { pin: null, biometric: false, biometricId: null, recoveryHash: null })
+  const [security, setSecurity] = useState<{ pin: string | null; biometric: boolean; biometricId: string | null; recoveryHash: string | null; lockDelaySec?: number }>(
+    () => loadStored('kaya.security.v1', { pin: null, biometric: false, biometricId: null, recoveryHash: null, lockDelaySec: 0 })
   );
-  const [locked, setLocked] = useState<boolean>(() => !!loadStored<{ pin: string | null }>('kaya.security.v1', { pin: null }).pin);
+  const [locked, setLocked] = useState<boolean>(() => {
+    const sec = loadStored<{ pin: string | null; lockDelaySec?: number }>('kaya.security.v1', { pin: null });
+    if (!sec.pin) return false;
+    const delayMs = (sec.lockDelaySec || 0) * 1000;
+    const last = readLastActive();
+    return !(last && Date.now() - last <= delayMs); // stay unlocked if reopened within the grace window
+  });
   const [showSetPin, setShowSetPin] = useState(false);
+  const [showAutoLock, setShowAutoLock] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
 
@@ -468,12 +486,29 @@ export default function App() {
     try { localStorage.setItem('kaya.security.v1', JSON.stringify(security)); } catch {}
   }, [security]);
 
-  // Re-lock when the app is sent to the background (if a PIN is set).
+  // Track "last active" and only re-lock after the configured grace period.
   useEffect(() => {
-    const onVis = () => { if (document.visibilityState === 'hidden' && security.pin) setLocked(true); };
+    if (!security.pin) return;
+    writeLastActive();
+    const delayMs = (security.lockDelaySec || 0) * 1000;
+    const heartbeat = setInterval(() => { if (document.visibilityState === 'visible') writeLastActive(); }, 10000);
+    const onHide = () => writeLastActive();
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') {
+        writeLastActive();
+      } else {
+        const last = readLastActive();
+        if (last && Date.now() - last > delayMs) setLocked(true);
+      }
+    };
+    window.addEventListener('pagehide', onHide);
     document.addEventListener('visibilitychange', onVis);
-    return () => document.removeEventListener('visibilitychange', onVis);
-  }, [security.pin]);
+    return () => {
+      clearInterval(heartbeat);
+      window.removeEventListener('pagehide', onHide);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [security.pin, security.lockDelaySec]);
 
   const handleToggleAppLock = () => {
     if (security.pin) {
@@ -485,6 +520,8 @@ export default function App() {
     }
   };
   const handleChangePin = () => setShowSetPin(true);
+  const handleSetLockDelay = (sec: number) => { setSecurity(s => ({ ...s, lockDelaySec: sec })); setShowAutoLock(false); };
+  const lockDelayLabel = (LOCK_DELAY_OPTIONS.find(o => o.sec === (security.lockDelaySec || 0)) || LOCK_DELAY_OPTIONS[0]).label;
   const handleSetPin = async (hash: string) => {
     setShowSetPin(false);
     if (!security.recoveryHash) {
@@ -1516,6 +1553,9 @@ export default function App() {
         {security.pin && (
           <SettingsItem icon={<Icons.Edit size={20} />} label="Change PIN" onClick={handleChangePin} />
         )}
+        {security.pin && (
+          <SettingsItem icon={<Icons.History size={20} />} label="Auto-lock" value={lockDelayLabel} onClick={() => setShowAutoLock(true)} />
+        )}
         <SettingsItem icon={<Icons.Fingerprint size={20} />} label="Face ID / Touch ID" toggle isToggled={security.biometric} onToggle={handleToggleBiometric} isLast />
       </SettingsGroup>
 
@@ -1613,6 +1653,25 @@ export default function App() {
       {/* Hidden inputs for restoring a backup / importing a CSV */}
       <input ref={restoreInputRef} type="file" accept="application/json,.json" onChange={handleRestoreFile} className="hidden" />
       <input ref={csvInputRef} type="file" accept=".csv,text/csv" onChange={handleImportCSV} className="hidden" />
+
+      {/* Auto-lock delay picker */}
+      <Modal isOpen={showAutoLock} onClose={() => setShowAutoLock(false)}>
+        <h2 className="text-2xl font-medium mb-1 text-white">Auto-lock</h2>
+        <p className="text-textMuted text-sm mb-5">Require your PIN after Kaya has been in the background for…</p>
+        <div className="rounded-2xl overflow-hidden bg-[#0e0e0e] border border-white/5">
+          {LOCK_DELAY_OPTIONS.map((o, i) => (
+            <button
+              key={o.sec}
+              onClick={() => handleSetLockDelay(o.sec)}
+              className={`w-full text-left px-4 py-3.5 flex items-center justify-between hover:bg-white/5 transition-colors ${i !== LOCK_DELAY_OPTIONS.length - 1 ? 'border-b border-white/5' : ''}`}
+            >
+              <span className="text-white text-sm">{o.label}</span>
+              {(security.lockDelaySec || 0) === o.sec && <Icons.Check size={18} className="text-primary" />}
+            </button>
+          ))}
+        </div>
+        <p className="text-zinc-600 text-[11px] mt-4 leading-relaxed">"Immediately" locks every time you leave the app. Longer delays are more convenient but less private on a shared device.</p>
+      </Modal>
 
       {/* Privacy & Data info */}
       <Modal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)}>
