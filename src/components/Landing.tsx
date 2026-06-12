@@ -54,7 +54,7 @@ const HeroPhone: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
   return (
     <div className="relative mx-auto w-[282px] sm:w-[316px]" onMouseMove={onMove} onMouseLeave={() => setTilt({ x: 0, y: 0 })}>
-      <div className="absolute inset-0 blur-3xl" style={{ background: 'radial-gradient(circle at 50% 38%, rgba(16,185,129,0.22), transparent 66%)' }} />
+      <div className="absolute inset-x-0 top-0 h-[58%] blur-3xl" style={{ background: 'radial-gradient(circle at 50% 32%, rgba(16,185,129,0.22), transparent 60%)' }} />
       <div style={{ transform: `perspective(1100px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`, transition: 'transform .18s ease-out' }}>
         <div
           className="relative rounded-[3rem] p-[6px] bg-gradient-to-b from-zinc-700 via-zinc-900 to-black animate-[floatY_7s_ease-in-out_infinite]"
@@ -87,8 +87,36 @@ const GlowPhone: React.FC<{ children: React.ReactNode; tilt?: number }> = ({ chi
   </div>
 );
 
+// Count up from 0 to target with an ease-out curve (only when `run` is true).
+const useCountUp = (target: number, run: boolean, dur = 1300) => {
+  const [v, setV] = useState(run ? 0 : target);
+  useEffect(() => {
+    if (!run) { setV(target); return; }
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setV(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [run, target]);
+  return v;
+};
+
 // --- Recreated app screens (dummy data) ----------------------------------
-const OverviewScreen = () => (
+// `animate` triggers the hero's one-time count-up + left-to-right line draw.
+const OverviewScreen: React.FC<{ animate?: boolean }> = ({ animate = false }) => {
+  const [drawn, setDrawn] = useState(!animate);
+  const value = useCountUp(1284930, animate);
+  useEffect(() => {
+    if (!animate) return;
+    const id = requestAnimationFrame(() => setDrawn(true));
+    return () => cancelAnimationFrame(id);
+  }, [animate]);
+  return (
   <div className="px-3 py-4 space-y-3">
     <div className="flex items-center gap-1.5">
       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -98,7 +126,7 @@ const OverviewScreen = () => (
       <p className="text-[9px] text-zinc-500 uppercase tracking-widest mb-1">Net Worth</p>
       <div className="flex items-baseline gap-1 mb-1">
         <span className="text-base text-zinc-500">₱</span>
-        <span className="text-2xl font-semibold text-white tracking-tight">1,284,930</span>
+        <span className="text-2xl font-semibold text-white tracking-tight tabular-nums">{value.toLocaleString('en-US')}</span>
       </div>
       <div className="flex items-center gap-1.5 mb-2">
         <span className="text-emerald-400 text-[11px] font-medium">▲ 3.1%</span>
@@ -106,8 +134,8 @@ const OverviewScreen = () => (
       </div>
       <svg viewBox="0 0 200 56" className="w-full h-11" preserveAspectRatio="none">
         <defs><linearGradient id="lgo" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity="0.35" /><stop offset="100%" stopColor="#10b981" stopOpacity="0" /></linearGradient></defs>
-        <path d="M0,44 C20,40 34,42 52,36 S96,34 120,26 S168,14 200,10 L200,56 L0,56 Z" fill="url(#lgo)" />
-        <path d="M0,44 C20,40 34,42 52,36 S96,34 120,26 S168,14 200,10" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M0,44 C20,40 34,42 52,36 S96,34 120,26 S168,14 200,10 L200,56 L0,56 Z" fill="url(#lgo)" style={{ opacity: drawn ? 1 : 0, transition: 'opacity .9s ease .5s' }} />
+        <path d="M0,44 C20,40 34,42 52,36 S96,34 120,26 S168,14 200,10" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" pathLength={1} strokeDasharray={1} style={{ strokeDashoffset: drawn ? 0 : 1, transition: 'stroke-dashoffset 1.4s cubic-bezier(.4,.1,.2,1)' }} />
       </svg>
       <div className="flex justify-between mt-2">
         {['1D', '1W', '1M', '3M', '1Y', 'ALL'].map((r, i) => (
@@ -124,7 +152,8 @@ const OverviewScreen = () => (
       ))}
     </div>
   </div>
-);
+  );
+};
 
 const IncomeScreen = () => (
   <div className="px-3 py-4 space-y-3">
@@ -189,13 +218,13 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
   return (
     <div className="min-h-[100dvh] bg-black text-white overflow-x-hidden">
       {/* Nav */}
-      <header className="sticky top-0 z-30 backdrop-blur-md bg-black/40 border-b border-white/5">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-black/60 border-b border-white/10 supports-[backdrop-filter]:bg-black/50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-medium tracking-wide uppercase">Kaya</span>
           </div>
-          <button onClick={onGetStarted} className="text-sm text-zinc-300 hover:text-white transition-colors">Sign in</button>
+          <button onClick={onGetStarted} className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">Sign in</button>
         </div>
       </header>
 
@@ -218,7 +247,7 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
           </Reveal>
 
           <Reveal delay={150} className="flex justify-center mt-12">
-            <HeroPhone><OverviewScreen /></HeroPhone>
+            <HeroPhone><OverviewScreen animate /></HeroPhone>
           </Reveal>
         </div>
       </section>
@@ -280,10 +309,10 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">Start in minutes</h2>
           <p className="text-zinc-400 mt-3 text-lg">No setup, no linking, no spreadsheet wrangling.</p>
         </Reveal>
-        <div className="grid sm:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-3 gap-6 items-stretch">
           {steps.map((s, i) => (
-            <Reveal key={i} delay={i * 90}>
-              <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6">
+            <Reveal key={i} delay={i * 90} className="h-full">
+              <div className="h-full rounded-3xl border border-white/10 bg-white/[0.02] p-6">
                 <div className="w-9 h-9 rounded-full border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-sm font-semibold mb-4">{i + 1}</div>
                 <h3 className="text-lg font-medium mb-1.5">{s.t}</h3>
                 <p className="text-sm text-zinc-400 leading-relaxed">{s.d}</p>
