@@ -41,6 +41,7 @@ import {
   ChartBar,
   Fingerprint,
   Sun,
+  ChatCircleText,
   Backspace
 } from '@phosphor-icons/react';
 
@@ -85,5 +86,6 @@ export const Icons = {
   BarChart: ChartBar,
   Fingerprint: Fingerprint,
   Sun: Sun,
+  Feedback: ChatCircleText,
   Backspace: Backspace
 };

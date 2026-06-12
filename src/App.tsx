@@ -429,6 +429,26 @@ export default function App() {
   const handleSignOut = async () => {
     if (supabase) await supabase.auth.signOut();
   };
+
+  // Feedback → Supabase if available, else fall back to an email draft.
+  const FEEDBACK_EMAIL = 'designer@jasonangeles.com';
+  const submitFeedback = async () => {
+    const msg = feedbackText.trim();
+    if (!msg) return;
+    setFeedbackStatus('sending');
+    try {
+      if (isSupabaseEnabled && supabase) {
+        const { error } = await supabase.from('kaya_feedback').insert({ user_id: session?.user.id ?? null, message: msg });
+        if (error) throw error;
+      } else {
+        window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Kaya feedback')}&body=${encodeURIComponent(msg)}`;
+      }
+    } catch {
+      window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Kaya feedback')}&body=${encodeURIComponent(msg)}`;
+    }
+    setFeedbackText('');
+    setFeedbackStatus('sent');
+  };
   
   const [activeTab, setActiveTab] = useState<'HOME' | 'ASSETS' | 'INCOME' | 'SETTINGS' | 'SETTINGS_CURRENCY'>('HOME');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -448,6 +468,9 @@ export default function App() {
   const [incomeAddTick, setIncomeAddTick] = useState(0);
   const [showFxEdit, setShowFxEdit] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [allocMode, setAllocMode] = useState<'TYPE' | 'CURRENCY'>('TYPE');
   const [fxDraft, setFxDraft] = useState<{ first: string; second: string }[]>(DEFAULT_FX_PAIRS);
   const mainRef = useRef<HTMLElement>(null);
@@ -1607,6 +1630,7 @@ export default function App() {
       </SettingsGroup>
 
       <SettingsGroup title="Support">
+        <SettingsItem icon={<Icons.Feedback size={20} />} label="Share feedback" onClick={() => { setFeedbackStatus('idle'); setShowFeedback(true); }} />
         <SettingsItem icon={<Icons.Shield size={20} />} label="Privacy & Data" onClick={() => setShowPrivacy(true)} />
         <SettingsItem icon={<Icons.Star size={20} />} label="Rate Kaya" onClick={() => {}} />
         <SettingsItem icon={<Icons.Mail size={20} />} label="Contact Us" onClick={() => {}} isLast />
@@ -1692,6 +1716,38 @@ export default function App() {
       {/* Hidden inputs for restoring a backup / importing a CSV */}
       <input ref={restoreInputRef} type="file" accept="application/json,.json" onChange={handleRestoreFile} className="hidden" />
       <input ref={csvInputRef} type="file" accept=".csv,text/csv" onChange={handleImportCSV} className="hidden" />
+
+      {/* Share feedback */}
+      <Modal isOpen={showFeedback} onClose={() => { setShowFeedback(false); setFeedbackStatus('idle'); }}>
+        {feedbackStatus === 'sent' ? (
+          <div className="text-center py-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3"><Icons.Check size={22} /></div>
+            <h2 className="text-2xl font-medium text-ink mb-1">Thank you!</h2>
+            <p className="text-textMuted text-sm">Your feedback helps shape Kaya.</p>
+            <button onClick={() => { setShowFeedback(false); setFeedbackStatus('idle'); }} className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-6 hover:opacity-90 transition-opacity">Done</button>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-2xl font-medium text-ink mb-1">Share feedback</h2>
+            <p className="text-textMuted text-sm mb-4">Bugs, ideas, requests — anything. I read every message.</p>
+            <textarea
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              rows={5}
+              autoFocus
+              placeholder="What's on your mind?"
+              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none focus:border-ink/40 transition-all resize-none placeholder:text-textFaint"
+            />
+            <button
+              onClick={submitFeedback}
+              disabled={!feedbackText.trim() || feedbackStatus === 'sending'}
+              className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {feedbackStatus === 'sending' ? 'Sending…' : 'Send feedback'}
+            </button>
+          </>
+        )}
+      </Modal>
 
       {/* Auto-lock delay picker */}
       <Modal isOpen={showAutoLock} onClose={() => setShowAutoLock(false)}>
