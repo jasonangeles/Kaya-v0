@@ -205,6 +205,14 @@ const AllocationScreen = () => (
 
 // --- Landing --------------------------------------------------------------
 export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) => {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const props = [
     { icon: <Icons.Global size={22} />, title: 'Every currency', desc: 'Hold pesos, dollars, dirhams, even sats. Kaya converts it all live, so your total always makes sense.' },
     { icon: <Icons.Trend size={22} />, title: 'Passive income', desc: 'Log dividends and interest as they arrive and watch them grow month over month — the quiet habit that builds wealth.' },
@@ -219,7 +227,7 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
   return (
     <div className="min-h-[100dvh] bg-black text-white overflow-x-clip">
       {/* Nav */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-black/40 supports-[backdrop-filter]:bg-black/30">
+      <header className={`sticky top-0 z-30 transition-colors duration-300 ${scrolled ? 'backdrop-blur-xl bg-black/40 supports-[backdrop-filter]:bg-black/30' : 'bg-transparent'}`}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
