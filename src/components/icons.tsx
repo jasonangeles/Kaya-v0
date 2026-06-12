@@ -42,7 +42,8 @@ import {
   Fingerprint,
   Sun,
   ChatCircleText,
-  Backspace
+  Backspace,
+  X
 } from '@phosphor-icons/react';
 
 export const Icons = {
@@ -87,5 +88,6 @@ export const Icons = {
   Fingerprint: Fingerprint,
   Sun: Sun,
   Feedback: ChatCircleText,
-  Backspace: Backspace
+  Backspace: Backspace,
+  Close: X
 };

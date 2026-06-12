@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Icons } from './icons';
+import { SignInModal } from './SignInModal';
 
 // --- Scroll reveal (fade + rise, once) -----------------------------------
 const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({ children, delay = 0, className = '' }) => {
@@ -204,8 +205,10 @@ const AllocationScreen = () => (
 );
 
 // --- Landing --------------------------------------------------------------
-export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) => {
+export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted }) => {
   const [scrolled, setScrolled] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const openSignIn = onGetStarted ?? (() => setSignInOpen(true));
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
@@ -233,7 +236,7 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-medium tracking-wide uppercase">Kaya</span>
           </div>
-          <button onClick={onGetStarted} className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">Sign in</button>
+          <button onClick={openSignIn} className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">Sign in</button>
         </div>
       </header>
 
@@ -250,7 +253,7 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
               Kaya brings your banks, investments and crypto into one number — converted live, even denominated in Bitcoin. No bank logins. No noise. Just your money, clearly.
             </p>
             <div className="flex items-center justify-center gap-3 mt-8">
-              <button onClick={onGetStarted} className="bg-white text-black font-semibold px-6 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Get started — it's free</button>
+              <button onClick={openSignIn} className="bg-white text-black font-semibold px-6 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Get started — it's free</button>
             </div>
             <p className="text-xs text-zinc-600 mt-4">No bank linking · passwordless · your data stays yours</p>
           </Reveal>
@@ -337,7 +340,7 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 p-12 text-center" style={{ background: 'radial-gradient(ellipse 70% 120% at 50% 0%, rgba(16,185,129,0.15), transparent 70%)' }}>
             <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">Start tracking your wealth today</h2>
             <p className="text-zinc-400 mt-3 text-lg">Free to use. No bank linking. Yours to keep.</p>
-            <button onClick={onGetStarted} className="mt-7 bg-white text-black font-semibold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Get started — it's free</button>
+            <button onClick={openSignIn} className="mt-7 bg-white text-black font-semibold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Get started — it's free</button>
           </div>
         </Reveal>
       </section>
@@ -352,6 +355,8 @@ export const Landing: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }
           <p className="text-xs text-zinc-600">Built for global Filipinos · Privacy-first · © {new Date().getFullYear()} Kaya</p>
         </div>
       </footer>
+
+      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
     </div>
   );
 };
