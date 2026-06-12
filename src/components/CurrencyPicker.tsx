@@ -44,7 +44,7 @@ export const CurrencyPicker: React.FC<Props> = ({ value, onChange, variant = 'fi
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={close} />
-          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[220px]">
+          <div className={`absolute top-full mt-2 z-50 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden ${variant === 'inline' ? 'left-0 min-w-[200px]' : 'left-0 right-0'}`}>
             <div className="p-2 border-b border-white/5">
               <input
                 autoFocus
@@ -72,9 +72,9 @@ export const CurrencyPicker: React.FC<Props> = ({ value, onChange, variant = 'fi
                       onClick={() => pick(c.code)}
                       className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-white/5 transition-colors"
                     >
-                      <span className={`font-medium min-w-[36px] ${value === c.code ? 'text-primary' : 'text-white'}`}>{c.code}</span>
-                      <span className="text-xs text-textMuted truncate flex-1">{c.name}</span>
-                      {value === c.code && <Icons.Check size={16} className="text-primary" />}
+                      <span className={`font-medium min-w-[36px] shrink-0 ${value === c.code ? 'text-primary' : 'text-white'}`}>{c.code}</span>
+                      <span className="text-xs text-textMuted truncate flex-1 min-w-0">{c.name}</span>
+                      {value === c.code && <Icons.Check size={16} className="text-primary shrink-0" />}
                     </button>
                   </React.Fragment>
                 );
