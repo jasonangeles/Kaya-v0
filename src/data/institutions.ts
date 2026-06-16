@@ -26,7 +26,7 @@ export const INSTITUTIONS: Institution[] = [
   // ---- Philippines · digital / e-wallets ----
   { id: 'gcash', short: 'G', color: '#0070E0', aliases: ['gcash'] },
   { id: 'maya', short: 'M', color: '#00C66B', aliases: ['maya', 'paymaya'] },
-  { id: 'maribank', short: 'M', color: '#1BA784', aliases: ['maribank', 'mari', 'seabank'] },
+  { id: 'maribank', short: 'M', color: '#FF6B00', aliases: ['maribank', 'mari', 'seabank'] },
   { id: 'tonik', short: 'T', color: '#22D3A6', aliases: ['tonik', 'tonikbank'] },
   { id: 'gotyme', short: 'GT', color: '#FF5A00', aliases: ['gotyme', 'gotymebank'] },
   { id: 'cimb', short: 'CIMB', color: '#EC1C24', aliases: ['cimb', 'cimbph', 'cimbbank'] },
@@ -96,14 +96,14 @@ export const INSTITUTIONS: Institution[] = [
   { id: 'trustwallet', short: 'TW', color: '#3375BB', aliases: ['trustwallet', 'trust'] },
   { id: 'strike', short: 'S', color: '#191919', aliases: ['strike'] },
   { id: 'pdax', short: 'P', color: '#1A1F71', aliases: ['pdax'] },
-  { id: 'coinsph', short: 'C', color: '#5E2B97', aliases: ['coinsph', 'coins'] },
+  { id: 'coinsph', short: 'C', color: '#1652F0', aliases: ['coinsph', 'coins'] },
 
   // ---- Brokerages / investing ----
   { id: 'ibkr', short: 'IB', color: '#D81222', aliases: ['interactivebrokers', 'ibkr'] },
   { id: 'robinhood', short: 'R', color: '#00C805', aliases: ['robinhood'] },
   { id: 'vanguard', short: 'V', color: '#96151D', aliases: ['vanguard'] },
   { id: 'fidelity', short: 'F', color: '#468125', aliases: ['fidelity'] },
-  { id: 'col', short: 'COL', color: '#ED1C24', aliases: ['col', 'colfinancial'] },
+  { id: 'col', short: 'COL', color: '#00529B', aliases: ['col', 'colfinancial'] },
 ];
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
