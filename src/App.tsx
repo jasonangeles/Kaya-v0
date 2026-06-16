@@ -4,6 +4,7 @@ import { NetWorthChart } from './components/NetWorthChart';
 import { IncomeTracker } from './components/IncomeTracker';
 import { LockScreen, SetPinSheet, RecoverySheet, RecoveryCodeSheet, generateRecoveryCode, hashRecoveryCode, isBiometricAvailable, registerBiometric } from './components/AppLock';
 import { Landing } from './components/Landing';
+import { InstitutionLogo } from './components/InstitutionLogo';
 import { CurrencyPicker } from './components/CurrencyPicker';
 import { Sym, DirhamSign } from './components/DirhamSign';
 import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
@@ -1328,11 +1329,7 @@ export default function App() {
                     className={`p-4 flex justify-between items-center hover:bg-ink/5 transition-colors cursor-pointer group ${index !== topAssets.length - 1 ? 'border-b border-ink/5' : ''}`}
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-surface2 border border-ink/5 text-textMuted">
-                            {asset.category === AssetCategory.BANK_PH ? <Icons.Bank size={18} /> : 
-                             asset.category === AssetCategory.CRYPTO ? <Icons.Crypto size={18} /> : 
-                             <Icons.Wallet size={18} />}
-                        </div>
+                        <InstitutionLogo name={asset.institution} category={asset.category} size={36} radius={10} />
                         <div>
                             <p className="font-medium text-ink text-sm">{asset.name}</p>
                             <p className="text-[10px] text-textMuted">{asset.institution}</p>
@@ -1520,11 +1517,7 @@ export default function App() {
                                 className={`p-5 flex justify-between items-center hover:bg-ink/5 transition-colors cursor-pointer group ${index !== categoryAssets.length - 1 ? 'border-b border-ink/5' : ''}`}
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="p-2.5 rounded-xl bg-surface2 border border-ink/5 group-hover:border-primary/50 transition-colors">
-                                         {asset.category === AssetCategory.BANK_PH ? <Icons.Bank size={18} /> : 
-                                          asset.category === AssetCategory.CRYPTO ? <Icons.Crypto size={18} /> : 
-                                          <Icons.Wallet size={18} />}
-                                    </div>
+                                    <InstitutionLogo name={asset.institution} category={asset.category} size={44} radius={12} className="group-hover:border-primary/50 transition-colors" />
                                     <div>
                                         <p className="font-medium text-ink text-base">{asset.name}</p>
                                         <p className="text-xs text-textMuted mt-0.5">{asset.institution}</p>
