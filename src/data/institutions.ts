@@ -104,6 +104,9 @@ export const INSTITUTIONS: Institution[] = [
   { id: 'vanguard', short: 'V', color: '#96151D', aliases: ['vanguard'] },
   { id: 'fidelity', short: 'F', color: '#468125', aliases: ['fidelity'] },
   { id: 'col', short: 'COL', color: '#00529B', aliases: ['col', 'colfinancial'] },
+  { id: 'gotrade', short: 'Go', color: '#00B86B', aliases: ['gotrade', 'heygotrade'] },
+  { id: 'investatrade', short: 'IT', color: '#12B5C9', aliases: ['investatrade', 'investa'] },
+  { id: 'stake', short: 'St', color: '#16233F', aliases: ['stake', 'getstake'] },
 ];
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
