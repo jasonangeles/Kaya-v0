@@ -1,4 +1,4 @@
-import { Asset, HistoricalPoint, TimeRange } from '../types';
+import { Asset, AssetCategory, HistoricalPoint, TimeRange } from '../types';
 
 // Reconstructs real net worth over time from each asset's balance history.
 // At any moment T, an asset's value = its most recent logged balance as of T
@@ -36,6 +36,7 @@ export const buildNetWorthSeries = (
   // Pre-sort each asset's history ascending by date.
   const prepared = assets.map(a => ({
     currency: a.currency,
+    sign: a.category === AssetCategory.DEBT ? -1 : 1,
     hist: [...a.history].sort((x, y) => new Date(x.date).getTime() - new Date(y.date).getTime())
           .map(h => ({ t: new Date(h.date).getTime(), amount: h.amount }))
   }));
@@ -53,7 +54,7 @@ export const buildNetWorthSeries = (
       for (let k = a.hist.length - 1; k >= 0; k--) {
         if (a.hist[k].t <= t) { bal = a.hist[k].amount; break; }
       }
-      if (bal != null) usd += usdOf(bal, a.currency);
+      if (bal != null) usd += a.sign * usdOf(bal, a.currency);
     });
     series.push({
       date: new Date(t).toISOString(),

@@ -666,8 +666,12 @@ export default function App() {
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [selectedAsset, selectedTimeRange, rates]);
 
+  // Net worth = assets minus liabilities. DEBT entries subtract.
   const totalValueUSD = useMemo(() => {
-    return assets.reduce((acc, curr) => acc + curr.amount / (rates[curr.currency] || 1), 0);
+    return assets.reduce((acc, a) => {
+      const v = a.amount / (rates[a.currency] || 1);
+      return a.category === AssetCategory.DEBT ? acc - v : acc + v;
+    }, 0);
   }, [assets, rates]);
 
   const totalValueParts = useMemo(() => {
@@ -1357,6 +1361,11 @@ export default function App() {
                       </span>
                       <span className="text-textMuted text-xs">{rangeLabel[selectedTimeRange]}</span>
                    </div>
+                 )}
+                 {liquidityBreakdown.liabilities > 0 && !privacyMode && (
+                   <p className="mt-1.5 text-[11px] text-textMuted">
+                      Assets {fmtDisplay(liquidityBreakdown.assetsTotal)} <span className="text-rose-400">− Liabilities {fmtDisplay(liquidityBreakdown.liabilities)}</span>
+                   </p>
                  )}
             </div>
          </div>
@@ -2053,18 +2062,20 @@ export default function App() {
             // VIEW: New Asset OR Edit Metadata
             <>
                 <h2 className="text-2xl font-medium mb-6 text-ink">
-                    {selectedAsset ? 'Edit Asset' : 'New Asset'}
+                    {selectedAsset
+                        ? (modalCategory === AssetCategory.DEBT ? 'Edit Liability' : 'Edit Asset')
+                        : (modalCategory === AssetCategory.DEBT ? 'New Liability' : 'New Asset')}
                 </h2>
                 <form onSubmit={handleSaveAsset} className="space-y-5">
                     <div>
-                        <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Asset Name</label>
-                        <input required name="name" defaultValue={selectedAsset?.name} placeholder="e.g., BDO Savings" className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
+                        <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">{modalCategory === AssetCategory.DEBT ? 'Liability Name' : 'Asset Name'}</label>
+                        <input required name="name" defaultValue={selectedAsset?.name} placeholder={modalCategory === AssetCategory.DEBT ? 'e.g., Car Loan' : 'e.g., BDO Savings'} className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
                     </div>
                     
                     {!selectedAsset && (
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Amount</label>
+                                <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">{modalCategory === AssetCategory.DEBT ? 'Amount Owed' : 'Amount'}</label>
                                 <input required name="amount" type="number" step="any" placeholder="0.00" className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
                             </div>
                             <div>
@@ -2111,7 +2122,7 @@ export default function App() {
                             <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
                         )}
                         <button type="submit" className={`flex-[2] bg-ink text-paper shadow-lg shadow-black/40 font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity ${!selectedAsset ? 'w-full' : ''}`}>
-                            {selectedAsset ? 'Save Changes' : 'Add Asset'}
+                            {selectedAsset ? 'Save Changes' : (modalCategory === AssetCategory.DEBT ? 'Add Liability' : 'Add Asset')}
                         </button>
                     </div>
                 </form>
@@ -2134,6 +2145,8 @@ function getInstitutionLabel(category: AssetCategory) {
             return 'Brokerage';
         case AssetCategory.PENSION:
             return 'Provider / Fund';
+        case AssetCategory.DEBT:
+            return 'Lender';
         default:
             return 'Institution / Platform';
     }
