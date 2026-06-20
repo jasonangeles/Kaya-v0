@@ -77,6 +77,12 @@ const emptyDraft = (currency: string): IncomeRecord => ({
 
 export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, addTick, rates, records, onRecordsChange }) => {
   const [mode, setMode] = useState<Mode>('MONTH');
+  const currentYear = new Date().getFullYear();
+  const [viewYear, setViewYear] = useState(currentYear); // which year the Monthly view shows
+  const earliestYear = useMemo(() => {
+    const ys = records.map(r => new Date(r.date).getFullYear());
+    return ys.length ? Math.min(...ys) : currentYear;
+  }, [records, currentYear]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<IncomeRecord>(emptyDraft(displayCurrency));
@@ -100,31 +106,46 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
     const keys: string[] = [];
     const now = new Date();
     if (mode === 'MONTH') {
-      // Current calendar year, January on the left up to the current month.
-      for (let m = 0; m <= now.getMonth(); m++) {
-        keys.push(monthKey(new Date(now.getFullYear(), m, 1)));
-      }
+      // The selected year, January on the left. Current year stops at this month; past years show all 12.
+      const lastMonth = viewYear === currentYear ? now.getMonth() : 11;
+      for (let m = 0; m <= lastMonth; m++) keys.push(monthKey(new Date(viewYear, m, 1)));
     } else {
-      const years = records.map(r => new Date(r.date).getFullYear());
-      const minY = years.length ? Math.min(...years) : now.getFullYear();
-      for (let y = Math.min(minY, now.getFullYear() - 4); y <= now.getFullYear(); y++) keys.push(`${y}`);
+      // Only years that have data, oldest → current. No empty padding.
+      for (let y = earliestYear; y <= currentYear; y++) keys.push(`${y}`);
     }
     return keys.map(key => ({
       key,
       label: mode === 'MONTH' ? monthLabel(key) : key,
       total: Math.round((totals.get(key) || 0) * 100) / 100
     }));
-  }, [records, mode, displayCurrency, rates]);
+  }, [records, mode, displayCurrency, rates, viewYear, currentYear, earliestYear]);
 
-  const current = chartData[chartData.length - 1]?.total || 0;
-  const previous = chartData[chartData.length - 2]?.total || 0;
-  // Average monthly income this year (this year's total ÷ months elapsed). Simple cashflow line.
+  // Average monthly income for the displayed year (year total ÷ months shown). Simple cashflow line.
   const avgMonthly = useMemo(() => {
     if (mode !== 'MONTH') return 0;
     const sum = chartData.reduce((s, d) => s + d.total, 0);
     return sum / (chartData.length || 1);
   }, [chartData, mode]);
-  const growth = previous > 0 ? ((current - previous) / previous) * 100 : (current > 0 ? 100 : 0);
+
+  // Headline number + growth: current month (MoM) for this year, year total (YoY) when browsing a past year, year total (YoY) in Yearly mode.
+  const summary = useMemo(() => {
+    const yearTotalOf = (y: number) => records.reduce((s, r) => new Date(r.date).getFullYear() === y ? s + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd) : s, 0);
+    const pct = (cur: number, prev: number) => prev > 0 ? ((cur - prev) / prev) * 100 : (cur > 0 ? 100 : 0);
+    if (mode === 'YEAR') {
+      const cur = chartData[chartData.length - 1]?.total || 0;
+      const prev = chartData[chartData.length - 2]?.total || 0;
+      return { label: 'This year', value: cur, growth: pct(cur, prev) };
+    }
+    if (viewYear === currentYear) {
+      const cur = chartData[chartData.length - 1]?.total || 0;   // current month
+      const prev = chartData[chartData.length - 2]?.total || 0;  // previous month
+      return { label: 'This month', value: cur, growth: pct(cur, prev) };
+    }
+    const total = chartData.reduce((s, d) => s + d.total, 0);
+    return { label: `${viewYear}`, value: total, growth: pct(total, yearTotalOf(viewYear - 1)) };
+  }, [mode, viewYear, currentYear, chartData, records, displayCurrency, rates]);
+  const current = summary.value;
+  const growth = summary.growth;
   const allTimeTotal = useMemo(
     () => records.reduce((s, r) => s + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd), 0),
     [records, displayCurrency, rates]
@@ -214,7 +235,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
         <div className="flex items-start justify-between mb-1">
           <div>
             <p className="text-textMuted text-xs font-medium tracking-widest uppercase mb-1">
-              {mode === 'MONTH' ? 'This month' : 'This year'}
+              {summary.label}
             </p>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-normal text-textFaint"><Sym code={displayCurrency} /></span>
@@ -230,9 +251,31 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
         </div>
         <p className="text-[11px] text-textMuted mb-3">
           {mode === 'MONTH' && avgMonthly > 0
-            ? <>Averaging {hide(fmt(avgMonthly, displayCurrency))} a month this year</>
-            : <>{mode === 'MONTH' ? 'This year so far' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
+            ? <>Averaging {hide(fmt(avgMonthly, displayCurrency))} a month {viewYear === currentYear ? 'this year' : `in ${viewYear}`}</>
+            : <>{mode === 'MONTH' ? 'No income yet for this year' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
         </p>
+
+        {mode === 'MONTH' && (
+          <div className="flex items-center justify-center gap-5 mb-2">
+            <button
+              onClick={() => setViewYear(y => Math.max(earliestYear, y - 1))}
+              disabled={viewYear <= earliestYear}
+              aria-label="Previous year"
+              className="p-1 rounded-full text-textMuted hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            >
+              <Icons.ChevronRight size={18} className="rotate-180" />
+            </button>
+            <span className="text-sm font-medium text-ink tabular-nums w-12 text-center">{viewYear}</span>
+            <button
+              onClick={() => setViewYear(y => Math.min(currentYear, y + 1))}
+              disabled={viewYear >= currentYear}
+              aria-label="Next year"
+              className="p-1 rounded-full text-textMuted hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            >
+              <Icons.ChevronRight size={18} />
+            </button>
+          </div>
+        )}
 
         <div className="h-36 -mx-2">
           <ResponsiveContainer width="100%" height="100%">
