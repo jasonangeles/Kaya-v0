@@ -1669,14 +1669,7 @@ export default function App() {
         )}
 
         <Modal isOpen={filterOpen} onClose={() => setFilterOpen(false)}>
-            <div className="flex items-center justify-between mb-5 pr-9">
-                <h2 className="text-xl font-semibold text-ink">Sort &amp; filter</h2>
-                {filtersActive && (
-                    <button onClick={resetFilters} className="text-[11px] font-medium px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors">
-                        Reset all
-                    </button>
-                )}
-            </div>
+            <h2 className="text-xl font-semibold text-ink mb-5">Sort &amp; filter</h2>
 
             <p className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2">Sort</p>
             <div className="flex bg-surface2 rounded-xl p-1 mb-6">
@@ -1710,9 +1703,16 @@ export default function App() {
                 ))}
             </div>
 
-            <button onClick={() => setFilterOpen(false)} className="w-full mt-7 bg-ink text-paper font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity">
-                Show {filteredAssets.length} {filteredAssets.length === 1 ? 'account' : 'accounts'}
-            </button>
+            <div className="flex gap-3 mt-7">
+                {filtersActive && (
+                    <button type="button" onClick={resetFilters} className="px-5 py-3.5 rounded-xl border border-ink/15 text-ink font-medium hover:bg-ink/5 transition-colors whitespace-nowrap">
+                        Reset all
+                    </button>
+                )}
+                <button onClick={() => setFilterOpen(false)} className="flex-1 bg-ink text-paper font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity">
+                    Show {filteredAssets.length} {filteredAssets.length === 1 ? 'account' : 'accounts'}
+                </button>
+            </div>
         </Modal>
     </div>
   );
