@@ -764,6 +764,16 @@ export default function App() {
     return arr;
   }, [filteredAssets, sortMode, rates]);
   const filtersActive = catFilter.length > 0 || curFilter.length > 0 || sortMode !== 'CATEGORY';
+  // Filtered subtotal (only when a category/currency filter is actually narrowing the list).
+  const filteredSubtotal = useMemo(() => {
+    if (catFilter.length === 0 && curFilter.length === 0) return null;
+    const usd = filteredAssets.reduce((s, a) => {
+      const u = a.amount / (rates[a.currency] || 1);
+      return a.category === AssetCategory.DEBT ? s - u : s + u;
+    }, 0);
+    const net = liquidityBreakdown.net;
+    return { usd, pct: net > 0 ? (usd / net) * 100 : null, count: filteredAssets.length };
+  }, [filteredAssets, catFilter, curFilter, rates, liquidityBreakdown.net]);
   const toggleCat = (c: AssetCategory) => setCatFilter(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]);
   const toggleCur = (c: string) => setCurFilter(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]);
   const resetFilters = () => { setSortMode('CATEGORY'); setCatFilter([]); setCurFilter([]); };
@@ -1598,6 +1608,37 @@ export default function App() {
                     Filter
                     <Icons.BarChart size={14} className="rotate-90" />
                 </button>
+            </div>
+        )}
+
+        {filteredSubtotal && filteredAssets.length > 0 && (
+            <div className="glass-panel rounded-2xl px-4 py-3.5 shadow-lg">
+                <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[9px] tracking-widest text-textFaint uppercase">Filtered total</span>
+                    <span className="text-[11px] text-textFaint">{filteredSubtotal.count} {filteredSubtotal.count === 1 ? 'account' : 'accounts'}</span>
+                </div>
+                <p className="text-2xl font-semibold text-ink mb-2.5">{privacyMode ? '••••••' : fmtDisplay(filteredSubtotal.usd)}</p>
+                {filteredSubtotal.pct !== null && (
+                    <div className="flex h-1.5 rounded-full overflow-hidden bg-surface2 mb-2.5">
+                        <div style={{ width: `${Math.max(0, Math.min(100, filteredSubtotal.pct))}%`, background: '#10b981' }} />
+                    </div>
+                )}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    {catFilter.map(c => (
+                        <span key={c} className="text-[10px] px-2 py-0.5 rounded-full"
+                            style={c !== AssetCategory.DEBT && (CATEGORY_LIQUIDITY[c] ?? 'medium') !== 'low'
+                                ? { background: 'rgba(16,185,129,0.10)', color: '#5fb89a' }
+                                : { background: 'rgba(148,163,184,0.12)', color: '#8d9bad' }}>
+                            {c}
+                        </span>
+                    ))}
+                    {curFilter.map(c => (
+                        <span key={c} className="text-[10px] px-2 py-0.5 rounded-full bg-surface2 text-textMuted">{c}</span>
+                    ))}
+                    {filteredSubtotal.pct !== null && (
+                        <span className="text-[11px] text-textMuted ml-0.5">{filteredSubtotal.pct.toFixed(0)}% of net worth</span>
+                    )}
+                </div>
             </div>
         )}
 
