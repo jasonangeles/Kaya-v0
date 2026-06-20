@@ -51,9 +51,9 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
     const t = trackRef.current; if (!t) return;
     setSlide(Math.round(t.scrollLeft / t.clientWidth));
   };
-  const onDown = (e: React.MouseEvent) => { const t = trackRef.current; if (!t) return; drag.current = { down: true, sx: e.pageX, sl: t.scrollLeft }; };
-  const onMove = (e: React.MouseEvent) => { const t = trackRef.current; if (!t || !drag.current.down) return; t.scrollLeft = drag.current.sl - (e.pageX - drag.current.sx); };
-  const onUp = () => { const t = trackRef.current; if (!t || !drag.current.down) return; drag.current.down = false; go(Math.round(t.scrollLeft / t.clientWidth)); };
+  const onDown = (e: React.MouseEvent) => { const t = trackRef.current; if (!t) return; drag.current = { down: true, sx: e.pageX, sl: t.scrollLeft }; t.style.scrollSnapType = 'none'; t.style.scrollBehavior = 'auto'; };
+  const onMove = (e: React.MouseEvent) => { const t = trackRef.current; if (!t || !drag.current.down) return; e.preventDefault(); t.scrollLeft = drag.current.sl - (e.pageX - drag.current.sx); };
+  const onUp = () => { const t = trackRef.current; if (!t || !drag.current.down) return; drag.current.down = false; t.style.scrollSnapType = 'x mandatory'; go(Math.round(t.scrollLeft / t.clientWidth)); };
 
   const liqTotal = liquid + locked || 1;
   const liquidPct = (liquid / liqTotal) * 100;
@@ -83,22 +83,7 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
         className="flex overflow-x-auto no-scrollbar select-none cursor-grab active:cursor-grabbing"
         style={{ scrollSnapType: 'x mandatory' }}
       >
-        {/* Slide 1 — donut */}
-        <div className="shrink-0 w-full" style={{ scrollSnapAlign: 'center' }}>
-          <div className="flex justify-center pt-2 pb-1">
-            <Donut segs={segs} centerTop="NET WORTH" centerMain={privacyMode ? '••••' : fmt(assetsTotal - liabilities)} />
-          </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2">
-            {segs.map(s => (
-              <div key={s.key} className="flex items-center justify-between min-w-0">
-                <span className="flex items-center gap-2 min-w-0"><i className="w-2 h-2 rounded-sm shrink-0" style={{ background: s.color }} /><span className="text-xs text-ink truncate">{s.key}</span></span>
-                <span className="text-xs text-textMuted shrink-0">{s.pct.toFixed(0)}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Slide 2 — segmented bar */}
+        {/* Slide 1 — segmented bar */}
         <div className="shrink-0 w-full" style={{ scrollSnapAlign: 'center' }}>
           <div className="flex gap-[3px] h-3.5 mt-3 mb-4">
             {segs.map(s => <div key={s.key} style={{ flexGrow: s.pct, background: s.color }} className="rounded" />)}
@@ -108,6 +93,21 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
               <div key={s.key} className="flex items-center justify-between">
                 <span className="flex items-center gap-2.5 min-w-0"><i className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: s.color }} /><span className="text-sm text-ink truncate">{s.key}</span></span>
                 <span className="flex items-center gap-3 shrink-0"><span className="text-xs text-textMuted">{val(s.usd)}</span><span className="text-sm font-medium text-ink w-9 text-right">{s.pct.toFixed(0)}%</span></span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Slide 2 — donut */}
+        <div className="shrink-0 w-full" style={{ scrollSnapAlign: 'center' }}>
+          <div className="flex justify-center pt-2 pb-1">
+            <Donut segs={segs} centerTop="NET WORTH" centerMain={privacyMode ? '••••' : fmt(assetsTotal - liabilities)} />
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2">
+            {segs.map(s => (
+              <div key={s.key} className="flex items-center justify-between min-w-0">
+                <span className="flex items-center gap-2 min-w-0"><i className="w-2 h-2 rounded-sm shrink-0" style={{ background: s.color }} /><span className="text-xs text-ink truncate">{s.key}</span></span>
+                <span className="text-xs text-textMuted shrink-0">{s.pct.toFixed(0)}%</span>
               </div>
             ))}
           </div>

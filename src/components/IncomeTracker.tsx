@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import { Icons } from './icons';
 import { IncomeRecord } from '../types';
 import { symbolFor } from '../data/currencies';
@@ -118,6 +118,12 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
 
   const current = chartData[chartData.length - 1]?.total || 0;
   const previous = chartData[chartData.length - 2]?.total || 0;
+  // Trailing 12-month average monthly income (total ÷ 12). Descriptive cashflow line.
+  const avgMonthly = useMemo(() => {
+    if (mode !== 'MONTH') return 0;
+    const sum = chartData.reduce((s, d) => s + d.total, 0);
+    return sum / (chartData.length || 1);
+  }, [chartData, mode]);
   const growth = previous > 0 ? ((current - previous) / previous) * 100 : (current > 0 ? 100 : 0);
   const allTimeTotal = useMemo(
     () => records.reduce((s, r) => s + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd), 0),
@@ -223,7 +229,9 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
           </div>
         </div>
         <p className="text-[11px] text-textMuted mb-3">
-          {mode === 'MONTH' ? 'Month over month' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}
+          {mode === 'MONTH' && avgMonthly > 0
+            ? <>Avg {hide(fmt(avgMonthly, displayCurrency))}/mo · {current >= avgMonthly ? 'above' : 'below'} average this month</>
+            : <>{mode === 'MONTH' ? 'Month over month' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
         </p>
 
         <div className="h-36 -mx-2">
@@ -248,6 +256,21 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                   <Cell key={i} fill={i === chartData.length - 1 ? '#10b981' : '#3f3f46'} />
                 ))}
               </Bar>
+              {mode === 'MONTH' && avgMonthly > 0 && (
+                <ReferenceLine
+                  y={avgMonthly}
+                  stroke="#e4e4e7"
+                  strokeDasharray="4 4"
+                  strokeOpacity={0.65}
+                  ifOverflow="extendDomain"
+                  label={{
+                    value: privacyMode ? '•••• /mo avg' : `${symbolOf(displayCurrency)}${Math.round(avgMonthly).toLocaleString()} /mo avg`,
+                    position: 'insideTopRight',
+                    fill: '#a1a1aa',
+                    fontSize: 10
+                  }}
+                />
+              )}
             </BarChart>
           </ResponsiveContainer>
         </div>

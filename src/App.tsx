@@ -1629,7 +1629,7 @@ export default function App() {
                 {Object.values(AssetCategory).filter(c => assets.some(a => a.category === c)).map(c => (
                     <button key={c} onClick={() => toggleCat(c)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${catFilter.includes(c) ? 'bg-surfaceHi text-ink border-ink/20' : 'bg-surface2 text-textMuted border-ink/5 hover:text-ink'}`}>
-                        <i className="w-2 h-2 rounded-full" style={{ background: TYPE_COLORS[c] || '#52525b' }} />{c}
+                        {c !== AssetCategory.DEBT && <i className="w-2 h-2 rounded-full" style={{ background: (CATEGORY_LIQUIDITY[c] ?? 'medium') === 'low' ? '#94a3b8' : '#10b981' }} />}{c}
                     </button>
                 ))}
             </div>
