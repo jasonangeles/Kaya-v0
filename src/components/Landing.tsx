@@ -33,7 +33,11 @@ const Phone: React.FC<{ children: React.ReactNode; tilt?: number; float?: boolea
   <div className="relative" style={{ transform: `perspective(1400px) rotateY(${tilt}deg) rotateX(2deg)` }}>
     <div
       className={`relative rounded-[2.6rem] p-2.5 bg-[#0a0a0a] border border-white/10 ${float ? 'animate-[floatY_7s_ease-in-out_infinite]' : ''}`}
-      style={{ boxShadow: '0 55px 90px -25px rgba(16,185,129,0.22), 0 45px 80px -35px rgba(0,0,0,0.85)' }}
+      style={{
+        boxShadow: '0 36px 80px -42px rgba(0,0,0,0.9)',
+        WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 95%)',
+        maskImage: 'linear-gradient(to bottom, #000 62%, transparent 95%)'
+      }}
     >
       <div className="w-[248px] rounded-[2.1rem] overflow-hidden bg-black">
         <div className="mx-auto mt-2.5 mb-1 h-1 w-12 rounded-full bg-white/15" />
@@ -85,10 +89,9 @@ const HeroPhone: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const GlowPhone: React.FC<{ children: React.ReactNode; tilt?: number }> = ({ children, tilt }) => (
   <div className="relative flex justify-center">
-    <div className="absolute inset-0 blur-3xl" style={{ background: 'radial-gradient(circle at 50% 38%, rgba(16,185,129,0.20), transparent 66%)' }} />
+    {/* Glow kept in the upper half so it never pools below the device */}
+    <div className="absolute inset-x-0 top-0 h-[48%] blur-3xl" style={{ background: 'radial-gradient(ellipse 68% 92% at 50% 26%, rgba(16,185,129,0.18), transparent 70%)' }} />
     <div className="relative"><Phone tilt={tilt}>{children}</Phone></div>
-    {/* Bottom alpha fade so the device dissolves off-frame instead of looking squished */}
-    <div className="pointer-events-none absolute inset-x-0 -bottom-2 h-[40%] z-20" style={{ background: 'linear-gradient(to bottom, transparent 0%, #000 80%)' }} />
   </div>
 );
 
