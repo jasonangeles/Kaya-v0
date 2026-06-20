@@ -19,9 +19,13 @@ export enum AssetCategory {
   CRYPTO = 'Crypto Assets',
   STOCKS = 'Equities',
   REAL_ESTATE = 'Real Estate',
+  PENSION = 'Pension',
   OTHER = 'Other',
   DEBT = 'Liabilities'
 }
+
+// How quickly an asset converts to spendable cash without loss.
+export type Liquidity = 'high' | 'medium' | 'low';
 
 export type TimeRange = '1D' | '1W' | '1M' | '3M' | 'YTD' | '1Y' | 'ALL';
 
@@ -42,6 +46,7 @@ export interface Asset {
   amount: number; // Current Balance (Stored in original currency)
   currency: string; // ISO currency code (e.g. 'PHP', 'USD', 'BTC')
   institution?: string; // e.g., "BDO", "Wealthsimple"
+  liquidity?: Liquidity; // optional manual override; otherwise derived from category
   lastUpdated: string;
   history: AssetHistoryEntry[];
 }

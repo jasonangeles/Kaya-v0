@@ -5,12 +5,13 @@ import { IncomeTracker } from './components/IncomeTracker';
 import { LockScreen, SetPinSheet, RecoverySheet, RecoveryCodeSheet, generateRecoveryCode, hashRecoveryCode, isBiometricAvailable, registerBiometric } from './components/AppLock';
 import { Landing } from './components/Landing';
 import { InstitutionLogo } from './components/InstitutionLogo';
+import { AllocationCarousel } from './components/AllocationCarousel';
 import { CurrencyPicker } from './components/CurrencyPicker';
 import { Sym, DirhamSign } from './components/DirhamSign';
 import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
-import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry, IncomeRecord } from './types';
+import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry, IncomeRecord, Liquidity } from './types';
 import { RATES, INITIAL_ASSETS, BTC_PRICE_USD } from './services/mockDataService';
 import { buildNetWorthSeries } from './services/history';
 import { getLiveRates } from './services/fxService';
@@ -240,9 +241,26 @@ const TYPE_COLORS: Record<string, string> = {
   [AssetCategory.STOCKS]: '#e4e4e7',
   [AssetCategory.CASH]: '#a1a1aa',
   [AssetCategory.REAL_ESTATE]: '#71717a',
+  [AssetCategory.PENSION]: '#94a3b8',
   [AssetCategory.OTHER]: '#52525b'
 };
 const ALLOC_PALETTE = ['#10b981', '#e4e4e7', '#5eead4', '#a1a1aa', '#71717a', '#34d399', '#d4d4d8', '#52525b'];
+
+// Auto liquidity by category (cash-like = high, marketable = medium, long-term/locked = low).
+// Users can override per asset; DEBT is excluded from liquidity entirely.
+const CATEGORY_LIQUIDITY: Record<string, Liquidity> = {
+  [AssetCategory.CASH]: 'high',
+  [AssetCategory.BANK_PH]: 'high',
+  [AssetCategory.BANK_INTL]: 'high',
+  [AssetCategory.STOCKS]: 'medium',
+  [AssetCategory.CRYPTO]: 'low',
+  [AssetCategory.REAL_ESTATE]: 'low',
+  [AssetCategory.PENSION]: 'low',
+  [AssetCategory.OTHER]: 'medium'
+};
+const assetLiquidity = (a: Asset): Liquidity => a.liquidity ?? CATEGORY_LIQUIDITY[a.category] ?? 'medium';
+// Two-segment split: high+medium count as reachable soon; low is locked.
+const isLiquid = (a: Asset): boolean => assetLiquidity(a) !== 'low';
 const LAST_ACTIVE_KEY = 'kaya.lastActiveAt';
 const readLastActive = () => { try { return parseInt(localStorage.getItem(LAST_ACTIVE_KEY) || '0', 10) || 0; } catch { return 0; } };
 const writeLastActive = () => { try { localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now())); } catch {} };
@@ -473,6 +491,10 @@ export default function App() {
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [allocMode, setAllocMode] = useState<'TYPE' | 'CURRENCY'>('TYPE');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [sortMode, setSortMode] = useState<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>('CATEGORY');
+  const [catFilter, setCatFilter] = useState<AssetCategory[]>([]);
+  const [curFilter, setCurFilter] = useState<string[]>([]);
   const [fxDraft, setFxDraft] = useState<{ first: string; second: string }[]>(DEFAULT_FX_PAIRS);
   const mainRef = useRef<HTMLElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
@@ -711,6 +733,39 @@ export default function App() {
     return `${getCurrencySymbol(display)}${Math.round(usd * (rates[display] || 1)).toLocaleString()}`;
   };
 
+  // Liquidity split (liquid vs locked) + gross assets and liabilities, all in USD base.
+  const liquidityBreakdown = useMemo(() => {
+    const usdOf = (a: Asset) => a.amount / (rates[a.currency] || 1);
+    let liquid = 0, locked = 0, liabilities = 0;
+    assets.forEach(a => {
+      if (a.category === AssetCategory.DEBT) { liabilities += usdOf(a); return; }
+      if (a.amount <= 0) return;
+      if (isLiquid(a)) liquid += usdOf(a); else locked += usdOf(a);
+    });
+    const assetsTotal = liquid + locked;
+    return { liquid, locked, liabilities, assetsTotal, net: assetsTotal - liabilities };
+  }, [assets, rates]);
+
+  // Portfolio filter + sort.
+  const portfolioCurrencies = useMemo(() => Array.from(new Set(assets.map(a => a.currency))), [assets]);
+  const filteredAssets = useMemo(() => assets.filter(a =>
+    (catFilter.length === 0 || catFilter.includes(a.category)) &&
+    (curFilter.length === 0 || curFilter.includes(a.currency))
+  ), [assets, catFilter, curFilter]);
+  const sortedFlat = useMemo(() => {
+    const usd = (a: Asset) => a.amount / (rates[a.currency] || 1);
+    const liqRank = (a: Asset) => a.category === AssetCategory.DEBT ? 3 : ({ high: 0, medium: 1, low: 2 }[assetLiquidity(a)]);
+    const arr = [...filteredAssets];
+    if (sortMode === 'VALUE') arr.sort((a, b) => usd(b) - usd(a));
+    else if (sortMode === 'UPDATED') arr.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+    else if (sortMode === 'LIQUIDITY') arr.sort((a, b) => liqRank(a) - liqRank(b) || usd(b) - usd(a));
+    return arr;
+  }, [filteredAssets, sortMode, rates]);
+  const filtersActive = catFilter.length > 0 || curFilter.length > 0 || sortMode !== 'CATEGORY';
+  const toggleCat = (c: AssetCategory) => setCatFilter(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]);
+  const toggleCur = (c: string) => setCurFilter(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]);
+  const resetFilters = () => { setSortMode('CATEGORY'); setCatFilter([]); setCurFilter([]); };
+
   // Passive income received in the last 12 months, in the display currency.
   // Informational only — deliberately NOT added to net worth (avoids double-counting).
   const passiveIncome12mo = useMemo(() => {
@@ -809,10 +864,13 @@ export default function App() {
         if (!editingEntryId) registerStreakActivity(); // adding a balance counts
         setEditingEntryId(null);
     } else {
+        const liqRaw = formData.get('liquidity') as string;
+        const liquidity = (liqRaw === 'high' || liqRaw === 'medium' || liqRaw === 'low') ? (liqRaw as Liquidity) : undefined;
         const assetData = {
             name: formData.get('name') as string,
             category: formData.get('category') as AssetCategory,
             institution: formData.get('institution') as string,
+            liquidity,
         };
         if (selectedAsset && isEditMode) {
              setAssets(prev => prev.map(a => a.id === selectedAsset.id ? { ...a, ...assetData } : a));
@@ -1422,6 +1480,35 @@ export default function App() {
     </div>
   );
 
+  const assetRow = (asset: Asset, showCat: boolean, isLast: boolean) => (
+    <div
+        key={asset.id}
+        onClick={() => setSelectedAssetId(asset.id)}
+        className={`p-5 flex justify-between items-center hover:bg-ink/5 transition-colors cursor-pointer group ${!isLast ? 'border-b border-ink/5' : ''}`}
+    >
+        <div className="flex items-center gap-4 min-w-0">
+            <InstitutionLogo name={asset.institution} category={asset.category} size={44} radius={12} className="group-hover:border-primary/50 transition-colors" />
+            <div className="min-w-0">
+                <p className="font-medium text-ink text-base truncate">{asset.name}</p>
+                {showCat ? (
+                    <span className="flex items-center gap-1.5 mt-0.5">
+                        <i className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: TYPE_COLORS[asset.category] || '#52525b' }} />
+                        <span className="text-xs text-textMuted truncate">{asset.category}{asset.institution ? ` · ${asset.institution}` : ''}</span>
+                    </span>
+                ) : (
+                    <p className="text-xs text-textMuted mt-0.5">{asset.institution}</p>
+                )}
+            </div>
+        </div>
+        <div className="text-right shrink-0">
+            <p className="font-semibold text-ink tracking-wide">
+                {privacyMode ? '••••••' : (<><Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}{asset.amount.toLocaleString()}</>)}
+            </p>
+            <p className="text-[10px] text-textMuted mt-1">{new Date(asset.lastUpdated).toLocaleDateString()}</p>
+        </div>
+    </div>
+  );
+
   const renderPortfolioList = () => (
     <div className="pb-28 space-y-4 animate-[fadeIn_0.5s_ease-out]">
          <header className="mb-6 px-1">
@@ -1429,45 +1516,19 @@ export default function App() {
             <p className="text-sm text-textMuted">Tap to view details</p>
         </header>
 
-        {/* Allocation breakdown */}
+        {/* Allocation + liquidity (swipeable) */}
         {assets.length > 0 && (
-        <div className="glass-panel rounded-3xl p-5 shadow-lg mb-2">
-            <div className="flex justify-between items-center mb-3">
-                <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Allocation</h3>
-                <div className="flex bg-surface2 rounded-full p-0.5">
-                    {(['TYPE', 'CURRENCY'] as const).map(m => (
-                        <button
-                            key={m}
-                            onClick={() => setAllocMode(m)}
-                            className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${allocMode === m ? 'bg-surfaceHi text-ink' : 'text-textFaint hover:text-ink'}`}
-                        >
-                            {m === 'TYPE' ? 'By type' : 'By currency'}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div className="flex h-2.5 rounded-full overflow-hidden mb-4 bg-surface2">
-                {allocation.map(s => (
-                    <div key={s.key} style={{ width: `${s.pct}%`, backgroundColor: s.color }} className="h-full" title={`${s.key} ${s.pct.toFixed(0)}%`} />
-                ))}
-            </div>
-
-            <div className="space-y-2.5">
-                {allocation.map(s => (
-                    <div key={s.key} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-                            <span className="text-sm text-ink truncate">{s.key}</span>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-xs text-textMuted">{privacyMode ? '••••' : fmtDisplay(s.usd)}</span>
-                            <span className="text-sm font-medium text-ink w-10 text-right">{s.pct.toFixed(0)}%</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+            <AllocationCarousel
+                segs={allocation}
+                liquid={liquidityBreakdown.liquid}
+                locked={liquidityBreakdown.locked}
+                liabilities={liquidityBreakdown.liabilities}
+                assetsTotal={liquidityBreakdown.assetsTotal}
+                fmt={fmtDisplay}
+                privacyMode={privacyMode}
+                allocMode={allocMode}
+                onAllocMode={setAllocMode}
+            />
         )}
 
         {/* Read-only passive-income summary (not counted in net worth) */}
@@ -1502,46 +1563,91 @@ export default function App() {
             </div>
         )}
 
-        {Object.values(AssetCategory).map(category => {
-            const categoryAssets = assets.filter(a => a.category === category);
-            if (categoryAssets.length === 0) return null;
+        {/* Filter + sort control */}
+        {assets.length > 0 && (
+            <div className="flex items-center justify-between px-1 pt-1">
+                <span className="text-xs text-textMuted">
+                    {filteredAssets.length === assets.length ? `${assets.length} accounts` : `${filteredAssets.length} of ${assets.length}`}
+                </span>
+                <button
+                    onClick={() => setFilterOpen(true)}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors ${filtersActive ? 'bg-surfaceHi text-ink border-ink/10' : 'bg-surface2 text-textMuted border-ink/5 hover:text-ink'}`}
+                >
+                    {filtersActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                    Filter
+                    <Icons.BarChart size={14} className="rotate-90" />
+                </button>
+            </div>
+        )}
 
-            return (
-                <div key={category} className="mb-6">
-                     <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-3 px-1">{category}</h3>
-                    <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
-                        {categoryAssets.map((asset, index) => (
-                            <div 
-                                key={asset.id} 
-                                onClick={() => setSelectedAssetId(asset.id)}
-                                className={`p-5 flex justify-between items-center hover:bg-ink/5 transition-colors cursor-pointer group ${index !== categoryAssets.length - 1 ? 'border-b border-ink/5' : ''}`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <InstitutionLogo name={asset.institution} category={asset.category} size={44} radius={12} className="group-hover:border-primary/50 transition-colors" />
-                                    <div>
-                                        <p className="font-medium text-ink text-base">{asset.name}</p>
-                                        <p className="text-xs text-textMuted mt-0.5">{asset.institution}</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold text-ink tracking-wide">
-                                        {privacyMode ? '••••••' : (
-                                            <>
-                                                <Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}
-                                                {asset.amount.toLocaleString()}
-                                            </>
-                                        )}
-                                    </p>
-                                    <p className="text-[10px] text-textMuted mt-1">
-                                        {new Date(asset.lastUpdated).toLocaleDateString()}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+        {filteredAssets.length === 0 && assets.length > 0 && (
+            <div className="glass-panel rounded-3xl p-8 text-center shadow-lg">
+                <p className="text-ink font-medium mb-1">No matching accounts</p>
+                <p className="text-textMuted text-sm">Try clearing a filter.</p>
+            </div>
+        )}
+
+        {sortMode === 'CATEGORY' ? (
+            Object.values(AssetCategory).map(category => {
+                const categoryAssets = filteredAssets.filter(a => a.category === category);
+                if (categoryAssets.length === 0) return null;
+                return (
+                    <div key={category} className="mb-6">
+                        <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-3 px-1">{category}</h3>
+                        <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+                            {categoryAssets.map((asset, index) => assetRow(asset, false, index === categoryAssets.length - 1))}
+                        </div>
                     </div>
-                </div>
-            );
-        })}
+                );
+            })
+        ) : (
+            <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+                {sortedFlat.map((asset, index) => assetRow(asset, true, index === sortedFlat.length - 1))}
+            </div>
+        )}
+
+        <Modal isOpen={filterOpen} onClose={() => setFilterOpen(false)}>
+            <h2 className="text-xl font-semibold text-ink mb-5">Sort &amp; filter</h2>
+
+            <p className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2">Sort</p>
+            <div className="flex bg-surface2 rounded-xl p-1 mb-6">
+                {([['CATEGORY', 'Category'], ['VALUE', 'Value'], ['UPDATED', 'Updated'], ['LIQUIDITY', 'Liquidity']] as const).map(([m, label]) => (
+                    <button key={m} onClick={() => setSortMode(m)}
+                        className={`flex-1 py-2 text-[12px] font-medium rounded-lg transition-all ${sortMode === m ? 'bg-surfaceHi text-ink shadow' : 'text-textFaint hover:text-ink'}`}>
+                        {label}
+                    </button>
+                ))}
+            </div>
+
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold text-textMuted uppercase tracking-widest">Filter</p>
+                {filtersActive && <button onClick={resetFilters} className="text-xs font-medium text-emerald-400 hover:opacity-80">Reset</button>}
+            </div>
+
+            <p className="text-[11px] text-textFaint mb-2">Category</p>
+            <div className="flex flex-wrap gap-2 mb-5">
+                {Object.values(AssetCategory).filter(c => assets.some(a => a.category === c)).map(c => (
+                    <button key={c} onClick={() => toggleCat(c)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${catFilter.includes(c) ? 'bg-surfaceHi text-ink border-ink/20' : 'bg-surface2 text-textMuted border-ink/5 hover:text-ink'}`}>
+                        <i className="w-2 h-2 rounded-full" style={{ background: TYPE_COLORS[c] || '#52525b' }} />{c}
+                    </button>
+                ))}
+            </div>
+
+            <p className="text-[11px] text-textFaint mb-2">Currency</p>
+            <div className="flex flex-wrap gap-2">
+                {portfolioCurrencies.map(c => (
+                    <button key={c} onClick={() => toggleCur(c)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${curFilter.includes(c) ? 'bg-surfaceHi text-ink border-ink/20' : 'bg-surface2 text-textMuted border-ink/5 hover:text-ink'}`}>
+                        {c}
+                    </button>
+                ))}
+            </div>
+
+            <button onClick={() => setFilterOpen(false)} className="w-full mt-7 bg-ink text-paper font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity">
+                Show {filteredAssets.length} {filteredAssets.length === 1 ? 'account' : 'accounts'}
+            </button>
+        </Modal>
     </div>
   );
 
@@ -1918,6 +2024,22 @@ export default function App() {
                         <input name="institution" defaultValue={selectedAsset?.institution} placeholder={getInstitutionLabel(modalCategory)} className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
                     </div>
 
+                    {modalCategory !== AssetCategory.DEBT && (
+                        <div>
+                            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Liquidity (Optional)</label>
+                            <div className="relative">
+                                <select name="liquidity" defaultValue={selectedAsset?.liquidity ?? 'auto'} className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none appearance-none focus:border-primary transition-all">
+                                    <option value="auto">Auto · {CATEGORY_LIQUIDITY[modalCategory] ?? 'medium'} (by category)</option>
+                                    <option value="high">High · cash-like, reachable in a day</option>
+                                    <option value="medium">Medium · sellable in days</option>
+                                    <option value="low">Low · locked / long-term</option>
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-textMuted"><Icons.ChevronDown size={20} /></div>
+                            </div>
+                            <p className="text-[11px] text-textFaint mt-1.5">Sets the "accessible now" split. Leave on Auto unless this account is unusual.</p>
+                        </div>
+                    )}
+
                     <div className="flex gap-3 pt-4">
                         {selectedAsset && (
                             <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
@@ -1944,6 +2066,8 @@ function getInstitutionLabel(category: AssetCategory) {
             return 'Wallet / Exchange';
         case AssetCategory.STOCKS:
             return 'Brokerage';
+        case AssetCategory.PENSION:
+            return 'Provider / Fund';
         default:
             return 'Institution / Platform';
     }
