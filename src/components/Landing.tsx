@@ -118,7 +118,7 @@ const useCountUp = (target: number, run: boolean, dur = 1300) => {
 // `animate` triggers the hero's one-time count-up + left-to-right line draw.
 const OverviewScreen: React.FC<{ animate?: boolean }> = ({ animate = false }) => {
   const [drawn, setDrawn] = useState(!animate);
-  const value = useCountUp(1284930, animate);
+  const value = useCountUp(1847200, animate);
   useEffect(() => {
     if (!animate) return;
     const id = requestAnimationFrame(() => setDrawn(true));
@@ -137,7 +137,7 @@ const OverviewScreen: React.FC<{ animate?: boolean }> = ({ animate = false }) =>
         <span className="text-2xl font-semibold text-white tracking-tight tabular-nums">{value.toLocaleString('en-US')}</span>
       </div>
       <div className="flex items-center gap-1.5 mb-2">
-        <span className="text-emerald-400 text-[11px] font-medium">▲ 3.1%</span>
+        <span className="text-emerald-400 text-[11px] font-medium">▲ 4.2%</span>
         <span className="text-zinc-600 text-[10px]">past month</span>
       </div>
       <svg viewBox="0 0 200 56" className="w-full h-11" preserveAspectRatio="none">
@@ -152,7 +152,7 @@ const OverviewScreen: React.FC<{ animate?: boolean }> = ({ animate = false }) =>
       </div>
     </div>
     <div className="rounded-2xl bg-[#141414] border border-white/5 overflow-hidden">
-      {[{ n: 'Emergency Fund', s: 'BPI', v: '₱150,000' }, { n: 'TFSA', s: 'Wealthsimple', v: 'C$12,500' }, { n: 'Bitcoin', s: 'Ledger', v: '₿0.15' }].map((a, i) => (
+      {[{ n: 'Emergency Fund', s: 'BPI', v: '₱220,000' }, { n: 'Roth IRA', s: 'Fidelity', v: '$16,800' }, { n: 'Bitcoin', s: 'Ledger', v: '₿0.21' }].map((a, i) => (
         <div key={i} className={`flex items-center justify-between px-3 py-2.5 ${i < 2 ? 'border-b border-white/5' : ''}`}>
           <div className="min-w-0"><p className="text-[11px] font-medium text-white truncate">{a.n}</p><p className="text-[9px] text-zinc-500">{a.s}</p></div>
           <span className="text-[11px] font-medium text-zinc-200">{a.v}</span>
@@ -168,10 +168,10 @@ const IncomeScreen = () => (
     <p className="text-sm font-medium text-white pt-1">Passive Income</p>
     <div className="rounded-2xl bg-[#141414] border border-white/5 p-3.5">
       <div className="flex items-start justify-between mb-0.5">
-        <div><p className="text-[9px] text-zinc-500 uppercase tracking-widest mb-1">This year</p><p className="text-xl font-semibold text-white">₱124,413</p></div>
-        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-medium self-center">▲ 9%</span>
+        <div><p className="text-[9px] text-zinc-500 uppercase tracking-widest mb-1">This year</p><p className="text-xl font-semibold text-white">₱156,800</p></div>
+        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-medium self-center">▲ 11%</span>
       </div>
-      <p className="text-[9px] text-zinc-500 mb-2.5">Averaging ₱9,500 a month this year</p>
+      <p className="text-[9px] text-zinc-500 mb-2.5">Averaging ₱13,000 a month this year</p>
       <div className="flex items-center justify-center gap-3 mb-2">
         <Icons.ChevronRight size={12} className="rotate-180 text-zinc-600" />
         <span className="text-[10px] font-medium text-white tabular-nums">2026</span>
@@ -186,14 +186,14 @@ const IncomeScreen = () => (
         <div className="absolute inset-x-0 flex items-center" style={{ bottom: '60%' }}>
           <div className="flex-1 border-t border-dashed border-zinc-300/50" />
         </div>
-        <span className="absolute right-0 text-[7px] text-zinc-400" style={{ bottom: '62%' }}>₱9.5k /mo avg</span>
+        <span className="absolute right-0 text-[7px] text-zinc-400" style={{ bottom: '62%' }}>₱13k /mo avg</span>
       </div>
       <div className="flex justify-between mt-1.5 px-0.5">
         {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map(m => <span key={m} className="text-[7px] text-zinc-600">{m}</span>)}
       </div>
     </div>
     <div className="rounded-2xl bg-[#141414] border border-white/5 overflow-hidden">
-      {[{ s: 'FB', c: 'Dividend · Jun 8', v: '+₱1,800' }, { s: 'RCR', c: 'Dividend · Jun 1', v: '+₱2,207' }].map((r, i) => (
+      {[{ s: 'JFC', c: 'Dividend · Jun 8', v: '+₱2,400' }, { s: 'SM', c: 'Dividend · Jun 1', v: '+₱3,150' }].map((r, i) => (
         <div key={i} className={`flex items-center justify-between px-3 py-2.5 ${i < 1 ? 'border-b border-white/5' : ''}`}>
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Icons.ArrowDownLeft size={12} /></span>
@@ -230,8 +230,8 @@ const AllocationScreen = () => (
     </div>
     <div className="rounded-2xl bg-[#141414] border border-white/5 overflow-hidden">
       {[
-        { m: 'M', mc: '#FF6B00', n: 'JR', cat: 'Philippine Banks', liquid: true, v: '₱2,995,197' },
-        { m: 'SSS', mc: '#5b6b7f', n: 'SSS', cat: 'Pension', liquid: false, v: '₱170,135' }
+        { m: 'M', mc: '#FF6B00', n: 'Juan Dela Cruz', cat: 'Philippine Banks', liquid: true, v: '₱1,842,500' },
+        { m: 'SSS', mc: '#5b6b7f', n: 'SSS', cat: 'Pension', liquid: false, v: '₱210,450' }
       ].map((r, i) => (
         <div key={i} className={`flex items-center gap-2.5 px-3 py-2.5 ${i < 1 ? 'border-b border-white/5' : ''}`}>
           <span className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-semibold text-white shrink-0" style={{ background: r.mc }}>{r.m}</span>

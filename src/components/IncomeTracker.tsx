@@ -404,7 +404,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
             <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Source</label>
             <input
               required
-              placeholder="e.g. FB, RCR, BPI Savings"
+              placeholder="e.g. JFC, SM, BPI Savings"
               value={draft.source}
               onChange={(e) => setDraft({ ...draft, source: e.target.value })}
               className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-ink/40 outline-none transition-all placeholder:text-textFaint"
