@@ -294,7 +294,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                   );
                 }}
               />
-              <Bar dataKey="total" radius={[4, 4, 0, 0]} animationDuration={700}>
+              <Bar dataKey="total" radius={[4, 4, 0, 0]} animationDuration={700} maxBarSize={48}>
                 {chartData.map((entry, i) => (
                   <Cell key={i} fill={i === chartData.length - 1 ? '#10b981' : '#3f3f46'} />
                 ))}
