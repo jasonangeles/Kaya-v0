@@ -100,9 +100,9 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
     const keys: string[] = [];
     const now = new Date();
     if (mode === 'MONTH') {
-      for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        keys.push(monthKey(d));
+      // Current calendar year, January on the left up to the current month.
+      for (let m = 0; m <= now.getMonth(); m++) {
+        keys.push(monthKey(new Date(now.getFullYear(), m, 1)));
       }
     } else {
       const years = records.map(r => new Date(r.date).getFullYear());
@@ -118,7 +118,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
 
   const current = chartData[chartData.length - 1]?.total || 0;
   const previous = chartData[chartData.length - 2]?.total || 0;
-  // Trailing 12-month average monthly income (total ÷ 12). Descriptive cashflow line.
+  // Average monthly income this year (this year's total ÷ months elapsed). Simple cashflow line.
   const avgMonthly = useMemo(() => {
     if (mode !== 'MONTH') return 0;
     const sum = chartData.reduce((s, d) => s + d.total, 0);
@@ -230,8 +230,8 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
         </div>
         <p className="text-[11px] text-textMuted mb-3">
           {mode === 'MONTH' && avgMonthly > 0
-            ? <>Avg {hide(fmt(avgMonthly, displayCurrency))}/mo · {current >= avgMonthly ? 'above' : 'below'} average this month</>
-            : <>{mode === 'MONTH' ? 'Month over month' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
+            ? <>Averaging {hide(fmt(avgMonthly, displayCurrency))} a month this year</>
+            : <>{mode === 'MONTH' ? 'This year so far' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
         </p>
 
         <div className="h-36 -mx-2">

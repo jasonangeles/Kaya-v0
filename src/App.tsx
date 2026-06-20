@@ -12,7 +12,7 @@ import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/cur
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
 import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry, IncomeRecord, Liquidity } from './types';
-import { RATES, INITIAL_ASSETS, BTC_PRICE_USD } from './services/mockDataService';
+import { RATES, BTC_PRICE_USD } from './services/mockDataService';
 import { buildNetWorthSeries } from './services/history';
 import { getLiveRates } from './services/fxService';
 import { getWealthInsights } from './services/geminiService';
@@ -318,7 +318,9 @@ const recomputeAsset = (asset: Asset, history: AssetHistoryEntry[]): Asset => {
 };
 
 export default function App() {
-  const [assets, setAssets] = useState<Asset[]>(() => normalizeAssets(loadStored(STORAGE_KEYS.assets, INITIAL_ASSETS)));
+  // New users start empty (clean empty states), not with sample data.
+  // Existing data is read from local storage / cloud, so this only affects fresh accounts.
+  const [assets, setAssets] = useState<Asset[]>(() => normalizeAssets(loadStored<Asset[]>(STORAGE_KEYS.assets, [])));
   const [income, setIncome] = useState<IncomeRecord[]>(() => loadStored<IncomeRecord[]>('kaya.income.v1', []));
   const [liveRates, setLiveRates] = useState<Record<string, number>>({});
   const [btcUsd, setBtcUsd] = useState<number>(BTC_PRICE_USD);
@@ -492,9 +494,9 @@ export default function App() {
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [allocMode, setAllocMode] = useState<'TYPE' | 'CURRENCY'>('TYPE');
   const [filterOpen, setFilterOpen] = useState(false);
-  const [sortMode, setSortMode] = useState<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>('CATEGORY');
-  const [catFilter, setCatFilter] = useState<AssetCategory[]>([]);
-  const [curFilter, setCurFilter] = useState<string[]>([]);
+  const [sortMode, setSortMode] = useState<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>(() => loadStored<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>('kaya.portfolio.sort', 'CATEGORY'));
+  const [catFilter, setCatFilter] = useState<AssetCategory[]>(() => loadStored<AssetCategory[]>('kaya.portfolio.catFilter', []));
+  const [curFilter, setCurFilter] = useState<string[]>(() => loadStored<string[]>('kaya.portfolio.curFilter', []));
   const [fxDraft, setFxDraft] = useState<{ first: string; second: string }[]>(DEFAULT_FX_PAIRS);
   const mainRef = useRef<HTMLElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
@@ -765,6 +767,14 @@ export default function App() {
   const toggleCat = (c: AssetCategory) => setCatFilter(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]);
   const toggleCur = (c: string) => setCurFilter(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]);
   const resetFilters = () => { setSortMode('CATEGORY'); setCatFilter([]); setCurFilter([]); };
+  // Remember the user's sort/filter across refreshes (per-device view preference).
+  useEffect(() => {
+    try {
+      localStorage.setItem('kaya.portfolio.sort', JSON.stringify(sortMode));
+      localStorage.setItem('kaya.portfolio.catFilter', JSON.stringify(catFilter));
+      localStorage.setItem('kaya.portfolio.curFilter', JSON.stringify(curFilter));
+    } catch {}
+  }, [sortMode, catFilter, curFilter]);
 
   // Passive income received in the last 12 months, in the display currency.
   // Informational only — deliberately NOT added to net worth (avoids double-counting).
@@ -782,6 +792,7 @@ export default function App() {
 
   useEffect(() => {
     const fetchAdvice = async () => {
+      if (assets.length === 0) { setInsights([]); setIsLoadingInsights(false); return; }
       setIsLoadingInsights(true);
       const totalPHP = totalValueUSD * RATES.PHP;
       const tips = await getWealthInsights(assets, totalPHP);
@@ -789,7 +800,8 @@ export default function App() {
       setIsLoadingInsights(false);
     };
     fetchAdvice();
-  }, []); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assets.length === 0]);
   
   useEffect(() => {
     if (selectedAsset && !historySwipeHintShown) {
@@ -1430,6 +1442,7 @@ export default function App() {
           </div>
       </div>
 
+      {assets.length > 0 && (
       <div className="px-1">
         <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-3">Insights</h3>
         {isLoadingInsights ? (
@@ -1477,6 +1490,7 @@ export default function App() {
             </div>
         )}
       </div>
+      )}
     </div>
   );
 
