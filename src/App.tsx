@@ -1669,7 +1669,14 @@ export default function App() {
         )}
 
         <Modal isOpen={filterOpen} onClose={() => setFilterOpen(false)}>
-            <h2 className="text-xl font-semibold text-ink mb-5">Sort &amp; filter</h2>
+            <div className="flex items-center justify-between mb-5 pr-9">
+                <h2 className="text-xl font-semibold text-ink">Sort &amp; filter</h2>
+                {filtersActive && (
+                    <button onClick={resetFilters} className="text-[11px] font-medium px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors">
+                        Reset all
+                    </button>
+                )}
+            </div>
 
             <p className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2">Sort</p>
             <div className="flex bg-surface2 rounded-xl p-1 mb-6">
@@ -1681,10 +1688,7 @@ export default function App() {
                 ))}
             </div>
 
-            <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold text-textMuted uppercase tracking-widest">Filter</p>
-                {filtersActive && <button onClick={resetFilters} className="text-xs font-medium text-emerald-400 hover:opacity-80">Reset</button>}
-            </div>
+            <p className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2">Filter</p>
 
             <p className="text-[11px] text-textFaint mb-2">Category</p>
             <div className="flex flex-wrap gap-2 mb-5">

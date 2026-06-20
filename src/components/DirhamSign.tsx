@@ -6,11 +6,11 @@ const DIRHAM_PATH = "m88.3 1c0.4 0.6 2.6 3.3 4.7 5.9 15.3 18.2 26.8 47.8 33 85.1
 // The official UAE Dirham symbol as an inline icon — inherits text color & size.
 export const DirhamSign: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className, style }) => (
   <svg
-    viewBox="0 0 1000 870"
+    viewBox="-6 -6 1014 890"
     role="img"
     aria-label="AED"
     className={className}
-    style={{ height: '0.78em', width: 'auto', display: 'inline-block', verticalAlign: '-0.05em', fill: 'currentColor', ...style }}
+    style={{ height: '0.78em', width: 'auto', display: 'inline-block', verticalAlign: '-0.05em', fill: 'currentColor', overflow: 'visible', ...style }}
   >
     <path d={DIRHAM_PATH} />
   </svg>
