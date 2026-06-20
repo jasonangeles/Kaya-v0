@@ -1505,9 +1505,16 @@ export default function App() {
             <div className="min-w-0">
                 <p className="font-medium text-ink text-base truncate">{asset.name}</p>
                 {showCat ? (
-                    <span className="flex items-center gap-1.5 mt-0.5">
-                        <i className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: TYPE_COLORS[asset.category] || '#52525b' }} />
-                        <span className="text-xs text-textMuted truncate">{asset.category}{asset.institution ? ` · ${asset.institution}` : ''}</span>
+                    <span className="flex items-center gap-1.5 mt-1 min-w-0">
+                        <span
+                            className="text-[9px] leading-none px-1.5 py-[3px] rounded-full shrink-0"
+                            style={isLiquid(asset)
+                                ? { background: 'rgba(16,185,129,0.10)', color: '#5fb89a' }
+                                : { background: 'rgba(148,163,184,0.12)', color: '#8d9bad' }}
+                        >
+                            {asset.category}
+                        </span>
+                        {asset.institution && <span className="text-[10px] text-textFaint truncate">{asset.institution}</span>}
                     </span>
                 ) : (
                     <p className="text-xs text-textMuted mt-0.5">{asset.institution}</p>
