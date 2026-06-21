@@ -695,7 +695,8 @@ export default function App() {
   }, [totalValueUSD, settings.displayCurrency, privacyMode, rates, btcUsd]);
 
   const topAssets = useMemo(() => {
-    return [...assets]
+    return assets
+      .filter(a => !a.excluded && a.category !== AssetCategory.DEBT)
       .sort((a, b) => {
         const getVal = (asset: Asset) => asset.amount / (rates[asset.currency] || 1);
         return getVal(b) - getVal(a);
@@ -2142,10 +2143,10 @@ export default function App() {
                     <label className="flex items-center justify-between gap-4 cursor-pointer">
                         <span className="min-w-0">
                             <span className="block text-xs font-medium text-textMuted uppercase tracking-wider">Exclude from net worth</span>
-                            <span className="block text-[11px] text-textFaint mt-1">Still tracked, but not added to your total — for things that aren't fully yours yet.</span>
+                            <span className="block text-[11px] text-textFaint mt-1">Still tracked, but not added to your total.</span>
                         </span>
                         <input type="checkbox" name="excluded" defaultChecked={selectedAsset?.excluded} className="peer sr-only" />
-                        <span className="shrink-0 w-11 h-6 rounded-full bg-surfaceHi peer-checked:bg-ink relative transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
+                        <span className="shrink-0 w-11 h-6 rounded-full bg-zinc-700 peer-checked:bg-ink relative transition-colors duration-200 after:content-[''] after:absolute after:top-1 after:left-1 after:w-4 after:h-4 after:rounded-full after:shadow-sm after:transition-all after:duration-200 after:bg-ink peer-checked:after:bg-paper peer-checked:after:translate-x-5" />
                     </label>
 
                     <div className="flex gap-3 pt-4">
