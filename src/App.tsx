@@ -294,6 +294,20 @@ const SYNC_KEY = 'kaya.syncedAt';
 const getSyncedAt = () => { try { return localStorage.getItem(SYNC_KEY) || ''; } catch { return ''; } };
 const setSyncedAt = (t: string) => { try { localStorage.setItem(SYNC_KEY, t); } catch {} };
 
+// Which signed-in user the locally-cached data belongs to. Prevents one account's
+// data from leaking into another when accounts are switched on the same device.
+const OWNER_KEY = 'kaya.ownerId';
+const getOwner = () => { try { return localStorage.getItem(OWNER_KEY) || ''; } catch { return ''; } };
+const setOwner = (id: string) => { try { localStorage.setItem(OWNER_KEY, id); } catch {} };
+
+const DEFAULT_SETTINGS: UserSettings = {
+  displayCurrency: Currency.PHP,
+  showInBTC: false,
+  onboardingComplete: true,
+  streakDays: 0,
+  lastLogin: new Date().toISOString()
+};
+
 // Build an ISO timestamp from a YYYY-MM-DD date, attaching a time-of-day so
 // multiple entries on the same date keep a stable, log-order sort.
 // Anchored to the LOCAL calendar date so the stored instant renders back to the
@@ -362,13 +376,7 @@ export default function App() {
     ...liveRates,
     BTC: btcUsd ? 1 / btcUsd : RATES.BTC
   }), [liveRates, btcUsd]);
-  const [settings, setSettings] = useState<UserSettings>(() => loadStored(STORAGE_KEYS.settings, {
-    displayCurrency: Currency.PHP,
-    showInBTC: false,
-    onboardingComplete: true,
-    streakDays: 0,
-    lastLogin: new Date().toISOString()
-  }));
+  const [settings, setSettings] = useState<UserSettings>(() => loadStored(STORAGE_KEYS.settings, DEFAULT_SETTINGS));
 
   // Persist data locally so real entries survive reloads.
   useEffect(() => {
@@ -437,7 +445,19 @@ export default function App() {
       const { data } = await supabase!.from('kaya_data').select('data, updated_at').eq('user_id', uid).maybeSingle();
       if (!active) return;
 
-      if (!data) {
+      const accountSwitch = getOwner() !== '' && getOwner() !== uid;
+
+      if (accountSwitch) {
+        // A different account signed in on this device. NEVER carry the previous
+        // user's local data over — adopt this user's own cloud, or start empty.
+        const now = new Date().toISOString();
+        if (data?.data) {
+          adopt(data.data, data.updated_at || now);
+        } else {
+          setAssets([]); setIncome([]); setSettings(DEFAULT_SETTINGS); setSyncedAt(now);
+          await supabase!.from('kaya_data').upsert({ user_id: uid, data: { assets: [], income: [], settings: DEFAULT_SETTINGS }, updated_at: now });
+        }
+      } else if (!data) {
         await pushLocal();                       // no cloud row yet → seed from local
       } else {
         const d: any = data.data || {};
@@ -455,6 +475,7 @@ export default function App() {
           await pushLocal();                     // local is newer/equal → keep + push
         }
       }
+      setOwner(uid);
       if (active) setCloudLoaded(true);
     })();
     return () => { active = false; };
@@ -475,6 +496,15 @@ export default function App() {
 
   const handleSignOut = async () => {
     if (supabase) await supabase.auth.signOut();
+    // Clear this account's local data so the next sign-in starts from their own cloud.
+    try {
+      localStorage.removeItem(STORAGE_KEYS.assets);
+      localStorage.removeItem('kaya.income.v1');
+      localStorage.removeItem(STORAGE_KEYS.settings);
+      localStorage.removeItem(SYNC_KEY);
+      localStorage.removeItem(OWNER_KEY);
+    } catch {}
+    setAssets([]); setIncome([]); setSettings(DEFAULT_SETTINGS); setCloudLoaded(false);
   };
 
   // Feedback → Supabase if available, else fall back to an email draft.
