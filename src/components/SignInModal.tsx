@@ -84,19 +84,19 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void }> = ({ 
           <>
             <h2 className="text-2xl font-semibold text-white mb-1.5">Enter your code</h2>
             <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
-              We emailed a 6-digit code to <span className="text-white">{email}</span>. Enter it below — or tap the link in the email if you're on a computer.
+              We emailed a code to <span className="text-white">{email}</span>. Enter it below — or tap the link in the email if you're on a computer.
             </p>
             <form onSubmit={verifyCode} className="space-y-3">
               <input
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                maxLength={6}
+                maxLength={8}
                 autoFocus
                 value={code}
                 onChange={(e) => { setCode(e.target.value.replace(/\D/g, '')); if (message) setMessage(''); }}
-                placeholder="123456"
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-center text-2xl tracking-[0.4em] font-semibold focus:ring-1 focus:ring-white/40 focus:border-white/40 outline-none transition-all placeholder:text-zinc-700 placeholder:tracking-normal placeholder:text-base"
+                placeholder="Enter code"
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-center text-2xl tracking-[0.3em] font-semibold focus:ring-1 focus:ring-white/40 focus:border-white/40 outline-none transition-all placeholder:text-zinc-700 placeholder:tracking-normal placeholder:text-base"
               />
               {message && <p className="text-rose-400 text-sm text-center">{message}</p>}
               <button
