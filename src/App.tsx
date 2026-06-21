@@ -445,11 +445,15 @@ export default function App() {
       const { data } = await supabase!.from('kaya_data').select('data, updated_at').eq('user_id', uid).maybeSingle();
       if (!active) return;
 
-      const accountSwitch = getOwner() !== '' && getOwner() !== uid;
+      // Trust local cache ONLY if it belongs to this exact user. Anything else
+      // (different account, or an untagged stale cache) is not carried over —
+      // we load this user's own cloud, or start empty. (The app requires sign-in
+      // to enter data, so genuine local data always has a matching owner.)
+      const accountSwitch = getOwner() !== uid;
 
       if (accountSwitch) {
-        // A different account signed in on this device. NEVER carry the previous
-        // user's local data over — adopt this user's own cloud, or start empty.
+        // A different/untagged account on this device. NEVER carry local data over —
+        // adopt this user's own cloud, or start empty.
         const now = new Date().toISOString();
         if (data?.data) {
           adopt(data.data, data.updated_at || now);
