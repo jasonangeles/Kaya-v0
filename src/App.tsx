@@ -497,6 +497,7 @@ export default function App() {
   const [sortMode, setSortMode] = useState<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>(() => loadStored<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>('kaya.portfolio.sort', 'CATEGORY'));
   const [catFilter, setCatFilter] = useState<AssetCategory[]>(() => loadStored<AssetCategory[]>('kaya.portfolio.catFilter', []));
   const [curFilter, setCurFilter] = useState<string[]>(() => loadStored<string[]>('kaya.portfolio.curFilter', []));
+  const [excludedOpen, setExcludedOpen] = useState(false);
   const [fxDraft, setFxDraft] = useState<{ first: string; second: string }[]>(DEFAULT_FX_PAIRS);
   const mainRef = useRef<HTMLElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
@@ -666,9 +667,10 @@ export default function App() {
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [selectedAsset, selectedTimeRange, rates]);
 
-  // Net worth = assets minus liabilities. DEBT entries subtract.
+  // Net worth = assets minus liabilities. DEBT subtracts; excluded assets don't count.
   const totalValueUSD = useMemo(() => {
     return assets.reduce((acc, a) => {
+      if (a.excluded) return acc;
       const v = a.amount / (rates[a.currency] || 1);
       return a.category === AssetCategory.DEBT ? acc - v : acc + v;
     }, 0);
@@ -715,7 +717,7 @@ export default function App() {
   const allocation = useMemo(() => {
     const usdOf = (a: Asset) => a.amount / (rates[a.currency] || 1);
     const map = new Map<string, number>();
-    assets.filter(a => a.category !== AssetCategory.DEBT && a.amount > 0).forEach(a => {
+    assets.filter(a => a.category !== AssetCategory.DEBT && a.amount > 0 && !a.excluded).forEach(a => {
       const key = allocMode === 'TYPE' ? a.category : a.currency;
       map.set(key, (map.get(key) || 0) + usdOf(a));
     });
@@ -744,6 +746,7 @@ export default function App() {
     const usdOf = (a: Asset) => a.amount / (rates[a.currency] || 1);
     let liquid = 0, locked = 0, liabilities = 0;
     assets.forEach(a => {
+      if (a.excluded) return;
       if (a.category === AssetCategory.DEBT) { liabilities += usdOf(a); return; }
       if (a.amount <= 0) return;
       if (isLiquid(a)) liquid += usdOf(a); else locked += usdOf(a);
@@ -758,26 +761,29 @@ export default function App() {
     (catFilter.length === 0 || catFilter.includes(a.category)) &&
     (curFilter.length === 0 || curFilter.includes(a.currency))
   ), [assets, catFilter, curFilter]);
+  // Excluded assets are parked in their own collapsed section, out of the main list and all totals.
+  const mainAssets = useMemo(() => filteredAssets.filter(a => !a.excluded), [filteredAssets]);
+  const excludedAssets = useMemo(() => filteredAssets.filter(a => a.excluded), [filteredAssets]);
   const sortedFlat = useMemo(() => {
     const usd = (a: Asset) => a.amount / (rates[a.currency] || 1);
     const liqRank = (a: Asset) => a.category === AssetCategory.DEBT ? 3 : ({ high: 0, medium: 1, low: 2 }[assetLiquidity(a)]);
-    const arr = [...filteredAssets];
+    const arr = [...mainAssets];
     if (sortMode === 'VALUE') arr.sort((a, b) => usd(b) - usd(a));
     else if (sortMode === 'UPDATED') arr.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     else if (sortMode === 'LIQUIDITY') arr.sort((a, b) => liqRank(a) - liqRank(b) || usd(b) - usd(a));
     return arr;
-  }, [filteredAssets, sortMode, rates]);
+  }, [mainAssets, sortMode, rates]);
   const filtersActive = catFilter.length > 0 || curFilter.length > 0 || sortMode !== 'CATEGORY';
   // Filtered subtotal (only when a category/currency filter is actually narrowing the list).
   const filteredSubtotal = useMemo(() => {
     if (catFilter.length === 0 && curFilter.length === 0) return null;
-    const usd = filteredAssets.reduce((s, a) => {
+    const usd = mainAssets.reduce((s, a) => {
       const u = a.amount / (rates[a.currency] || 1);
       return a.category === AssetCategory.DEBT ? s - u : s + u;
     }, 0);
     const net = liquidityBreakdown.net;
-    return { usd, pct: net > 0 ? (usd / net) * 100 : null, count: filteredAssets.length };
-  }, [filteredAssets, catFilter, curFilter, rates, liquidityBreakdown.net]);
+    return { usd, pct: net > 0 ? (usd / net) * 100 : null, count: mainAssets.length };
+  }, [mainAssets, catFilter, curFilter, rates, liquidityBreakdown.net]);
   const toggleCat = (c: AssetCategory) => setCatFilter(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]);
   const toggleCur = (c: string) => setCurFilter(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]);
   const resetFilters = () => { setSortMode('CATEGORY'); setCatFilter([]); setCurFilter([]); };
@@ -897,6 +903,7 @@ export default function App() {
             category: formData.get('category') as AssetCategory,
             institution: formData.get('institution') as string,
             liquidity,
+            excluded: formData.get('excluded') === 'on',
         };
         if (selectedAsset && isEditMode) {
              setAssets(prev => prev.map(a => a.id === selectedAsset.id ? { ...a, ...assetData } : a));
@@ -1660,7 +1667,7 @@ export default function App() {
 
         {sortMode === 'CATEGORY' ? (
             Object.values(AssetCategory).map(category => {
-                const categoryAssets = filteredAssets.filter(a => a.category === category);
+                const categoryAssets = mainAssets.filter(a => a.category === category);
                 if (categoryAssets.length === 0) return null;
                 return (
                     <div key={category} className="mb-6">
@@ -1674,6 +1681,21 @@ export default function App() {
         ) : (
             <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
                 {sortedFlat.map((asset, index) => assetRow(asset, true, index === sortedFlat.length - 1))}
+            </div>
+        )}
+
+        {/* Excluded — tracked but not counted toward net worth */}
+        {excludedAssets.length > 0 && (
+            <div className="mt-2">
+                <button onClick={() => setExcludedOpen(o => !o)} className="w-full flex items-center justify-between px-1 py-2 group">
+                    <span className="text-xs font-bold text-textMuted uppercase tracking-widest">Excluded · not in net worth ({excludedAssets.length})</span>
+                    <Icons.ChevronDown className={`w-4 h-4 text-textFaint transition-transform ${excludedOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {excludedOpen && (
+                    <div className="glass-panel rounded-3xl overflow-hidden shadow-lg opacity-70">
+                        {excludedAssets.map((asset, index) => assetRow(asset, true, index === excludedAssets.length - 1))}
+                    </div>
+                )}
             </div>
         )}
 
@@ -2116,6 +2138,15 @@ export default function App() {
                             <p className="text-[11px] text-textFaint mt-1.5">Sets the "accessible now" split. Leave on Auto unless this account is unusual.</p>
                         </div>
                     )}
+
+                    <label className="flex items-center justify-between gap-4 cursor-pointer">
+                        <span className="min-w-0">
+                            <span className="block text-xs font-medium text-textMuted uppercase tracking-wider">Exclude from net worth</span>
+                            <span className="block text-[11px] text-textFaint mt-1">Still tracked, but not added to your total — for things that aren't fully yours yet.</span>
+                        </span>
+                        <input type="checkbox" name="excluded" defaultChecked={selectedAsset?.excluded} className="peer sr-only" />
+                        <span className="shrink-0 w-11 h-6 rounded-full bg-surfaceHi peer-checked:bg-ink relative transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
+                    </label>
 
                     <div className="flex gap-3 pt-4">
                         {selectedAsset && (

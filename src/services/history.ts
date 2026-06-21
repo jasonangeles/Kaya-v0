@@ -34,7 +34,7 @@ export const buildNetWorthSeries = (
   }
 
   // Pre-sort each asset's history ascending by date.
-  const prepared = assets.map(a => ({
+  const prepared = assets.filter(a => !a.excluded).map(a => ({
     currency: a.currency,
     sign: a.category === AssetCategory.DEBT ? -1 : 1,
     hist: [...a.history].sort((x, y) => new Date(x.date).getTime() - new Date(y.date).getTime())

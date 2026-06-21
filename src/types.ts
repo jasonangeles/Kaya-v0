@@ -47,6 +47,7 @@ export interface Asset {
   currency: string; // ISO currency code (e.g. 'PHP', 'USD', 'BTC')
   institution?: string; // e.g., "BDO", "Wealthsimple"
   liquidity?: Liquidity; // optional manual override; otherwise derived from category
+  excluded?: boolean; // tracked but not counted toward net worth / allocation / liquidity
   lastUpdated: string;
   history: AssetHistoryEntry[];
 }
