@@ -509,6 +509,7 @@ export default function App() {
       localStorage.removeItem(OWNER_KEY);
     } catch {}
     setAssets([]); setIncome([]); setSettings(DEFAULT_SETTINGS); setCloudLoaded(false);
+    setActiveTab('HOME'); // always return to the main page on next sign-in
   };
 
   // Feedback → Supabase if available, else fall back to an email draft.
