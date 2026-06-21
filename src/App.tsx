@@ -456,6 +456,7 @@ export default function App() {
   const submitFeedback = async () => {
     const msg = feedbackText.trim();
     if (!msg) return;
+    if (fbHoney.current?.value) { setFeedbackText(''); setFeedbackStatus('sent'); return; } // bot — drop silently
     setFeedbackStatus('sending');
     try {
       if (isSupabaseEnabled && supabase) {
@@ -475,6 +476,7 @@ export default function App() {
   const submitContact = async () => {
     const msg = contactText.trim();
     if (!msg) return;
+    if (contactHoney.current?.value) { setContactText(''); setContactEmail(''); setContactStatus('sent'); return; } // bot — drop silently
     setContactStatus('sending');
     try {
       if (!supabase) { setContactStatus('error'); return; }
@@ -511,6 +513,9 @@ export default function App() {
   const [contactText, setContactText] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  // Honeypots — hidden fields only bots fill; if filled we silently drop the submit.
+  const fbHoney = useRef<HTMLInputElement>(null);
+  const contactHoney = useRef<HTMLInputElement>(null);
   const [allocMode, setAllocMode] = useState<'TYPE' | 'CURRENCY'>('TYPE');
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortMode, setSortMode] = useState<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>(() => loadStored<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>('kaya.portfolio.sort', 'CATEGORY'));
@@ -1946,6 +1951,7 @@ export default function App() {
           <>
             <h2 className="text-2xl font-medium text-ink mb-1">Share feedback</h2>
             <p className="text-textMuted text-sm mb-4">Bugs, ideas, requests — anything. I read every message.</p>
+            <input ref={fbHoney} type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] w-px h-px opacity-0" />
             <textarea
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
@@ -1978,6 +1984,7 @@ export default function App() {
           <>
             <h2 className="text-2xl font-medium text-ink mb-1">Contact us</h2>
             <p className="text-textMuted text-sm mb-4">Questions or anything else? Send a message and I'll reply by email.</p>
+            <input ref={contactHoney} type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] w-px h-px opacity-0" />
             <textarea
               value={contactText}
               onChange={(e) => setContactText(e.target.value)}
