@@ -26,11 +26,23 @@ Deno.serve(async (req) => {
 
   // Supabase DB webhooks send { type, table, record, old_record }.
   const row = payload.record ?? payload;
-  const message: string = row?.message ?? "(no message)";
 
-  // The contact form tags an optional reply address as "reply-to: someone@email".
-  const replyTo = String(message).match(/reply-to:\s*([^\s\n]+)/i)?.[1];
-  const isContact = String(message).startsWith("[Contact]");
+  // Two row shapes: feedback/contact (has `message`) or a new signup (has `email`, no message).
+  let subject: string;
+  let text: string;
+  let replyTo: string | undefined;
+
+  if (row?.message) {
+    const message = String(row.message);
+    replyTo = message.match(/reply-to:\s*([^\s\n]+)/i)?.[1];
+    subject = message.startsWith("[Contact]") ? "New Kaya contact message" : "New Kaya feedback";
+    text = message;
+  } else if (row?.email) {
+    subject = "New Kaya signup";
+    text = `A new user just signed up:\n${row.email}`;
+  } else {
+    return new Response("Nothing to notify", { status: 200 });
+  }
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -42,8 +54,8 @@ Deno.serve(async (req) => {
       from: "Kaya <onboarding@resend.dev>",
       to: [NOTIFY_EMAIL],
       ...(replyTo ? { reply_to: [replyTo] } : {}),
-      subject: isContact ? "New Kaya contact message" : "New Kaya feedback",
-      text: message,
+      subject,
+      text,
     }),
   });
 

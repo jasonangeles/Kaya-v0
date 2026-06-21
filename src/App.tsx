@@ -1394,11 +1394,6 @@ export default function App() {
                       <span className="text-textMuted text-xs">{rangeLabel[selectedTimeRange]}</span>
                    </div>
                  )}
-                 {liquidityBreakdown.liabilities > 0 && !privacyMode && (
-                   <p className="mt-1.5 text-[11px] text-textMuted">
-                      Assets {fmtDisplay(liquidityBreakdown.assetsTotal)} <span className="text-rose-400">− Liabilities {fmtDisplay(liquidityBreakdown.liabilities)}</span>
-                   </p>
-                 )}
             </div>
          </div>
          <div className="h-28 -mx-4 mt-2">
