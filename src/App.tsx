@@ -470,6 +470,21 @@ export default function App() {
     setFeedbackText('');
     setFeedbackStatus('sent');
   };
+
+  // Contact → Supabase only (never exposes the owner's email to the client).
+  const submitContact = async () => {
+    const msg = contactText.trim();
+    if (!msg) return;
+    setContactStatus('sending');
+    try {
+      if (!supabase) { setContactStatus('error'); return; }
+      const reply = contactEmail.trim();
+      const tagged = `[Contact]${reply ? ` reply-to: ${reply}` : ''}\n${msg}`;
+      const { error } = await supabase.from('kaya_feedback').insert({ user_id: session?.user.id ?? null, message: tagged });
+      if (error) { setContactStatus('error'); return; }
+      setContactText(''); setContactEmail(''); setContactStatus('sent');
+    } catch { setContactStatus('error'); }
+  };
   
   const [activeTab, setActiveTab] = useState<'HOME' | 'ASSETS' | 'INCOME' | 'SETTINGS' | 'SETTINGS_CURRENCY'>('HOME');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -492,6 +507,10 @@ export default function App() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [showContact, setShowContact] = useState(false);
+  const [contactText, setContactText] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [allocMode, setAllocMode] = useState<'TYPE' | 'CURRENCY'>('TYPE');
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortMode, setSortMode] = useState<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>(() => loadStored<'CATEGORY' | 'VALUE' | 'UPDATED' | 'LIQUIDITY'>('kaya.portfolio.sort', 'CATEGORY'));
@@ -1829,8 +1848,8 @@ export default function App() {
       <SettingsGroup title="Support">
         <SettingsItem icon={<Icons.Feedback size={20} />} label="Share feedback" onClick={() => { setFeedbackStatus('idle'); setShowFeedback(true); }} />
         <SettingsItem icon={<Icons.Shield size={20} />} label="Privacy & Data" onClick={() => setShowPrivacy(true)} />
-        <SettingsItem icon={<Icons.Star size={20} />} label="Rate Kaya" onClick={() => {}} />
-        <SettingsItem icon={<Icons.Mail size={20} />} label="Contact Us" onClick={() => {}} isLast />
+        <SettingsItem icon={<Icons.Star size={20} />} label="Rate Kaya" onClick={() => window.open('https://www.producthunt.com/products/kaya-wealth/reviews', '_blank', 'noopener,noreferrer')} />
+        <SettingsItem icon={<Icons.Mail size={20} />} label="Contact Us" onClick={() => { setContactStatus('idle'); setShowContact(true); }} isLast />
       </SettingsGroup>
 
       {isSupabaseEnabled && session && (
@@ -1941,6 +1960,46 @@ export default function App() {
               className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-3 hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {feedbackStatus === 'sending' ? 'Sending…' : 'Send feedback'}
+            </button>
+          </>
+        )}
+      </Modal>
+
+      {/* Contact us */}
+      <Modal isOpen={showContact} onClose={() => { setShowContact(false); setContactStatus('idle'); }}>
+        {contactStatus === 'sent' ? (
+          <div className="text-center py-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3"><Icons.Check size={22} /></div>
+            <h2 className="text-2xl font-medium text-ink mb-1">Message sent</h2>
+            <p className="text-textMuted text-sm">Thanks for reaching out — I'll get back to you if you left an email.</p>
+            <button onClick={() => { setShowContact(false); setContactStatus('idle'); }} className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-6 hover:opacity-90 transition-opacity">Done</button>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-2xl font-medium text-ink mb-1">Contact us</h2>
+            <p className="text-textMuted text-sm mb-4">Questions or anything else? Send a message and I'll reply by email.</p>
+            <textarea
+              value={contactText}
+              onChange={(e) => setContactText(e.target.value)}
+              rows={4}
+              autoFocus
+              placeholder="How can I help?"
+              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none focus:border-ink/40 transition-all resize-none placeholder:text-textFaint"
+            />
+            <input
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="Your email (optional, so I can reply)"
+              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 mt-3 text-ink outline-none focus:border-ink/40 transition-all placeholder:text-textFaint"
+            />
+            {contactStatus === 'error' && <p className="text-rose-400 text-sm mt-2">Couldn't send — please try again.</p>}
+            <button
+              onClick={submitContact}
+              disabled={!contactText.trim() || contactStatus === 'sending'}
+              className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {contactStatus === 'sending' ? 'Sending…' : 'Send message'}
             </button>
           </>
         )}
