@@ -14,7 +14,7 @@ import type { Session } from '@supabase/supabase-js';
 import { Asset, Currency, AssetCategory, UserSettings, TimeRange, AssetHistoryEntry, IncomeRecord, Liquidity } from './types';
 import { RATES, BTC_PRICE_USD } from './services/mockDataService';
 import { buildNetWorthSeries } from './services/history';
-import { getLiveRates } from './services/fxService';
+import { getLiveRates, getFxWeekly, FxHistory } from './services/fxService';
 import { getWealthInsights } from './services/geminiService';
 
 // --- Helper Components ---
@@ -35,6 +35,24 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
         {isOpen ? children : null}
       </div>
     </>
+  );
+};
+
+// Tiny inline weekly sparkline for the FX rows. Green if up over the period, red if down.
+const Sparkline: React.FC<{ data: number[]; up: boolean; w?: number; h?: number }> = ({ data, up, w = 76, h = 28 }) => {
+  if (!data || data.length < 2) return null;
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = max - min || 1;
+  const pad = 3;
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = pad + (1 - (v - min) / range) * (h - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden="true">
+      <polyline points={pts} fill="none" stroke={up ? '#10b981' : '#f43f5e'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 };
 
@@ -324,6 +342,7 @@ export default function App() {
   const [income, setIncome] = useState<IncomeRecord[]>(() => loadStored<IncomeRecord[]>('kaya.income.v1', []));
   const [liveRates, setLiveRates] = useState<Record<string, number>>({});
   const [btcUsd, setBtcUsd] = useState<number>(BTC_PRICE_USD);
+  const [fxHistory, setFxHistory] = useState<FxHistory | null>(null);
 
   // Fetch live FX once on load (cached daily; falls back to static rates offline).
   useEffect(() => {
@@ -361,6 +380,13 @@ export default function App() {
   useEffect(() => {
     try { localStorage.setItem('kaya.income.v1', JSON.stringify(income)); } catch {}
   }, [income]);
+
+  // Weekly FX history for the rate sparklines (cached daily).
+  useEffect(() => {
+    const pairs = (settings.fxPairs && settings.fxPairs.length) ? settings.fxPairs : DEFAULT_FX_PAIRS;
+    const codes = pairs.flatMap(p => [p.first, p.second]);
+    getFxWeekly(codes).then(h => { if (h) setFxHistory(h); });
+  }, [settings.fxPairs]);
 
   // --- Supabase auth + cloud sync (no-op unless env keys are set) ---
   const [session, setSession] = useState<Session | null>(null);
@@ -1004,6 +1030,18 @@ export default function App() {
     if (!isFinite(r) || r <= 0) return '—';
     return r >= 1 ? r.toFixed(2) : r.toFixed(4);
   };
+  // Weekly cross-rate series + % change for a pair (null if no history, e.g. BTC).
+  const fxWeeklyFor = (first: string, second: string): { series: number[]; change: number } | null => {
+    if (!fxHistory) return null;
+    const a = fxHistory.perUsd[first], b = fxHistory.perUsd[second];
+    if (!a || !b || a.length < 2 || b.length < 2) return null;
+    const n = Math.min(a.length, b.length);
+    const series: number[] = [];
+    for (let i = 0; i < n; i++) { const v = b[i] / a[i]; if (isFinite(v) && v > 0) series.push(v); }
+    if (series.length < 2) return null;
+    const change = ((series[series.length - 1] - series[0]) / series[0]) * 100;
+    return { series, change };
+  };
   const openFxEdit = () => { setFxDraft(fxPairs.map(p => ({ ...p }))); setShowFxEdit(true); };
   const updateFxDraft = (i: number, key: 'first' | 'second', code: string) =>
     setFxDraft(prev => prev.map((p, idx) => idx === i ? { ...p, [key]: code } : p));
@@ -1476,15 +1514,28 @@ export default function App() {
                 Edit
              </button>
           </div>
-          <div className="glass-panel rounded-3xl p-5 shadow-lg">
-             <div className="grid grid-cols-3 gap-2">
-                {fxPairs.map((p, i) => (
-                    <div key={i} className="text-center">
-                        <p className="text-[11px] text-textMuted mb-1">{p.first}/{p.second}</p>
-                        <p className="text-lg font-semibold text-ink tabular-nums">{fxRate(p.first, p.second)}</p>
+          <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+             {fxPairs.map((p, i) => {
+                const weekly = fxWeeklyFor(p.first, p.second);
+                const up = weekly ? weekly.change >= 0 : true;
+                return (
+                  <div key={i} className={`flex items-center justify-between gap-3 px-4 py-3.5 ${i !== fxPairs.length - 1 ? 'border-b border-ink/5' : ''}`}>
+                    <div className="min-w-0">
+                      <p className="text-sm text-ink tabular-nums">
+                        1 {p.first} = <span className="font-semibold">{fxRate(p.first, p.second)}</span> {p.second}
+                      </p>
+                      {weekly ? (
+                        <p className={`text-[11px] font-medium mt-0.5 ${up ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {up ? '▲' : '▼'} {Math.abs(weekly.change).toFixed(2)}% <span className="text-textFaint font-normal">this week</span>
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-textFaint mt-0.5">{p.first}/{p.second}</p>
+                      )}
                     </div>
-                ))}
-             </div>
+                    {weekly && <Sparkline data={weekly.series} up={up} />}
+                  </div>
+                );
+             })}
           </div>
       </div>
 

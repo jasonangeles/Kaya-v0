@@ -251,7 +251,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
         </div>
         <p className="text-[11px] text-textMuted mb-3">
           {mode === 'MONTH' && avgMonthly > 0
-            ? <>Averaging {hide(fmt(avgMonthly, displayCurrency))} a month {viewYear === currentYear ? 'this year' : `in ${viewYear}`}</>
+            ? <>Averaging <span className="text-emerald-400 font-medium">{hide(fmt(avgMonthly, displayCurrency))}</span> a month {viewYear === currentYear ? 'this year' : `in ${viewYear}`}</>
             : <>{mode === 'MONTH' ? 'No income yet for this year' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
         </p>
 
@@ -302,16 +302,10 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               {mode === 'MONTH' && avgMonthly > 0 && (
                 <ReferenceLine
                   y={avgMonthly}
-                  stroke="#e4e4e7"
+                  stroke="#10b981"
                   strokeDasharray="4 4"
-                  strokeOpacity={0.65}
+                  strokeOpacity={0.9}
                   ifOverflow="extendDomain"
-                  label={{
-                    value: privacyMode ? '•••• /mo avg' : `${symbolOf(displayCurrency)}${Math.round(avgMonthly).toLocaleString()} /mo avg`,
-                    position: 'insideTopRight',
-                    fill: '#a1a1aa',
-                    fontSize: 10
-                  }}
                 />
               )}
             </BarChart>

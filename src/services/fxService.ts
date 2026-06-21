@@ -3,6 +3,7 @@
 // BTC from CoinGecko. Values are "units of currency per 1 USD".
 
 const CACHE_KEY = 'kaya.fx.latest';
+const WEEKLY_CACHE_KEY = 'kaya.fx.weekly';
 
 interface FxSnapshot {
   fetchedAt: string;       // YYYY-MM-DD
@@ -76,4 +77,49 @@ export const getLiveRates = async (): Promise<FxSnapshot | null> => {
   if (fiat) writeCache(snap);
 
   return (fiat || btc || cached) ? snap : null;
+};
+
+// --- Weekly history (for the sparklines + weekly % change on the FX widget) ---
+export interface FxHistory {
+  fetchedAt: string;
+  dates: string[];
+  perUsd: Record<string, number[]>; // units of currency per 1 USD, aligned with `dates`
+}
+
+const ymd = (d: Date) => d.toISOString().split('T')[0];
+
+// Daily rates for the past ~week for the given currencies (one free frankfurter
+// time-series call). USD is always 1; BTC has no history here (sparkline skipped).
+export const getFxWeekly = async (symbols: string[]): Promise<FxHistory | null> => {
+  const wanted = Array.from(new Set(symbols.filter(s => s && s !== 'USD' && s !== 'BTC')));
+
+  try {
+    const raw = localStorage.getItem(WEEKLY_CACHE_KEY);
+    if (raw) {
+      const c = JSON.parse(raw) as FxHistory;
+      if (c.fetchedAt === todayStr() && wanted.every(s => Array.isArray(c.perUsd?.[s]))) return c;
+    }
+  } catch {}
+
+  if (wanted.length === 0) return { fetchedAt: todayStr(), dates: [], perUsd: { USD: [] } };
+
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 9);
+
+  try {
+    const res = await fetch(`https://api.frankfurter.dev/v1/${ymd(start)}..${ymd(end)}?base=USD&symbols=${wanted.join(',')}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.rates || typeof json.rates !== 'object') return null;
+    const dates = Object.keys(json.rates).sort();
+    if (dates.length === 0) return null;
+    const perUsd: Record<string, number[]> = { USD: dates.map(() => 1) };
+    wanted.forEach(s => { perUsd[s] = dates.map(d => json.rates[d]?.[s]).filter((v: unknown): v is number => typeof v === 'number'); });
+    const hist: FxHistory = { fetchedAt: todayStr(), dates, perUsd };
+    try { localStorage.setItem(WEEKLY_CACHE_KEY, JSON.stringify(hist)); } catch {}
+    return hist;
+  } catch {
+    return null;
+  }
 };
