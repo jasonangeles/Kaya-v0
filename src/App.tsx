@@ -507,8 +507,13 @@ export default function App() {
       localStorage.removeItem(STORAGE_KEYS.settings);
       localStorage.removeItem(SYNC_KEY);
       localStorage.removeItem(OWNER_KEY);
+      localStorage.removeItem('kaya.security.v1');     // PIN / recovery / biometric
+      localStorage.removeItem('kaya.portfolio.sort');  // view prefs
+      localStorage.removeItem('kaya.portfolio.catFilter');
+      localStorage.removeItem('kaya.portfolio.curFilter');
     } catch {}
     setAssets([]); setIncome([]); setSettings(DEFAULT_SETTINGS); setCloudLoaded(false);
+    setSecurity({ pin: null, biometric: false, biometricId: null, recoveryHash: null, lockDelaySec: 0 });
     setActiveTab('HOME'); // always return to the main page on next sign-in
   };
 
