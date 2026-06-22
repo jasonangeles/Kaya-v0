@@ -290,6 +290,10 @@ const LOCK_DELAY_OPTIONS = [
   { sec: 900, label: 'After 15 minutes' }
 ];
 
+// AI insights are off until they run through a secure server-side proxy (planned
+// premium feature). Flipping this to true also requires the Edge Function + key.
+const AI_INSIGHTS_ENABLED = false;
+
 const SYNC_KEY = 'kaya.syncedAt';
 const getSyncedAt = () => { try { return localStorage.getItem(SYNC_KEY) || ''; } catch { return ''; } };
 const setSyncedAt = (t: string) => { try { localStorage.setItem(SYNC_KEY, t); } catch {} };
@@ -903,7 +907,7 @@ export default function App() {
 
   useEffect(() => {
     const fetchAdvice = async () => {
-      if (assets.length === 0) { setInsights([]); setIsLoadingInsights(false); return; }
+      if (!AI_INSIGHTS_ENABLED || assets.length === 0) { setInsights([]); setIsLoadingInsights(false); return; }
       setIsLoadingInsights(true);
       const totalPHP = totalValueUSD * RATES.PHP;
       const tips = await getWealthInsights(assets, totalPHP);
@@ -1579,7 +1583,7 @@ export default function App() {
           </div>
       </div>
 
-      {assets.length > 0 && (
+      {AI_INSIGHTS_ENABLED && assets.length > 0 && (
       <div className="px-1">
         <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-3">Insights</h3>
         {isLoadingInsights ? (
