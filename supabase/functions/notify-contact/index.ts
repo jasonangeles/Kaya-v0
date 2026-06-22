@@ -10,6 +10,8 @@
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const NOTIFY_EMAIL = Deno.env.get("NOTIFY_EMAIL")!;
 const HOOK_SECRET = Deno.env.get("HOOK_SECRET");
+// Sender — must be on a domain verified in Resend. Override via the FROM_EMAIL secret.
+const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "Kaya <no-reply@kayawealth.app>";
 
 Deno.serve(async (req) => {
   // Optional shared-secret check (set header x-hook-secret on the webhook).
@@ -51,7 +53,7 @@ Deno.serve(async (req) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Kaya <onboarding@resend.dev>",
+      from: FROM_EMAIL,
       to: [NOTIFY_EMAIL],
       ...(replyTo ? { reply_to: [replyTo] } : {}),
       subject,
