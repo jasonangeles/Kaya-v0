@@ -20,6 +20,26 @@ import { getWealthInsights } from './services/geminiService';
 // --- Helper Components ---
 
 const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children?: React.ReactNode }) => {
+  // Lock the background scroll while open (iOS-safe). Without this, focusing a
+  // native date/select input scrolls the page under the fixed modal and shifts
+  // the touch layer so buttons stop responding.
+  useEffect(() => {
+    if (!isOpen) return;
+    const scrollY = window.scrollY;
+    const b = document.body;
+    const prev = { position: b.style.position, top: b.style.top, width: b.style.width, overflow: b.style.overflow };
+    b.style.position = 'fixed';
+    b.style.top = `-${scrollY}px`;
+    b.style.width = '100%';
+    b.style.overflow = 'hidden';
+    return () => {
+      b.style.position = prev.position;
+      b.style.top = prev.top;
+      b.style.width = prev.width;
+      b.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
   return (
     <>
       <div 
@@ -27,7 +47,7 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
         onClick={onClose}
       />
       <div
-        style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }}
+        style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}
         className={`fixed bottom-0 inset-x-0 z-50 bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto ${isOpen ? '' : 'pointer-events-none'}`}
       >
         <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
