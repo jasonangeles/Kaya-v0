@@ -37,6 +37,11 @@ const todayLocal = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
+// Stored ISO → local YYYY-MM-DD, so editing shows the same day the list shows.
+const localDateFromISO = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 type Mode = 'MONTH' | 'YEAR';
 
@@ -191,7 +196,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
   }, [addTick]);
   const openEdit = (r: IncomeRecord) => {
     setEditingId(r.id);
-    setDraft({ ...r, date: r.date.split('T')[0] });
+    setDraft({ ...r, date: localDateFromISO(r.date) });
     setIsOpen(true);
   };
   const closeSheet = () => { setIsOpen(false); setEditingId(null); };

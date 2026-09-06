@@ -350,6 +350,13 @@ const todayLocal = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+// A stored ISO timestamp → YYYY-MM-DD in LOCAL time, so editing an entry shows
+// the same day the list shows (not the UTC date, which can be a day off).
+const localDateFromISO = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const loadStored = <T,>(key: string, fallback: T): T => {
   try {
     const raw = localStorage.getItem(key);
@@ -972,7 +979,7 @@ export default function App() {
   const handleOpenEditHistoryEntry = (entry: AssetHistoryEntry) => {
     setIsEditMode(false);
     setEditingEntryId(entry.id);
-    setUpdateDate(entry.date.split('T')[0]);
+    setUpdateDate(localDateFromISO(entry.date));
     setIsModalOpen(true);
   };
 
