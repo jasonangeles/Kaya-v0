@@ -2217,13 +2217,13 @@ export default function App() {
                     <div>
                         <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Date</label>
                         <div className="relative">
-                            <input 
-                                required 
+                            <input
+                                required
                                 type="date"
                                 name="date"
-                                value={updateDate}
-                                onChange={(e) => setUpdateDate(e.target.value)}
-                                className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" 
+                                key={editingEntryId || 'new'}
+                                defaultValue={updateDate}
+                                className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint"
                             />
                             <Icons.Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-textFaint pointer-events-none" size={20} />
                         </div>
