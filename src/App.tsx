@@ -28,7 +28,7 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
       />
       <div
         style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }}
-        className="fixed bottom-0 inset-x-0 z-50 bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto"
+        className={`fixed bottom-0 inset-x-0 z-50 bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto ${isOpen ? '' : 'pointer-events-none'}`}
       >
         <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
         <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
@@ -323,6 +323,13 @@ const isoFromDate = (dateStr: string, preserveFrom?: string) => {
   return new Date(y, (m || 1) - 1, d || 1, t.getHours(), t.getMinutes(), t.getSeconds(), t.getMilliseconds()).toISOString();
 };
 
+// Today's date as YYYY-MM-DD in the user's LOCAL timezone (not UTC), so the date
+// picker defaults to the day the user actually sees on the calendar.
+const todayLocal = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const loadStored = <T,>(key: string, fallback: T): T => {
   try {
     const raw = localStorage.getItem(key);
@@ -571,7 +578,7 @@ export default function App() {
   const [modalCategory, setModalCategory] = useState<AssetCategory>(AssetCategory.BANK_PH);
   const [modalCurrency, setModalCurrency] = useState<string>(Currency.PHP);
   const [updateType, setUpdateType] = useState<'TRANSACTION' | 'MARKET'>('TRANSACTION');
-  const [updateDate, setUpdateDate] = useState(new Date().toISOString().split('T')[0]);
+  const [updateDate, setUpdateDate] = useState(todayLocal());
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [incomeAddTick, setIncomeAddTick] = useState(0);
   const [showFxEdit, setShowFxEdit] = useState(false);
@@ -938,7 +945,7 @@ export default function App() {
   const handleOpenUpdateBalance = () => {
     setIsEditMode(false);
     setEditingEntryId(null);
-    setUpdateDate(new Date().toISOString().split('T')[0]);
+    setUpdateDate(todayLocal());
     setIsModalOpen(true);
   };
 
@@ -963,6 +970,8 @@ export default function App() {
 
   const handleSaveAsset = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Dismiss any open native date/select picker so it can't orphan over the closing modal.
+    (document.activeElement as HTMLElement | null)?.blur();
     const formData = new FormData(e.currentTarget);
     
     if (selectedAsset && !isEditMode) {

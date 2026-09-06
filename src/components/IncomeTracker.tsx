@@ -32,6 +32,12 @@ const isoFromDate = (dateStr: string, preserveFrom?: string) => {
   return new Date(y, (m || 1) - 1, d || 1, t.getHours(), t.getMinutes(), t.getSeconds(), t.getMilliseconds()).toISOString();
 };
 
+// Today as YYYY-MM-DD in LOCAL time (not UTC) for date-input defaults.
+const todayLocal = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 type Mode = 'MONTH' | 'YEAR';
 
 const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -71,7 +77,7 @@ const emptyDraft = (currency: string): IncomeRecord => ({
   currency,
   source: '',
   category: 'Dividend',
-  date: new Date().toISOString().split('T')[0],
+  date: todayLocal(),
   note: ''
 });
 
