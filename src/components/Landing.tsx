@@ -287,17 +287,17 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
         <div className="absolute inset-x-0 top-0 h-[700px] pointer-events-none" style={{ background: 'radial-gradient(ellipse 65% 55% at 50% 0%, rgba(16,185,129,0.18) 0%, transparent 62%)' }} />
         <div className="max-w-6xl mx-auto px-6 pt-20 pb-24 relative">
           <Reveal className="text-center max-w-2xl mx-auto">
-            <span className="inline-block text-[11px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-6">Privacy-first wealth tracker</span>
+            <span className="inline-block text-[11px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-6">Private net worth tracker</span>
             <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight leading-[1.05]">
-              Your net worth,<br /><span className="text-zinc-500">in every currency.</span>
+              Your net worth,<br /><span className="text-zinc-500">in one number.</span>
             </h1>
             <p className="text-lg text-zinc-400 mt-6 leading-relaxed">
-              Kaya brings your banks, investments and crypto into one number — converted live, even denominated in Bitcoin. No bank logins. No noise. Just your money, clearly.
+              Banks, savings, stocks, crypto — in any currency. Kaya adds it all up and keeps it current. No bank logins.
             </p>
             <div className="flex items-center justify-center gap-3 mt-8">
-              <button onClick={openSignIn} className="bg-white text-black font-semibold px-6 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Get started — it's free</button>
+              <button onClick={openSignIn} className="bg-white text-black font-semibold px-6 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Start for free</button>
             </div>
-            <p className="text-xs text-zinc-600 mt-4">No bank linking · passwordless · your data stays yours</p>
+            <p className="text-xs text-zinc-600 mt-4">No bank logins · No ads · Your data stays yours</p>
           </Reveal>
 
           <Reveal delay={150} className="flex justify-center mt-12">
@@ -382,7 +382,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 p-12 text-center" style={{ background: 'radial-gradient(ellipse 70% 120% at 50% 0%, rgba(16,185,129,0.15), transparent 70%)' }}>
             <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">Start tracking your wealth today</h2>
             <p className="text-zinc-400 mt-3 text-lg">Free to use. No bank linking. Yours to keep.</p>
-            <button onClick={openSignIn} className="mt-7 bg-white text-black font-semibold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Get started — it's free</button>
+            <button onClick={openSignIn} className="mt-7 bg-white text-black font-semibold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Start for free</button>
           </div>
         </Reveal>
       </section>
