@@ -2,6 +2,7 @@ import React from 'react';
 import { AssetCategory } from '../types';
 import { Icons } from './icons';
 import { findInstitution, textOn, Institution } from '../data/institutions';
+import { LOGO_BG } from '../data/logoBackgrounds';
 
 // Auto-discover any real logo files dropped into src/assets/logos/<id>.svg|png.
 // Empty by default — these override the generated monogram when present.
@@ -38,6 +39,20 @@ export const InstitutionLogo: React.FC<{
 
   const real = logoFor(inst.id);
   if (real) {
+    // Logos that ship with their own opaque background get a tile matched to
+    // that color, with the image rendered flush — no white square around it.
+    // Isolated marks (transparent) keep the clean white tile.
+    const ownBg = LOGO_BG[inst.id];
+    if (ownBg) {
+      return (
+        <div
+          className={`flex items-center justify-center border border-white/10 overflow-hidden ${className}`}
+          style={{ ...box, background: ownBg }}
+        >
+          <img src={real} alt={name} style={{ width: size, height: size, objectFit: 'contain' }} />
+        </div>
+      );
+    }
     return (
       <div className={`flex items-center justify-center bg-white border border-ink/5 overflow-hidden ${className}`} style={box}>
         <img src={real} alt={name} style={{ width: size * 0.66, height: size * 0.66, objectFit: 'contain' }} />
