@@ -8,6 +8,8 @@ import { InstitutionLogo } from './components/InstitutionLogo';
 import { AllocationCarousel } from './components/AllocationCarousel';
 import { CurrencyPicker } from './components/CurrencyPicker';
 import { Sym, DirhamSign } from './components/DirhamSign';
+import { DitherBackground } from './components/DitherBackground';
+import { KayaMark } from './components/KayaMark';
 import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
@@ -1420,22 +1422,24 @@ export default function App() {
     );
   };
 
+  const greetingName = (() => {
+    const n = session?.user?.email?.split('@')[0]?.replace(/[._-]+/g, ' ').trim().split(' ')[0] || '';
+    return n ? n.charAt(0).toUpperCase() + n.slice(1) : 'there';
+  })();
+
   const renderHome = () => (
     <div className="space-y-6 pb-28 animate-[fadeIn_0.5s_ease-out]">
       <header className="flex justify-between items-center px-1">
         <div>
-            <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                <h1 className="text-lg font-medium tracking-wide text-ink uppercase">Kaya</h1>
-            </div>
+            <h1 className="text-[20px] font-semibold tracking-tight text-textMuted">Hi, {greetingName}!</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
             <button
                 onClick={toggleTheme}
                 aria-label="Toggle light or dark mode"
-                className="glass-panel w-8 h-8 flex items-center justify-center rounded-full text-textMuted hover:text-ink transition-colors shadow-sm"
+                className="glass-panel w-9 h-9 flex items-center justify-center rounded-full text-textMuted hover:text-ink transition-colors shadow-sm"
             >
-                {theme === 'dark' ? <Icons.Moon size={15} /> : <Icons.Sun size={15} />}
+                {theme === 'dark' ? <Icons.Moon size={16} /> : <Icons.Sun size={16} />}
             </button>
             {currentStreak > 0 && (
             <div className="relative">
@@ -1459,6 +1463,13 @@ export default function App() {
                 )}
             </div>
             )}
+            <button
+                onClick={() => goTab('SETTINGS')}
+                aria-label="Profile and settings"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-surface3 text-textMuted hover:text-ink transition-colors"
+            >
+                <Icons.User size={22} />
+            </button>
         </div>
       </header>
 
@@ -1528,8 +1539,8 @@ export default function App() {
                     key={range}
                     onClick={() => setSelectedTimeRange(range)}
                     className={`flex-1 py-1.5 text-[10px] font-medium rounded-full transition-all ${
-                        selectedTimeRange === range 
-                        ? 'bg-surfaceHi text-ink shadow-sm' 
+                        selectedTimeRange === range
+                        ? 'bg-textMuted text-paper shadow-sm'
                         : 'text-textFaint hover:text-ink'
                     }`}
                 >
@@ -2007,6 +2018,9 @@ export default function App() {
   return (
     <div className="h-[100dvh] flex flex-col bg-transparent text-textMain max-w-md mx-auto relative shadow-2xl overflow-hidden font-sans">
 
+      {/* Dithered gradient backdrop (behind all content) */}
+      <DitherBackground theme={theme} />
+
       {/* Scrollable Content Area */}
       <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
         {activeTab === 'SETTINGS' ? renderSettings() :
@@ -2017,10 +2031,12 @@ export default function App() {
          renderHome()}
       </main>
 
-      {/* Bottom bar: FAB anchored one equal gap above the nav */}
-      <div className="shrink-0 relative z-40">
+      {/* Bottom bar: floating island dock + FAB above it.
+          Bottom padding = iOS safe-area inset + a gap so the island floats
+          clearly above the home indicator instead of sitting under it. */}
+      <div className="shrink-0 relative z-40 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+0.9rem)]">
         {activeTab !== 'SETTINGS' && activeTab !== 'SETTINGS_CURRENCY' && (
-          <div className="absolute right-6 bottom-full mb-6 z-30">
+          <div className="absolute right-6 bottom-full mb-5 z-30">
             <button
                 onClick={() => {
                   if (activeTab === 'INCOME') setIncomeAddTick(t => t + 1);
@@ -2034,20 +2050,62 @@ export default function App() {
           </div>
         )}
 
-        {/* Bottom Navigation (icons only) */}
-        <nav className="w-full glass-panel pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-8 flex justify-around items-center">
-          <button aria-label="Overview" onClick={() => goTab('HOME')} className={`p-2 ${activeTab === 'HOME' ? 'text-primary' : 'text-textFaint'}`}>
-              <Icons.Dashboard className="w-6 h-6" weight={activeTab === 'HOME' ? 'fill' : 'regular'} />
-          </button>
-          <button aria-label="Portfolio" onClick={() => goTab('ASSETS')} className={`p-2 ${activeTab === 'ASSETS' ? 'text-primary' : 'text-textFaint'}`}>
-              <Icons.Wallet className="w-6 h-6" weight={activeTab === 'ASSETS' ? 'fill' : 'regular'} />
-          </button>
-          <button aria-label="Income" onClick={() => goTab('INCOME')} className={`p-2 ${activeTab === 'INCOME' ? 'text-primary' : 'text-textFaint'}`}>
-              <Icons.BarChart className="w-6 h-6" weight={activeTab === 'INCOME' ? 'fill' : 'regular'} />
-          </button>
-          <button aria-label="Settings" onClick={() => goTab('SETTINGS')} className={`p-2 ${(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'text-primary' : 'text-textFaint'}`}>
-              <Icons.Settings className="w-6 h-6" weight={(activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY') ? 'fill' : 'regular'} />
-          </button>
+        {/* Floating island navigation (Figma: 350×70, r20, fill #424242 @10%,
+            background blur 12, 0.5px inside stroke white 10% → 0%, no shadow) */}
+        <nav
+          style={{
+            background: 'rgba(66,66,66,0.10)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+          }}
+          className="relative mx-auto w-full max-w-[350px] h-[70px] rounded-[20px] px-5 py-0 flex justify-between items-center overflow-hidden"
+        >
+          {/* gradient stroke that fades to transparent */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-[20px]"
+            style={{
+              padding: '0.5px',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0))',
+              WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+              WebkitMaskComposite: 'xor',
+              mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+              maskComposite: 'exclude',
+            }}
+          />
+          {([
+            { key: 'HOME', label: 'Overview', active: activeTab === 'HOME' },
+            { key: 'ASSETS', label: 'Portfolio', active: activeTab === 'ASSETS' },
+            { key: 'INCOME', label: 'Income', active: activeTab === 'INCOME' },
+            { key: 'SETTINGS', label: 'Settings', active: activeTab === 'SETTINGS' || activeTab === 'SETTINGS_CURRENCY' },
+          ] as const).map(({ key, label, active }) => (
+            <button
+              key={key}
+              aria-label={label}
+              onClick={() => goTab(key as any)}
+              className={`relative flex items-center justify-center w-6 h-full transition-colors ${active ? 'text-textMuted' : 'text-textFaint'}`}
+            >
+              {/* invisible wider tap area (icon itself is 24px, per Figma) */}
+              <span aria-hidden className="absolute inset-y-0 -inset-x-4" />
+              {active && (
+                // Figma: 48×48 circle, fill secondary #399d74, 50% opacity, layer blur 40,
+                // centered on the island's bottom edge below the icon (clipped by the island).
+                <span
+                  className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full"
+                  style={{ top: 46, background: '#399d74', opacity: 0.5, filter: 'blur(20px)' }}
+                />
+              )}
+              {key === 'HOME' ? (
+                <KayaMark size={24} className="relative" />
+              ) : key === 'ASSETS' ? (
+                <Icons.Wallet className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+              ) : key === 'INCOME' ? (
+                <Icons.BarChart className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+              ) : (
+                <Icons.Settings className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+              )}
+            </button>
+          ))}
         </nav>
       </div>
 

@@ -43,6 +43,7 @@ import {
   Sun,
   ChatCircleText,
   Backspace,
+  UserCircle,
   X
 } from '@phosphor-icons/react';
 
@@ -89,5 +90,6 @@ export const Icons = {
   Sun: Sun,
   Feedback: ChatCircleText,
   Backspace: Backspace,
+  User: UserCircle,
   Close: X
 };
