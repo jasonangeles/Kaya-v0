@@ -53,7 +53,7 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
   return (
     <div className="glass-panel rounded-3xl p-5 shadow-lg mb-2">
       <div className="flex justify-between items-center mb-1">
-        <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Overview</h3>
+        <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">Overview</h3>
         <div className="flex bg-surface2 rounded-full p-0.5">
           {(['TYPE', 'CURRENCY'] as const).map(m => (
             <button key={m} onClick={() => onAllocMode(m)}

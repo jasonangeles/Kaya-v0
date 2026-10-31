@@ -245,7 +245,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
       <div className="glass-panel rounded-3xl p-4 shadow-lg">
         <div className="flex items-start justify-between mb-1">
           <div>
-            <p className="text-textMuted text-xs font-medium tracking-widest uppercase mb-1">
+            <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase mb-1">
               {summary.label}
             </p>
             <div className="flex items-baseline gap-1">
@@ -350,7 +350,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
         grouped.map(group => (
           <div key={group.key} className="px-1">
             <div className="flex justify-between items-baseline mb-2 px-1">
-              <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">{group.label}</h3>
+              <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">{group.label}</h3>
               <span className="text-xs font-medium text-emerald-400">{hide(fmt(group.subtotal, displayCurrency))}</span>
             </div>
             <div className="rounded-3xl overflow-hidden shadow-lg bg-surface2 border border-ink/5">

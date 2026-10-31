@@ -153,10 +153,28 @@
         background-color: rgba(66, 66, 66, 0.10);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        border: 0 !important;
         position: relative;
         z-index: 1;
       }
+      /* Gradient stroke: white 10% at the top fading to transparent at the bottom */
+      .glass-panel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0));
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        mask-composite: exclude;
+        pointer-events: none;
+        z-index: 2;
+      }
+      /* No drop shadows on widgets in dark mode (per design) */
+      html:not(.light) .glass-panel { box-shadow: none !important; }
+      html.light .glass-panel::after { display: none; }
       html.light .glass-panel {
         background-color: rgba(255, 255, 255, 0.72);
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.07);

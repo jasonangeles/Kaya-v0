@@ -73,7 +73,7 @@ const Sparkline: React.FC<{ data: number[]; up: boolean; w?: number; h?: number 
   }).join(' ');
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden="true">
-      <polyline points={pts} fill="none" stroke={up ? '#10b981' : '#f43f5e'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points={pts} fill="none" stroke={up ? '#399d74' : '#f43f5e'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 };
@@ -141,7 +141,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
 
   const isPositive = entry.change >= 0;
   const Icon = isPositive ? Icons.ArrowUp : Icons.ArrowDown;
-  const iconColorClass = isPositive ? 'text-emerald-400' : 'text-rose-400';
+  const iconColorClass = isPositive ? 'text-[#399d74]' : 'text-rose-400';
   const iconBgClass = isPositive ? 'bg-emerald-500/10' : 'bg-rose-500/10';
 
   return (
@@ -172,7 +172,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
             <p className="text-sm font-medium text-ink">
               {new Date(entry.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
-            <p className={`text-xs ${entry.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <p className={`text-xs ${entry.change >= 0 ? 'text-[#399d74]' : 'text-rose-400'}`}>
               {entry.change > 0 ? '+' : ''}{entry.change.toLocaleString()}
             </p>
           </div>
@@ -189,7 +189,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
 
 const SettingsGroup = ({ title, children }: { title?: string, children?: React.ReactNode }) => (
   <div className="mb-6">
-    {title && <h4 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2 px-2">{title}</h4>}
+    {title && <h4 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-2 px-2">{title}</h4>}
     <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
       {children}
     </div>
@@ -1350,11 +1350,11 @@ export default function App() {
                 </div>
 
                 <div className="flex flex-col items-start mb-2 relative z-10">
-                    <p className="text-textMuted text-xs font-medium tracking-widest uppercase">
+                    <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase">
                         {selectedAsset.name}
                     </p>
                     {selectedAsset.institution && (
-                        <p className="text-textFaint text-xs font-medium tracking-widest uppercase">{selectedAsset.institution}</p>
+                        <p className="text-textFaint text-[11px] font-medium tracking-[1.2px] uppercase">{selectedAsset.institution}</p>
                     )}
                     <div className="flex items-baseline gap-1 mt-1.5">
                         <span className="text-2xl font-normal text-textFaint">
@@ -1394,7 +1394,7 @@ export default function App() {
 
             <div className="px-1">
                 <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Value History</h3>
+                    <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">Value History</h3>
                     <button 
                         onClick={handleOpenUpdateBalance}
                         className="px-3 py-1.5 rounded-full bg-ink/5 text-xs font-medium text-ink hover:bg-ink/10 transition-colors border border-ink/5"
@@ -1433,7 +1433,7 @@ export default function App() {
 
   const renderHome = () => (
     <div className="space-y-6 animate-[fadeIn_0.5s_ease-out]">
-      <header className="flex justify-between items-center px-1">
+      <header className="flex justify-between items-center">
         <div className="min-w-0 flex-1 pr-3">
             <h1 className="text-[20px] font-semibold tracking-tight text-textMuted whitespace-nowrap truncate">Hi, {greetingName}!</h1>
         </div>
@@ -1441,7 +1441,7 @@ export default function App() {
             <button
                 onClick={toggleTheme}
                 aria-label="Toggle light or dark mode"
-                className="glass-panel w-9 h-9 flex items-center justify-center rounded-full text-textMuted hover:text-ink transition-colors shadow-sm"
+                className="glass-panel w-9 h-9 flex items-center justify-center rounded-full text-textMuted hover:text-ink transition-colors"
             >
                 {theme === 'dark' ? <Icons.Moon size={16} /> : <Icons.Sun size={16} />}
             </button>
@@ -1449,7 +1449,7 @@ export default function App() {
             <div className="relative">
                 <button
                     onClick={() => setShowStreakTooltip(!showStreakTooltip)}
-                    className="flex items-center gap-1.5 glass-panel px-3 py-1.5 rounded-full text-xs font-medium text-textMuted shadow-sm hover:text-ink transition-colors"
+                    className="flex items-center gap-1.5 glass-panel h-9 px-3.5 rounded-full text-sm font-medium text-textMuted hover:text-ink transition-colors"
                 >
                     <Icons.Fire className="w-3.5 h-3.5 animate-pulse text-[#F7931A]" weight="fill" />
                     <span>{currentStreak}</span>
@@ -1477,11 +1477,11 @@ export default function App() {
         </div>
       </header>
 
-      <div className="glass-panel rounded-3xl p-4 relative overflow-visible shadow-lg z-20">
+      <div className="glass-panel rounded-[24px] p-5 relative overflow-visible z-20">
          <div className="flex justify-between items-start mb-0 relative">
             <div className="flex-1">
                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-textMuted text-xs font-medium tracking-widest uppercase">Net Worth</p>
+                    <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase">Net Worth</p>
                     <button
                         onClick={() => setPrivacyMode(!privacyMode)}
                         className="text-textMuted hover:text-ink transition-colors p-1"
@@ -1521,7 +1521,7 @@ export default function App() {
 
                  {netChange !== null && !privacyMode && (
                    <div className="mt-1 flex items-center gap-2">
-                      <span className={`text-sm font-medium flex items-center gap-1 ${netChange >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      <span className={`text-[13px] font-medium flex items-center gap-1 ${netChange >= 0 ? 'text-[#399d74]' : 'text-rose-400'}`}>
                           {netChange >= 0 ? <Icons.Trend size={14} /> : <Icons.TrendDown size={14} />} {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}%
                       </span>
                       <span className="text-textMuted text-xs">{rangeLabel[selectedTimeRange]}</span>
@@ -1529,7 +1529,7 @@ export default function App() {
                  )}
             </div>
          </div>
-         <div className="h-28 -mx-4 mt-2">
+         <div className="h-28 -mx-5 mt-2">
             <NetWorthChart
                 data={historyData}
                 mode={settings.displayCurrency === Currency.BTC ? 'BTC' : 'FIAT'}
@@ -1554,17 +1554,17 @@ export default function App() {
          </div>
       </div>
 
-      <div className="px-1">
-          <div className="flex justify-between items-end mb-3">
-             <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Top Assets</h3>
-             <button 
+      <div>
+          <div className="flex justify-between items-center mb-2.5">
+             <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] leading-[1.3]">Top Assets</h3>
+             <button
                 onClick={() => setActiveTab('ASSETS')}
-                className="text-xs text-primary font-medium hover:text-ink transition-colors"
+                className="text-[13px] text-textFaint font-medium hover:text-ink transition-colors"
              >
                 See All
              </button>
           </div>
-          <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+          <div className="glass-panel rounded-[20px] overflow-hidden">
              {topAssets.length === 0 && (
                 <div className="p-6 text-center">
                     <p className="text-ink text-sm font-medium mb-0.5">No assets yet</p>
@@ -1575,17 +1575,17 @@ export default function App() {
                 <div
                     key={asset.id}
                     onClick={() => setSelectedAssetId(asset.id)}
-                    className={`p-4 flex justify-between items-center hover:bg-ink/5 transition-colors cursor-pointer group ${index !== topAssets.length - 1 ? 'border-b border-ink/5' : ''}`}
+                    className="px-4 py-3.5 flex justify-between items-center gap-3 hover:bg-ink/5 transition-colors cursor-pointer group"
                 >
-                    <div className="flex items-center gap-3">
-                        <InstitutionLogo name={asset.institution} category={asset.category} size={36} radius={10} />
-                        <div>
-                            <p className="font-medium text-ink text-sm">{asset.name}</p>
-                            <p className="text-[10px] text-textMuted">{asset.institution}</p>
+                    <div className="flex items-center gap-3 min-w-0">
+                        <InstitutionLogo name={asset.institution} category={asset.category} size={40} radius={12} />
+                        <div className="min-w-0">
+                            <p className="font-medium text-ink text-[14px] truncate">{asset.name}</p>
+                            <p className="text-[12px] text-textMuted mt-0.5 truncate">{asset.institution}</p>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <p className="font-semibold text-ink text-sm tracking-wide">
+                    <div className="text-right shrink-0">
+                        <p className="font-semibold text-ink text-[14px]">
                             {privacyMode ? '•••••' : (
                                 <>
                                     <Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}
@@ -1599,32 +1599,32 @@ export default function App() {
           </div>
       </div>
 
-      <div className="px-1">
-          <div className="flex justify-between items-end mb-3">
-             <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest">Currency Rates</h3>
+      <div>
+          <div className="flex justify-between items-center mb-2.5">
+             <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] leading-[1.3]">Currency Rates</h3>
              <button
                 onClick={openFxEdit}
-                className="text-xs text-primary font-medium hover:text-ink transition-colors"
+                className="text-[13px] text-textFaint font-medium hover:text-ink transition-colors"
              >
                 Edit
              </button>
           </div>
-          <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+          <div className="glass-panel rounded-[20px] overflow-hidden">
              {fxPairs.map((p, i) => {
                 const weekly = fxWeeklyFor(p.first, p.second);
                 const up = weekly ? weekly.change >= 0 : true;
                 return (
-                  <div key={i} className={`flex items-center justify-between gap-3 px-4 py-3.5 ${i !== fxPairs.length - 1 ? 'border-b border-ink/5' : ''}`}>
+                  <div key={i} className="flex items-center justify-between gap-3 px-[18px] py-3.5">
                     <div className="min-w-0">
-                      <p className="text-sm text-ink tabular-nums">
+                      <p className="text-[15px] text-ink tabular-nums">
                         1 {p.first} = <span className="font-semibold">{fxRate(p.first, p.second)}</span> {p.second}
                       </p>
                       {weekly ? (
-                        <p className={`text-[11px] font-medium mt-0.5 ${up ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {up ? '▲' : '▼'} {Math.abs(weekly.change).toFixed(2)}% <span className="text-textFaint font-normal">this week</span>
+                        <p className={`text-[12px] mt-1 ${up ? 'text-[#399d74]' : 'text-rose-400'}`}>
+                          {up ? '▲' : '▼'} {Math.abs(weekly.change).toFixed(2)}% <span className="text-textFaint">this week</span>
                         </p>
                       ) : (
-                        <p className="text-[11px] text-textFaint mt-0.5">{p.first}/{p.second}</p>
+                        <p className="text-[12px] text-textFaint mt-1">{p.first}/{p.second}</p>
                       )}
                     </div>
                     {weekly && <Sparkline data={weekly.series} up={up} />}
@@ -1636,7 +1636,7 @@ export default function App() {
 
       {AI_INSIGHTS_ENABLED && assets.length > 0 && (
       <div className="px-1">
-        <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-3">Insights</h3>
+        <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-3">Insights</h3>
         {isLoadingInsights ? (
             <div className="p-4 rounded-3xl glass-panel animate-pulse h-24"></div>
         ) : (
@@ -1759,7 +1759,7 @@ export default function App() {
                 </div>
             </div>
             <div className="flex items-center gap-1.5">
-                <span className="text-sm font-medium text-emerald-400">
+                <span className="text-sm font-medium text-[#399d74]">
                     {privacyMode ? '••••' : `${getCurrencySymbol(settings.displayCurrency)}${Math.round(passiveIncome12mo).toLocaleString()}`}
                 </span>
                 <Icons.ChevronRight className="w-4 h-4 text-textFaint" />
@@ -1837,7 +1837,7 @@ export default function App() {
                 if (categoryAssets.length === 0) return null;
                 return (
                     <div key={category} className="mb-6">
-                        <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-3 px-1">{category}</h3>
+                        <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-3 px-1">{category}</h3>
                         <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
                             {categoryAssets.map((asset, index) => assetRow(asset, false, index === categoryAssets.length - 1))}
                         </div>
@@ -1854,7 +1854,7 @@ export default function App() {
         {excludedAssets.length > 0 && (
             <div className="mt-2">
                 <button onClick={() => setExcludedOpen(o => !o)} className="w-full flex items-center justify-between px-1 py-2 group">
-                    <span className="text-xs font-bold text-textMuted uppercase tracking-widest">Excluded · not in net worth ({excludedAssets.length})</span>
+                    <span className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">Excluded · not in net worth ({excludedAssets.length})</span>
                     <Icons.ChevronDown className={`w-4 h-4 text-textFaint transition-transform ${excludedOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {excludedOpen && (
@@ -1868,7 +1868,7 @@ export default function App() {
         <Modal isOpen={filterOpen} onClose={() => setFilterOpen(false)}>
             <h2 className="text-xl font-semibold text-ink mb-5">Sort &amp; filter</h2>
 
-            <p className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2">Sort</p>
+            <p className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-2">Sort</p>
             <div className="flex bg-surface2 rounded-xl p-1 mb-6">
                 {([['CATEGORY', 'Category'], ['VALUE', 'Value'], ['UPDATED', 'Updated'], ['LIQUIDITY', 'Liquidity']] as const).map(([m, label]) => (
                     <button key={m} onClick={() => setSortMode(m)}
@@ -1878,7 +1878,7 @@ export default function App() {
                 ))}
             </div>
 
-            <p className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2">Filter</p>
+            <p className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-2">Filter</p>
 
             <p className="text-[11px] text-textFaint mb-2">Category</p>
             <div className="flex flex-wrap gap-2 mb-5">
@@ -2036,7 +2036,7 @@ export default function App() {
 
       {/* Scrollable Content Area — runs full height and scrolls UNDER the
           floating dock; bottom padding lets the last item clear the island. */}
-      <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6 pb-[calc(env(safe-area-inset-bottom,0px)+7.5rem)]">
+      <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+7.5rem)]">
         {activeTab === 'SETTINGS' ? renderSettings() :
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
          activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} rates={rates} records={income} onRecordsChange={(next) => { if (next.length > income.length) registerStreakActivity(); setIncome(next); }} /> :
@@ -2085,7 +2085,7 @@ export default function App() {
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
           }}
-          className="relative mx-auto w-full max-w-[350px] h-[70px] rounded-[20px] px-5 py-0 flex justify-between items-center overflow-hidden"
+          className="relative w-full h-[70px] rounded-[20px] px-5 py-0 flex justify-between items-center overflow-hidden"
         >
           {/* gradient stroke that fades to transparent */}
           <span
@@ -2288,7 +2288,7 @@ export default function App() {
         <div className="space-y-6">
           {fxDraft.map((p, i) => (
             <div key={i}>
-              <h4 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2">Rate {i + 1}</h4>
+              <h4 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-2">Rate {i + 1}</h4>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-medium text-textMuted mb-1.5">First currency</label>
