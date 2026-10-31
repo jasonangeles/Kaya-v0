@@ -235,7 +235,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
   const positive = growth >= 0;
 
   return (
-    <div className="pb-28 space-y-6 animate-[fadeIn_0.4s_ease-out]">
+    <div className="space-y-6 animate-[fadeIn_0.4s_ease-out]">
       <header className="px-1">
         <h1 className="text-3xl font-medium text-ink mb-1">Passive Income</h1>
         <p className="text-sm text-textMuted">Track how your dividends & interest grow</p>

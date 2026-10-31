@@ -673,6 +673,8 @@ export default function App() {
   });
   const [showSetPin, setShowSetPin] = useState(false);
   const [showAutoLock, setShowAutoLock] = useState(false);
+  const [showNameEdit, setShowNameEdit] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
   const [showRecovery, setShowRecovery] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
 
@@ -1330,7 +1332,7 @@ export default function App() {
   const renderAssetDetail = () => {
     if (!selectedAsset) return null;
     return (
-        <div className="pb-28 animate-[fadeIn_0.3s_ease-out]">
+        <div className="animate-[fadeIn_0.3s_ease-out]">
             <div className="glass-panel rounded-t-[32px] rounded-b-3xl p-5 mb-6 relative overflow-visible shadow-lg z-20">
                 <div className="flex justify-between items-center mb-2 -mt-1">
                      <button 
@@ -1423,15 +1425,17 @@ export default function App() {
   };
 
   const greetingName = (() => {
-    const n = session?.user?.email?.split('@')[0]?.replace(/[._-]+/g, ' ').trim().split(' ')[0] || '';
+    const custom = settings.displayName?.trim();
+    if (custom) return custom;
+    const n =session?.user?.email?.split('@')[0]?.replace(/[0-9]+/g, '').replace(/[._+-]+/g, ' ').trim().split(' ')[0] || '';
     return n ? n.charAt(0).toUpperCase() + n.slice(1) : 'there';
   })();
 
   const renderHome = () => (
-    <div className="space-y-6 pb-28 animate-[fadeIn_0.5s_ease-out]">
+    <div className="space-y-6 animate-[fadeIn_0.5s_ease-out]">
       <header className="flex justify-between items-center px-1">
-        <div>
-            <h1 className="text-[20px] font-semibold tracking-tight text-textMuted">Hi, {greetingName}!</h1>
+        <div className="min-w-0 flex-1 pr-3">
+            <h1 className="text-[20px] font-semibold tracking-tight text-textMuted whitespace-nowrap truncate">Hi, {greetingName}!</h1>
         </div>
         <div className="flex items-center gap-2.5">
             <button
@@ -1533,12 +1537,12 @@ export default function App() {
                 timeRange={selectedTimeRange}
             />
          </div>
-         <div className="flex justify-between items-center bg-surface2 rounded-full p-0.5 mt-2">
+         <div className="flex justify-between items-center mt-2">
             {(['1D', '1W', '1M', '3M', 'YTD', '1Y', 'ALL'] as TimeRange[]).map((range) => (
                 <button
                     key={range}
                     onClick={() => setSelectedTimeRange(range)}
-                    className={`flex-1 py-1.5 text-[10px] font-medium rounded-full transition-all ${
+                    className={`px-[10px] py-[6px] text-[10px] font-medium rounded-full transition-all ${
                         selectedTimeRange === range
                         ? 'bg-textMuted text-paper shadow-sm'
                         : 'text-textFaint hover:text-ink'
@@ -1719,7 +1723,7 @@ export default function App() {
   );
 
   const renderPortfolioList = () => (
-    <div className="pb-28 space-y-4 animate-[fadeIn_0.5s_ease-out]">
+    <div className="space-y-4 animate-[fadeIn_0.5s_ease-out]">
          <header className="mb-6 px-1">
             <h1 className="text-3xl font-medium text-ink mb-2">Portfolio</h1>
             <p className="text-sm text-textMuted">Tap to view details</p>
@@ -1911,7 +1915,7 @@ export default function App() {
   );
 
   const renderCurrencySelection = () => (
-    <div className="pb-28 animate-[fadeIn_0.3s_ease-out]">
+    <div className="animate-[fadeIn_0.3s_ease-out]">
         <header className="flex items-center gap-4 mb-6 px-1">
             <button 
                 onClick={() => setActiveTab('SETTINGS')}
@@ -1946,7 +1950,7 @@ export default function App() {
   );
 
   const renderSettings = () => (
-    <div className="pb-28 animate-[fadeIn_0.5s_ease-out]">
+    <div className="animate-[fadeIn_0.5s_ease-out]">
       <header className="mb-8 px-1">
         <h1 className="text-3xl font-medium text-ink">Settings</h1>
       </header>
@@ -1994,12 +1998,21 @@ export default function App() {
         <SettingsItem icon={<Icons.Mail size={20} />} label="Contact Us" onClick={() => { setContactStatus('idle'); setShowContact(true); }} isLast />
       </SettingsGroup>
 
-      {isSupabaseEnabled && session && (
-        <SettingsGroup title="Account">
-          <SettingsItem icon={<Icons.Mail size={20} />} label="Signed in" value={session.user.email || ''} />
-          <SettingsItem icon={<Icons.ArrowLeftRight size={20} />} label="Sign out" onClick={handleSignOut} isLast />
-        </SettingsGroup>
-      )}
+      <SettingsGroup title="Account">
+        <SettingsItem
+          icon={<Icons.User size={20} />}
+          label="Display name"
+          value={settings.displayName?.trim() || 'Add'}
+          onClick={() => { setNameDraft(settings.displayName || ''); setShowNameEdit(true); }}
+          isLast={!(isSupabaseEnabled && session)}
+        />
+        {isSupabaseEnabled && session && (
+          <>
+            <SettingsItem icon={<Icons.Mail size={20} />} label="Signed in" value={session.user.email || ''} />
+            <SettingsItem icon={<Icons.ArrowLeftRight size={20} />} label="Sign out" onClick={handleSignOut} isLast />
+          </>
+        )}
+      </SettingsGroup>
 
       <div className="text-center mt-8 text-textFaint text-xs">
         <p>Kaya Wealth v1.1.0</p>
@@ -2016,13 +2029,14 @@ export default function App() {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-transparent text-textMain max-w-md mx-auto relative shadow-2xl overflow-hidden font-sans">
+    <div className="h-[100dvh] flex flex-col bg-transparent text-textMain max-w-md mx-auto relative isolate shadow-2xl overflow-hidden font-sans">
 
-      {/* Dithered gradient backdrop (behind all content) */}
+      {/* Dithered gradient backdrop (behind all content, confined to the app column) */}
       <DitherBackground theme={theme} />
 
-      {/* Scrollable Content Area */}
-      <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
+      {/* Scrollable Content Area — runs full height and scrolls UNDER the
+          floating dock; bottom padding lets the last item clear the island. */}
+      <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-6 pb-[calc(env(safe-area-inset-bottom,0px)+7.5rem)]">
         {activeTab === 'SETTINGS' ? renderSettings() :
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
          activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} rates={rates} records={income} onRecordsChange={(next) => { if (next.length > income.length) registerStreakActivity(); setIncome(next); }} /> :
@@ -2034,7 +2048,20 @@ export default function App() {
       {/* Bottom bar: floating island dock + FAB above it.
           Bottom padding = iOS safe-area inset + a gap so the island floats
           clearly above the home indicator instead of sitting under it. */}
-      <div className="shrink-0 relative z-40 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+0.9rem)]">
+      <div className="absolute inset-x-0 bottom-0 z-40 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+0.9rem)] pointer-events-none [&>*:not([aria-hidden])]:pointer-events-auto">
+        {/* Blur fade: content scrolling under the dock softens progressively
+            instead of looking cluttered behind the island. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 -top-12"
+          style={{
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.18) 100%)',
+            maskImage: 'linear-gradient(180deg, transparent 0%, #000 55%)',
+            WebkitMaskImage: 'linear-gradient(180deg, transparent 0%, #000 55%)',
+          }}
+        />
         {activeTab !== 'SETTINGS' && activeTab !== 'SETTINGS_CURRENCY' && (
           <div className="absolute right-6 bottom-full mb-5 z-30">
             <button
@@ -2197,6 +2224,33 @@ export default function App() {
       </Modal>
 
       {/* Auto-lock delay picker */}
+      <Modal isOpen={showNameEdit} onClose={() => setShowNameEdit(false)}>
+        <h2 className="text-2xl font-medium mb-1 text-ink">Display name</h2>
+        <p className="text-textMuted text-sm mb-5">This is how Kaya greets you on the Home page.</p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const v = nameDraft.trim().slice(0, 24);
+            setSettings(prev => ({ ...prev, displayName: v || undefined }));
+            (document.activeElement as HTMLElement | null)?.blur();
+            setShowNameEdit(false);
+          }}
+        >
+          <input
+            type="text"
+            value={nameDraft}
+            onChange={(e) => setNameDraft(e.target.value)}
+            maxLength={24}
+            placeholder="e.g. Jason"
+            autoComplete="given-name"
+            className="w-full bg-surface2 border border-ink/10 rounded-xl px-4 py-3.5 text-ink text-base outline-none focus:border-ink/30 transition-colors"
+          />
+          <button type="submit" className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-5 hover:opacity-90 transition-opacity">
+            Save
+          </button>
+        </form>
+      </Modal>
+
       <Modal isOpen={showAutoLock} onClose={() => setShowAutoLock(false)}>
         <h2 className="text-2xl font-medium mb-1 text-ink">Auto-lock</h2>
         <p className="text-textMuted text-sm mb-5">Require your PIN after Kaya has been in the background for…</p>

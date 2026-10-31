@@ -85,4 +85,5 @@ export interface UserSettings {
   lastStreakMonth?: string; // YYYY-MM of the last month activity was logged
   lastLogin: string;
   fxPairs?: { first: string; second: string }[]; // currency-rate widget pairs
+  displayName?: string; // shown in the Home greeting ("Hi, {displayName}!")
 }
