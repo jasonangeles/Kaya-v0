@@ -94,6 +94,9 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
     const ys = records.map(r => new Date(r.date).getFullYear());
     return ys.length ? Math.min(...ys) : currentYear;
   }, [records, currentYear]);
+  // Which bar is highlighted (null = the current/latest period).
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  useEffect(() => { setSelectedKey(null); }, [mode, viewYear]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<IncomeRecord>(emptyDraft(displayCurrency));
@@ -304,7 +307,18 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
 
         <div className="h-36 -mx-2">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+            <BarChart
+              data={chartData}
+              margin={{ top: 4, right: 8, left: 8, bottom: 0 }}
+              style={{ cursor: 'pointer' }}
+              onClick={(s: any) => {
+                // Tapping anywhere in a column selects that period; tap it again to go back to the latest.
+                const i = s?.activeTooltipIndex;
+                if (i == null || !chartData[i]) return;
+                const k = chartData[i].key;
+                setSelectedKey(prev => (prev === k ? null : k));
+              }}
+            >
               <defs>
                 {/* Main green at the base fading to muted at the top */}
                 <linearGradient id="incomeBarGrad" x1="0" y1="1" x2="0" y2="0">
@@ -318,19 +332,21 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                 cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                 content={({ active, payload, label }: any) => {
                   if (!active || !payload || !payload.length) return null;
+                  // Same colors as the active toggles: muted fill, black text.
                   return (
-                    <div className="bg-surface3/95 border border-ink/10 p-3 rounded-xl shadow-2xl">
-                      <p className="text-textMuted text-xs mb-1">{label}</p>
-                      <p className="text-[#399d74] font-bold text-sm">{fmt(payload[0].value, displayCurrency)}</p>
+                    <div className="bg-textMuted text-paper px-3 py-2 rounded-xl shadow-lg shadow-black/30">
+                      <p className="text-[11px] font-medium text-paper/60 leading-none mb-1">{label}</p>
+                      <p className="text-sm font-semibold leading-none tabular-nums">{privacyMode ? '••••' : fmt(payload[0].value, displayCurrency)}</p>
                     </div>
                   );
                 }}
               />
               <Bar dataKey="total" radius={[6, 6, 2, 2]} animationDuration={700} maxBarSize={48}>
-                {/* Every bar uses the gradient; the current period is full strength, past ones softer. */}
-                {chartData.map((entry, i) => (
-                  <Cell key={i} fill="url(#incomeBarGrad)" fillOpacity={i === chartData.length - 1 ? 1 : 0.45} />
-                ))}
+                {/* Every bar uses the gradient; the selected period (default: latest) is full strength. */}
+                {chartData.map((entry, i) => {
+                  const isSel = selectedKey ? entry.key === selectedKey : i === chartData.length - 1;
+                  return <Cell key={entry.key} fill="url(#incomeBarGrad)" fillOpacity={isSel ? 1 : 0.4} style={{ transition: 'fill-opacity 200ms ease' }} />;
+                })}
               </Bar>
               {mode === 'MONTH' && avgMonthly > 0 && (
                 <ReferenceLine
@@ -361,7 +377,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
           <div key={group.key}>
             <div className="flex justify-between items-center mb-3 px-1">
               <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">{group.label}</h3>
-              <span className="text-[13px] font-medium text-[#399d74]">{hide(fmt(group.subtotal, displayCurrency))}</span>
+              <span className="text-[13px] font-medium text-ink tabular-nums">{hide(fmt(group.subtotal, displayCurrency))}</span>
             </div>
             {/* Same frosted card + row style as the Portfolio account list */}
             <div className="glass-panel rounded-[20px] overflow-hidden">
@@ -383,7 +399,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="font-semibold text-[#399d74] tracking-wide">
+                    <p className="font-semibold text-ink tracking-wide tabular-nums">
                       {privacyMode ? '••••' : <>+<Sym code={r.currency} />{r.amount.toLocaleString()}</>}
                     </p>
                   </div>
