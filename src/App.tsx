@@ -2044,7 +2044,7 @@ export default function App() {
 
       {/* Scrollable Content Area — runs full height and scrolls UNDER the
           floating dock; bottom padding lets the last item clear the island. */}
-      <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+7.5rem)]">
+      <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+7.5rem+10px)]">
         {activeTab === 'SETTINGS' ? renderSettings() :
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
          activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} rates={rates} records={income} onRecordsChange={(next) => { if (next.length > income.length) registerStreakActivity(); setIncome(next); }} /> :
@@ -2056,7 +2056,7 @@ export default function App() {
       {/* Bottom bar: floating island dock + FAB above it.
           Bottom padding = iOS safe-area inset + a gap so the island floats
           clearly above the home indicator instead of sitting under it. */}
-      <div className="absolute inset-x-0 bottom-0 z-40 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+0.9rem)] pointer-events-none [&>*:not([aria-hidden])]:pointer-events-auto">
+      <div className="absolute inset-x-0 bottom-0 z-40 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+0.9rem+10px)] pointer-events-none [&>*:not([aria-hidden])]:pointer-events-auto">
         {/* Blur fade: content scrolling under the dock softens progressively
             instead of looking cluttered behind the island. */}
         <div

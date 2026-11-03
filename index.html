@@ -179,9 +179,10 @@
           radial-gradient(120% 60% at 50% 115%, rgba(57, 157, 116, 0.22) 0%, rgba(57, 157, 116, 0) 70%),
           linear-gradient(180deg, #0c1310 0%, #080d0b 55%, #0b1712 100%);
         border-top: 1px solid rgba(255, 255, 255, 0.10);
-        box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.55);
+        /* No box-shadow: closed sheets park just below the screen, and an upward
+           shadow would bleed over the toolbar as a dark band. The backdrop does the separation. */
       }
-      html.light .kaya-sheet { background: #ffffff; border-top-color: rgba(0, 0, 0, 0.08); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.08); }
+      html.light .kaya-sheet { background: #ffffff; border-top-color: rgba(0, 0, 0, 0.08); }
 
       /* Form fields: input / select / textarea / field-like wrappers */
       .kaya-field {
