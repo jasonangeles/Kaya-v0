@@ -205,9 +205,9 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
           <div className="relative flex justify-center mt-4">
             <LiquidityGauge liqFrac={liqFrac} progress={aProg} />
             <div className="absolute inset-x-0 bottom-0 text-center">
-              <p className="text-[9px] font-medium uppercase tracking-[1.2px] text-textFaint">Accessible ~48h</p>
-              <p className="text-[26px] font-bold text-ink leading-tight mt-0.5 tabular-nums">{Math.round(liqFrac * 100 * aProg)}%</p>
-              <p className="text-[11px]" style={{ color: LIQUID }}>liquid</p>
+              {/* Same size/weight as the Home net worth total */}
+              <p className="text-4xl font-medium tracking-tight text-ink leading-none tabular-nums">{Math.round(liqFrac * 100 * aProg)}%</p>
+              <p className="text-[11px] mt-1.5" style={{ color: LIQUID }}>liquid</p>
             </div>
           </div>
         </div>

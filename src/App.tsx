@@ -2096,7 +2096,7 @@ export default function App() {
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
           }}
-          className="relative w-full h-[70px] rounded-[20px] px-5 py-0 flex justify-between items-center overflow-hidden"
+          className="relative isolate w-full h-[70px] rounded-[20px] px-5 py-0 flex justify-between items-center overflow-hidden"
         >
           {/* gradient stroke that fades to transparent */}
           <span
@@ -2126,11 +2126,15 @@ export default function App() {
               {/* invisible wider tap area (icon itself is 24px, per Figma) */}
               <span aria-hidden className="absolute inset-y-0 -inset-x-4" />
               {active && (
-                // Figma: 48×48 circle, fill secondary #399d74, 50% opacity, layer blur 40,
-                // centered on the island's bottom edge below the icon (clipped by the island).
+                // Figma: 48×48 secondary circle + layer blur 40, centered on the island's
+                // bottom edge. Built as a radial gradient (no CSS `filter: blur`) — iOS Safari
+                // renders blurred children of a backdrop-filter container as square tiles.
                 <span
-                  className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full"
-                  style={{ top: 46, background: '#399d74', opacity: 0.7, filter: 'blur(20px)' }}
+                  className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-28 h-28 rounded-full"
+                  style={{
+                    top: 14,
+                    background: 'radial-gradient(circle closest-side, rgba(57,157,116,0.6) 0%, rgba(57,157,116,0.32) 45%, rgba(57,157,116,0) 100%)',
+                  }}
                 />
               )}
               {/* All dock icons stay regular (outline) weight per design;
