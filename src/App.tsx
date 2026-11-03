@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Icons } from './components/icons';
 import { NetWorthChart, ChartScrub } from './components/NetWorthChart';
 import { IncomeTracker } from './components/IncomeTracker';
@@ -42,21 +43,24 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
       window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
-  return (
+  // Portaled to <body>: sheets rendered inside an animating page would otherwise be
+  // positioned relative to that page (a transformed ancestor) and peek through.
+  return createPortal(
     <>
       <div 
         className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
       <div
-        style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}
+        style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)', visibility: isOpen ? 'visible' : 'hidden', transition: isOpen ? 'transform 300ms ease-out' : 'transform 300ms ease-out, visibility 0s linear 300ms', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}
         className={`fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] p-6  transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto ${isOpen ? '' : 'pointer-events-none'}`}
       >
         <div className="w-10 h-1 bg-ink/20 rounded-full mx-auto mb-6" />
         <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
         {isOpen ? children : null}
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 

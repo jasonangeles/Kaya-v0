@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import { Icons } from './icons';
 import { IncomeRecord } from '../types';
@@ -53,18 +54,20 @@ const monthLabel = (key: string) => {
   return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short' }) + (m === 1 ? ` '${String(y).slice(2)}` : '');
 };
 
-const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children?: React.ReactNode }) => (
+// Portaled to <body> so it's positioned against the screen, not the (animating) page.
+const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children?: React.ReactNode }) => createPortal(
   <>
     <div
       className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       onClick={onClose}
     />
-    <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] p-6  transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto">
+    <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)', visibility: isOpen ? 'visible' : 'hidden', transition: isOpen ? 'transform 300ms ease-out' : 'transform 300ms ease-out, visibility 0s linear 300ms' }} className="fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] p-6  transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto">
       <div className="w-10 h-1 bg-ink/20 rounded-full mx-auto mb-6" />
       <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
       {children}
     </div>
-  </>
+  </>,
+  document.body
 );
 
 interface Props {
