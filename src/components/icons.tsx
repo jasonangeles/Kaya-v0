@@ -45,6 +45,8 @@ import {
   Backspace,
   UserCircle,
   HouseSimple,
+  Heart,
+  MagnifyingGlass,
   X
 } from '@phosphor-icons/react';
 
@@ -93,5 +95,7 @@ export const Icons = {
   Backspace: Backspace,
   User: UserCircle,
   Home: HouseSimple,
+  Heart: Heart,
+  Search: MagnifyingGlass,
   Close: X
 };

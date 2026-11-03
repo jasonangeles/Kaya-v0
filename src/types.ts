@@ -86,4 +86,8 @@ export interface UserSettings {
   lastLogin: string;
   fxPairs?: { first: string; second: string }[]; // currency-rate widget pairs
   displayName?: string; // shown in the Home greeting ("Hi, {displayName}!")
+  // Onboarding (new sign-ups). Saved for user profiling; goals don't change the app yet.
+  homeCountries?: string[]; // e.g. ['PH', 'CA']
+  goals?: string[];         // e.g. ['NET_WORTH', 'PASSIVE_INCOME']
+  onboardedAt?: string;
 }

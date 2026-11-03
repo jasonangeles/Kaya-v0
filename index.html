@@ -248,6 +248,7 @@
       html.light .kaya-pop { background: rgba(255, 255, 255, 0.97); border-color: rgba(0, 0, 0, 0.08); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.10); }
 
       /* Overview widget motion */
+      @keyframes kayaSheetUp { from { transform: translateY(100%); } to { transform: none; } }
       @keyframes kayaFadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
       @keyframes kayaSweep { from { clip-path: inset(0 100% 0 0 round 999px); } to { clip-path: inset(0 0 0 0 round 999px); } }
       @media (prefers-reduced-motion: reduce) {

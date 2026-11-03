@@ -9,6 +9,7 @@ import { AllocationCarousel } from './components/AllocationCarousel';
 import { CurrencyPicker } from './components/CurrencyPicker';
 import { Sym, DirhamSign } from './components/DirhamSign';
 import { DitherBackground } from './components/DitherBackground';
+import { Onboarding, OnboardingResult } from './components/Onboarding';
 import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
@@ -494,8 +495,10 @@ export default function App() {
         if (data?.data) {
           adopt(data.data, data.updated_at || now);
         } else {
-          setAssets([]); setIncome([]); setSettings(DEFAULT_SETTINGS); setSyncedAt(now);
-          await supabase!.from('kaya_data').upsert({ user_id: uid, data: { assets: [], income: [], settings: DEFAULT_SETTINGS }, updated_at: now });
+          // Brand-new account (no cloud row): start empty and show onboarding once.
+          const fresh = { ...DEFAULT_SETTINGS, onboardingComplete: false };
+          setAssets([]); setIncome([]); setSettings(fresh); setSyncedAt(now);
+          await supabase!.from('kaya_data').upsert({ user_id: uid, data: { assets: [], income: [], settings: fresh }, updated_at: now });
         }
       } else if (!data) {
         await pushLocal();                       // no cloud row yet → seed from local
@@ -1043,6 +1046,33 @@ export default function App() {
     setModalCategory(asset.category);
     setModalCurrency(asset.currency);
     setIsModalOpen(true);
+  };
+
+  // Onboarding finished: save profile picks, create picked accounts at 0 (balances later).
+  const handleOnboardingFinish = (r: OnboardingResult) => {
+    const now = new Date().toISOString();
+    const stamp = Date.now();
+    const newAssets: Asset[] = r.accounts.map((p, i) => ({
+      id: `${stamp}-${i}`,
+      name: p.name,
+      category: p.category,
+      institution: p.institution,
+      amount: 0,
+      currency: p.currency,
+      lastUpdated: now,
+      history: [],
+    }));
+    if (newAssets.length) setAssets(prev => [...prev, ...newAssets]);
+    setSettings(prev => ({
+      ...prev,
+      displayCurrency: r.displayCurrency,
+      homeCountries: r.countries,
+      goals: r.goals,
+      onboardingComplete: true,
+      onboardedAt: now,
+    }));
+    setActiveTab(newAssets.length || r.wantsCustom ? 'ASSETS' : 'HOME');
+    if (r.wantsCustom) setTimeout(() => handleOpenAddAsset(), 350);
   };
 
   const handleSaveAsset = (e: React.FormEvent<HTMLFormElement>) => {
@@ -2092,6 +2122,10 @@ export default function App() {
   }
   if (isSupabaseEnabled && !session) {
     return <Landing />;
+  }
+  // New sign-ups only (flag set when their account is first created).
+  if (isSupabaseEnabled && session && cloudLoaded && settings.onboardingComplete === false) {
+    return <Onboarding onFinish={handleOnboardingFinish} />;
   }
 
   return (
