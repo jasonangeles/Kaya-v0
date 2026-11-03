@@ -44,6 +44,7 @@ import {
   ChatCircleText,
   Backspace,
   UserCircle,
+  HouseSimple,
   X
 } from '@phosphor-icons/react';
 
@@ -91,5 +92,6 @@ export const Icons = {
   Feedback: ChatCircleText,
   Backspace: Backspace,
   User: UserCircle,
+  Home: HouseSimple,
   Close: X
 };

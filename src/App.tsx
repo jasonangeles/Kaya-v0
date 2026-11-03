@@ -9,7 +9,6 @@ import { AllocationCarousel } from './components/AllocationCarousel';
 import { CurrencyPicker } from './components/CurrencyPicker';
 import { Sym, DirhamSign } from './components/DirhamSign';
 import { DitherBackground } from './components/DitherBackground';
-import { KayaMark } from './components/KayaMark';
 import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
 import type { Session } from '@supabase/supabase-js';
@@ -1435,9 +1434,9 @@ export default function App() {
     <div className="space-y-6 animate-[fadeIn_0.5s_ease-out]">
       <header className="flex justify-between items-center">
         <div className="min-w-0 flex-1 pr-3">
-            <h1 className="text-[20px] font-semibold tracking-tight text-textMuted whitespace-nowrap truncate">Hi, {greetingName}!</h1>
+            <h1 title={`Hi, ${greetingName}!`} className="text-[20px] font-semibold tracking-tight text-textMuted whitespace-nowrap overflow-hidden text-ellipsis">Hi, {greetingName}!</h1>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
             <button
                 onClick={toggleTheme}
                 aria-label="Toggle light or dark mode"
@@ -2119,17 +2118,19 @@ export default function App() {
                 // centered on the island's bottom edge below the icon (clipped by the island).
                 <span
                   className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full"
-                  style={{ top: 46, background: '#399d74', opacity: 0.5, filter: 'blur(20px)' }}
+                  style={{ top: 46, background: '#399d74', opacity: 0.7, filter: 'blur(20px)' }}
                 />
               )}
+              {/* All dock icons stay regular (outline) weight per design;
+                  the active tab is marked by the muted color + glow. */}
               {key === 'HOME' ? (
-                <KayaMark size={24} className="relative" />
+                <Icons.Home className="relative w-6 h-6" weight="regular" />
               ) : key === 'ASSETS' ? (
-                <Icons.Wallet className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+                <Icons.Wallet className="relative w-6 h-6" weight="regular" />
               ) : key === 'INCOME' ? (
-                <Icons.BarChart className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+                <Icons.BarChart className="relative w-6 h-6" weight="regular" />
               ) : (
-                <Icons.Settings className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+                <Icons.Settings className="relative w-6 h-6" weight="regular" />
               )}
             </button>
           ))}
