@@ -309,6 +309,8 @@ const LOCK_DELAY_OPTIONS = [
 // AI insights are off until they run through a secure server-side proxy (planned
 // premium feature). Flipping this to true also requires the Edge Function + key.
 const AI_INSIGHTS_ENABLED = false;
+// Portfolio page: passive-income summary card under Overview (hidden for now, not removed).
+const SHOW_PORTFOLIO_INCOME_CARD = false;
 
 const SYNC_KEY = 'kaya.syncedAt';
 const getSyncedAt = () => { try { return localStorage.getItem(SYNC_KEY) || ''; } catch { return ''; } };
@@ -1803,7 +1805,8 @@ export default function App() {
             />
         )}
 
-        {/* Read-only passive-income summary (not counted in net worth) */}
+        {/* Read-only passive-income summary (not counted in net worth) — hidden for now; flip SHOW_PORTFOLIO_INCOME_CARD to bring it back */}
+        {SHOW_PORTFOLIO_INCOME_CARD && (
         <button
             onClick={() => goTab('INCOME')}
             className="w-full text-left glass-panel rounded-[20px] px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-ink/5 transition-colors mb-2"
@@ -1824,6 +1827,7 @@ export default function App() {
                 <Icons.ChevronRight className="w-4 h-4 text-textFaint" />
             </div>
         </button>
+        )}
 
         {assets.length === 0 && (
             <div className="glass-panel rounded-[20px] p-8 text-center shadow-lg mt-4">

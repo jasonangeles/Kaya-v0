@@ -337,36 +337,6 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
           )}
         </div>
 
-        {/* Year stepper (Monthly only) — collapses/expands smoothly instead of popping in/out */}
-        <div
-          className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
-          style={{ gridTemplateRows: mode === 'MONTH' ? '1fr' : '0fr', opacity: mode === 'MONTH' ? 1 : 0 }}
-          aria-hidden={mode !== 'MONTH'}
-        >
-          <div className="overflow-hidden min-h-0">
-          <div className="flex items-center justify-center gap-5 pb-2">
-            <button
-              onClick={() => setViewYear(y => Math.max(earliestYear, y - 1))}
-              disabled={viewYear <= earliestYear}
-              tabIndex={mode === 'MONTH' ? 0 : -1}
-              aria-label="Previous year"
-              className="p-1 rounded-full text-textMuted hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            >
-              <Icons.ChevronRight size={18} className="rotate-180" />
-            </button>
-            <span className="text-sm font-medium text-ink tabular-nums w-12 text-center">{viewYear}</span>
-            <button
-              onClick={() => setViewYear(y => Math.min(currentYear, y + 1))}
-              disabled={viewYear >= currentYear}
-              tabIndex={mode === 'MONTH' ? 0 : -1}
-              aria-label="Next year"
-              className="p-1 rounded-full text-textMuted hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            >
-              <Icons.ChevronRight size={18} />
-            </button>
-          </div>
-          </div>
-        </div>
 
         <div key={`chart-${mode}`} className="h-36 -mx-2 animate-[kayaFadeUp_0.35s_ease-out]">
           <ResponsiveContainer width="100%" height="100%">
@@ -413,6 +383,36 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
               )}
             </BarChart>
           </ResponsiveContainer>
+        </div>
+        {/* Year stepper under the chart (Monthly only) — collapses/expands smoothly instead of popping in/out */}
+        <div
+          className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+          style={{ gridTemplateRows: mode === 'MONTH' ? '1fr' : '0fr', opacity: mode === 'MONTH' ? 1 : 0 }}
+          aria-hidden={mode !== 'MONTH'}
+        >
+          <div className="overflow-hidden min-h-0">
+          <div className="flex items-center justify-center gap-5 pt-3">
+            <button
+              onClick={() => setViewYear(y => Math.max(earliestYear, y - 1))}
+              disabled={viewYear <= earliestYear}
+              tabIndex={mode === 'MONTH' ? 0 : -1}
+              aria-label="Previous year"
+              className="p-1 rounded-full text-textMuted hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            >
+              <Icons.ChevronRight size={18} className="rotate-180" />
+            </button>
+            <span className="text-sm font-medium text-ink tabular-nums w-12 text-center">{viewYear}</span>
+            <button
+              onClick={() => setViewYear(y => Math.min(currentYear, y + 1))}
+              disabled={viewYear >= currentYear}
+              tabIndex={mode === 'MONTH' ? 0 : -1}
+              aria-label="Next year"
+              className="p-1 rounded-full text-textMuted hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            >
+              <Icons.ChevronRight size={18} />
+            </button>
+          </div>
+          </div>
         </div>
 
       </div>
