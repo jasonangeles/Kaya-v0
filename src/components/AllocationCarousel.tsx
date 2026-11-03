@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 
 export interface AllocSeg { key: string; pct: number; usd: number; color: string; }
 
@@ -47,6 +47,7 @@ function useCountUp(target: number, run: boolean, duration = 900) {
 
 /** Half-circle gauge: liquid then locked, rounded caps, 3px gap (like the bar). */
 export const LiquidityGauge: React.FC<{ liqFrac: number; progress: number }> = ({ liqFrac, progress }) => {
+  const gradId = 'liq-grad-' + useId().replace(/:/g, '');
   const cx = 120, cy = 116, r = 96, sw = 17; // stroke 30% thinner than before (24 → 17)
   const half = Math.PI * r;                  // arc length of the half circle
   const pt = (a: number) => { const t = Math.PI * (1 - a); return [cx + r * Math.cos(t), cy - r * Math.sin(t)]; };
@@ -73,9 +74,19 @@ export const LiquidityGauge: React.FC<{ liqFrac: number; progress: number }> = (
   }
   // Sweep-in animation: reveal from the left as progress goes 0 → 1.
   const sweep = cap + (1 - 2 * cap) * p;
+  // Liquid arc gradient: main green (left) → muted (right), spanning the arc's
+  // FINAL extent so the colors don't stretch while it sweeps in.
+  const gx1 = pt(cap)[0] - sw / 2, gx2 = pt(liqA1)[0] + sw / 2;
+  const useGrad = gx2 - gx1 > sw * 2;
   return (
     <svg viewBox="0 0 240 126" width="100%" style={{ maxWidth: 300 }} aria-hidden="true">
-      {hasLiq && p > 0 && arc(cap, Math.min(liqA1, sweep), LIQUID)}
+      <defs>
+        <linearGradient id={gradId} gradientUnits="userSpaceOnUse" x1={gx1} y1="0" x2={gx2} y2="0">
+          <stop offset="0%" style={{ stopColor: LIQUID }} />
+          <stop offset="100%" style={{ stopColor: 'rgb(var(--muted))' }} />
+        </linearGradient>
+      </defs>
+      {hasLiq && p > 0 && arc(cap, Math.min(liqA1, sweep), useGrad ? `url(#${gradId})` : LIQUID)}
       {hasLock && sweep >= lockA0 && arc(lockA0, Math.min(1 - cap, sweep), LOCKED)}
     </svg>
   );
@@ -155,7 +166,10 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
           {/* key={allocMode}: re-runs the sweep + fade when toggling type/currency */}
           <div key={allocMode}>
             <div className="flex gap-[3px] h-2.5 mt-[18px] mb-4 animate-[kayaSweep_0.6s_cubic-bezier(.22,1,.36,1)]">
-              {segs.map(s => <div key={s.key} style={{ flexGrow: s.pct, background: s.color }} className="rounded-full min-w-[4px]" />)}
+              {segs.map((s, i) => (
+                <div key={s.key} className="rounded-full min-w-[4px]"
+                  style={{ flexGrow: s.pct, background: i === 0 ? `linear-gradient(90deg, ${LIQUID}, rgb(var(--muted)))` : s.color }} />
+              ))}
             </div>
             <div className="space-y-2.5">
               {segs.map((s, i) => (
