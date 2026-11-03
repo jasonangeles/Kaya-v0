@@ -172,6 +172,12 @@
         pointer-events: none;
         z-index: 2;
       }
+      /* Overview widget motion */
+      @keyframes kayaFadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+      @keyframes kayaSweep { from { clip-path: inset(0 100% 0 0 round 999px); } to { clip-path: inset(0 0 0 0 round 999px); } }
+      @media (prefers-reduced-motion: reduce) {
+        .kaya-anim, .kaya-anim * { animation: none !important; transition: none !important; }
+      }
       /* No drop shadows on widgets in dark mode (per design) */
       html:not(.light) .glass-panel { box-shadow: none !important; }
       html.light .glass-panel::after { display: none; }

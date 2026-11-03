@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export interface AllocSeg { key: string; pct: number; usd: number; color: string; }
 
@@ -9,55 +9,114 @@ interface Props {
   liabilities: number;     // USD (positive number)
   assetsTotal: number;     // USD (gross, ex-liabilities)
   fmt: (usd: number) => string;
+  fmtCompact: (usd: number) => string;
   privacyMode: boolean;
   allocMode: 'TYPE' | 'CURRENCY';
   onAllocMode: (m: 'TYPE' | 'CURRENCY') => void;
 }
 
-const C = 2 * Math.PI * 70; // donut circumference (r=70)
+const LIQUID = '#399d74';            // secondary
+const LOCKED = 'rgb(var(--faint))';  // faint
 
-const LiquidityDonut: React.FC<{ liquid: number; locked: number; centerMain: string; pctLiquid: number }> = ({ liquid, locked, centerMain, pctLiquid }) => {
-  const total = liquid + locked || 1;
-  const liqLen = (liquid / total) * C;
-  const lockLen = C - liqLen;
-  const gap = liqLen > 8 && lockLen > 8 ? 3 : 0;
+const reduceMotion = () =>
+  typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/** Ease-out count from the current value to `target` once `run` is true. */
+function useCountUp(target: number, run: boolean, duration = 900) {
+  const [v, setV] = useState(0);
+  const cur = useRef(0);
+  useEffect(() => {
+    if (!run) return;
+    if (reduceMotion()) { cur.current = target; setV(target); return; }
+    const from = cur.current;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      const e = 1 - Math.pow(1 - p, 3);
+      const next = from + (target - from) * e;
+      cur.current = next;
+      setV(next);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, run, duration]);
+  return v;
+}
+
+/** Half-circle gauge: liquid then locked, rounded caps, 3px gap (like the bar). */
+export const LiquidityGauge: React.FC<{ liqFrac: number; progress: number }> = ({ liqFrac, progress }) => {
+  const cx = 120, cy = 116, r = 96, sw = 17; // stroke 30% thinner than before (24 → 17)
+  const half = Math.PI * r;                  // arc length of the half circle
+  const pt = (a: number) => { const t = Math.PI * (1 - a); return [cx + r * Math.cos(t), cy - r * Math.sin(t)]; };
+  const arc = (a0: number, a1: number, color: string) => {
+    if (a1 < a0) return null;
+    const [x0, y0] = pt(a0), [x1, y1] = pt(Math.max(a1, a0 + 0.0004)); // tiny length still draws a round dot
+    return <path d={`M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}`} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" />;
+  };
+  // Rounded caps extend sw/2 past each end — trim so caps sit inside the arc.
+  // Visible gap = 3 CSS px (viewBox renders ~1.25× on phones → 2.4 units).
+  const cap = (sw / 2) / half;
+  const gapHalf = (2.4 / 2) / half;
+  const lf = Math.max(0, Math.min(1, liqFrac));
+  const p = Math.max(0, Math.min(1, progress));
+  const hasLiq = lf > 0.0005, hasLock = lf < 0.9995;
+
+  // Final segment positions (arc fraction 0 = left end, 1 = right end).
+  let liqA1 = hasLock ? lf - gapHalf - cap : 1 - cap;
+  liqA1 = Math.max(cap, liqA1);                        // small share → at least a dot
+  let lockA0 = hasLiq ? liqA1 + 2 * cap + 2 * gapHalf : cap;
+  if (hasLiq && hasLock && lockA0 > 1 - cap) {         // small locked share → keep a dot on the right
+    lockA0 = 1 - cap;
+    liqA1 = Math.max(cap, lockA0 - 2 * cap - 2 * gapHalf);
+  }
+  // Sweep-in animation: reveal from the left as progress goes 0 → 1.
+  const sweep = cap + (1 - 2 * cap) * p;
   return (
-    <svg viewBox="0 0 200 200" width="158" height="158" aria-hidden="true">
-      <circle cx="100" cy="100" r="70" fill="none" stroke="rgb(var(--surface-3))" strokeWidth="24" />
-      <circle cx="100" cy="100" r="70" fill="none" stroke="#10b981" strokeWidth="24"
-        strokeDasharray={`${Math.max(0.001, liqLen - gap)} ${C - (liqLen - gap)}`} strokeDashoffset="0" transform="rotate(-90 100 100)" />
-      <circle cx="100" cy="100" r="70" fill="none" stroke="#94a3b8" strokeWidth="24"
-        strokeDasharray={`${Math.max(0.001, lockLen - gap)} ${C - (lockLen - gap)}`} strokeDashoffset={-liqLen} transform="rotate(-90 100 100)" />
-      <text x="100" y="90" textAnchor="middle" fontSize="8.5" letterSpacing="1.2" fill="rgb(var(--faint))">ACCESSIBLE ~48H</text>
-      <text x="100" y="113" textAnchor="middle" fontSize="20" fontWeight="600" fill="rgb(var(--ink))">{centerMain}</text>
-      <text x="100" y="129" textAnchor="middle" fontSize="10" fill="#10b981">{pctLiquid}% liquid</text>
+    <svg viewBox="0 0 240 126" width="100%" style={{ maxWidth: 300 }} aria-hidden="true">
+      {hasLiq && p > 0 && arc(cap, Math.min(liqA1, sweep), LIQUID)}
+      {hasLock && sweep >= lockA0 && arc(lockA0, Math.min(1 - cap, sweep), LOCKED)}
     </svg>
   );
 };
 
-export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liabilities, assetsTotal, fmt, privacyMode, allocMode, onAllocMode }) => {
+export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liabilities, assetsTotal, fmt, fmtCompact, privacyMode, allocMode, onAllocMode }) => {
   const [slide, setSlide] = useState(0);
+  const [seenLiquidity, setSeenLiquidity] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ down: false, sx: 0, sl: 0 });
 
   const go = (i: number) => { const t = trackRef.current; if (!t) return; t.scrollTo({ left: i * t.clientWidth, behavior: 'smooth' }); };
-  const onScroll = () => { const t = trackRef.current; if (!t) return; setSlide(Math.round(t.scrollLeft / t.clientWidth)); };
+  const onScroll = () => { const t = trackRef.current; if (!t) return; const s = Math.round(t.scrollLeft / t.clientWidth); setSlide(s); if (s === 1) setSeenLiquidity(true); };
   const onDown = (e: React.MouseEvent) => { const t = trackRef.current; if (!t) return; drag.current = { down: true, sx: e.pageX, sl: t.scrollLeft }; t.style.scrollSnapType = 'none'; };
   const onMove = (e: React.MouseEvent) => { const t = trackRef.current; if (!t || !drag.current.down) return; e.preventDefault(); t.scrollLeft = drag.current.sl - (e.pageX - drag.current.sx); };
   const onUp = () => { const t = trackRef.current; if (!t || !drag.current.down) return; drag.current.down = false; t.style.scrollSnapType = 'x mandatory'; go(Math.round(t.scrollLeft / t.clientWidth)); };
 
-  const liqTotal = liquid + locked || 1;
-  const pctLiquid = Math.round((liquid / liqTotal) * 100);
-  const val = (u: number) => privacyMode ? '••••' : fmt(u);
+  const net = assetsTotal - liabilities;
+  const liqTotal = liquid + locked;
+  const liqFrac = liqTotal > 0 ? liquid / liqTotal : 0;
+
+  // Counters: summary on load; liquidity the first time that slide is shown.
+  const aAssets = useCountUp(assetsTotal, true);
+  const aLiab = useCountUp(liabilities, true);
+  const aNet = useCountUp(net, true);
+  const aLiquid = useCountUp(liquid, seenLiquidity);
+  const aLocked = useCountUp(locked, seenLiquidity);
+  const aProg = useCountUp(1, seenLiquidity, 1000);
+  const hide = '••••';
 
   return (
-    <div className="glass-panel rounded-3xl p-5 shadow-lg mb-2">
-      <div className="flex justify-between items-center mb-1">
-        <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">Overview</h3>
-        <div className="flex bg-surface2 rounded-full p-0.5">
+    <div className="glass-panel rounded-[24px] p-5 mb-2 kaya-anim">
+      {/* Header: Overview + toggle on slide 1; Liquidity (no toggle) on slide 2 */}
+      <div className="flex justify-between items-center h-[25px]">
+        <h3 key={slide} className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] animate-[kayaFadeUp_0.25s_ease-out]">
+          {slide === 0 ? 'Overview' : 'Liquidity'}
+        </h3>
+        <div className={`flex gap-0.5 transition-opacity duration-200 ${slide === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} aria-hidden={slide !== 0}>
           {(['TYPE', 'CURRENCY'] as const).map(m => (
-            <button key={m} onClick={() => onAllocMode(m)}
-              className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${allocMode === m ? 'bg-surfaceHi text-ink' : 'text-textFaint hover:text-ink'} ${slide === 1 ? 'opacity-40 pointer-events-none' : ''}`}>
+            <button key={m} onClick={() => onAllocMode(m)} tabIndex={slide === 0 ? 0 : -1}
+              className={`px-[10px] py-[6px] text-[10px] font-medium rounded-full transition-colors duration-200 ${allocMode === m ? 'bg-textMuted text-paper' : 'text-textFaint hover:text-ink'}`}>
               {m === 'TYPE' ? 'By type' : 'By currency'}
             </button>
           ))}
@@ -74,34 +133,67 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
         className="flex overflow-x-auto no-scrollbar select-none cursor-grab active:cursor-grabbing"
         style={{ scrollSnapType: 'x mandatory' }}
       >
-        {/* Slide 1 — allocation breakdown bar */}
+        {/* Slide 1 — summary + allocation */}
         <div className="shrink-0 w-full" style={{ scrollSnapAlign: 'center' }}>
-          <div className="flex gap-[3px] h-3.5 mt-3 mb-4">
-            {segs.map(s => <div key={s.key} style={{ flexGrow: s.pct, background: s.color }} className="rounded" />)}
+          <div className="grid grid-cols-3 mt-4">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-[1.2px] text-textFaint">Assets</p>
+              <p className="text-[15px] font-semibold text-ink mt-1 tabular-nums truncate">{privacyMode ? hide : fmtCompact(aAssets)}</p>
+            </div>
+            <div className="min-w-0 border-l border-ink/10 pl-3.5">
+              <p className="text-[10px] font-medium uppercase tracking-[1.2px] text-textFaint">Liabilities</p>
+              <p className={`text-[15px] font-semibold mt-1 tabular-nums truncate ${liabilities > 0 ? 'text-rose-400' : 'text-textFaint'}`}>
+                {privacyMode ? hide : (liabilities > 0 ? `−${fmtCompact(aLiab)}` : fmtCompact(0))}
+              </p>
+            </div>
+            <div className="min-w-0 border-l border-ink/10 pl-3.5">
+              <p className="text-[10px] font-medium uppercase tracking-[1.2px] text-textFaint">Net</p>
+              <p className="text-[15px] font-semibold text-textMuted mt-1 tabular-nums truncate">{privacyMode ? hide : fmtCompact(aNet)}</p>
+            </div>
           </div>
-          <div className="space-y-2">
-            {segs.map(s => (
-              <div key={s.key} className="flex items-center justify-between">
-                <span className="flex items-center gap-2.5 min-w-0"><i className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: s.color }} /><span className="text-sm text-ink truncate">{s.key}</span></span>
-                <span className="flex items-center gap-3 shrink-0"><span className="text-xs text-textMuted">{val(s.usd)}</span><span className="text-sm font-medium text-ink w-9 text-right">{s.pct.toFixed(0)}%</span></span>
-              </div>
-            ))}
+
+          {/* key={allocMode}: re-runs the sweep + fade when toggling type/currency */}
+          <div key={allocMode}>
+            <div className="flex gap-[3px] h-2.5 mt-[18px] mb-4 animate-[kayaSweep_0.6s_cubic-bezier(.22,1,.36,1)]">
+              {segs.map(s => <div key={s.key} style={{ flexGrow: s.pct, background: s.color }} className="rounded-full min-w-[4px]" />)}
+            </div>
+            <div className="space-y-2.5">
+              {segs.map((s, i) => (
+                <div key={s.key} className="flex items-center justify-between opacity-0 animate-[kayaFadeUp_0.35s_ease-out_forwards]" style={{ animationDelay: `${80 + i * 45}ms` }}>
+                  <span className="flex items-center gap-2.5 min-w-0">
+                    <i className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
+                    <span className="text-[14px] text-ink truncate">{s.key}</span>
+                  </span>
+                  <span className="flex items-center gap-3 shrink-0">
+                    <span className="text-[12px] text-textFaint tabular-nums">{privacyMode ? hide : fmt(s.usd)}</span>
+                    <span className="text-[14px] font-medium text-ink w-9 text-right tabular-nums">{s.pct.toFixed(0)}%</span>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Slide 2 — liquidity donut */}
+        {/* Slide 2 — liquidity */}
         <div className="shrink-0 w-full" style={{ scrollSnapAlign: 'center' }}>
-          <div className="flex justify-center pt-2 pb-1">
-            <LiquidityDonut liquid={liquid} locked={locked} centerMain={val(liquid)} pctLiquid={pctLiquid} />
-          </div>
-          <div className="space-y-2 mt-2">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2.5"><i className="w-2.5 h-2.5 rounded-sm" style={{ background: '#10b981' }} /><span className="text-sm text-ink">Liquid · cash, banks, stocks</span></span>
-              <span className="text-sm font-medium text-ink">{val(liquid)}</span>
+          <div className="grid grid-cols-2 mt-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5"><i className="w-2 h-2 rounded-full" style={{ background: LIQUID }} /><span className="text-[12px] text-textMuted">Liquid</span></div>
+              <p className="text-[18px] font-semibold text-ink mt-1 tabular-nums truncate">{privacyMode ? hide : fmt(aLiquid)}</p>
+              <p className="text-[11px] text-textFaint mt-0.5">Cash, banks, stocks</p>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2.5"><i className="w-2.5 h-2.5 rounded-sm" style={{ background: '#94a3b8' }} /><span className="text-sm text-ink">Locked · pension, crypto, property</span></span>
-              <span className="text-sm font-medium text-ink">{val(locked)}</span>
+            <div className="min-w-0 border-l border-ink/10 pl-3.5">
+              <div className="flex items-center gap-1.5"><i className="w-2 h-2 rounded-full" style={{ background: LOCKED }} /><span className="text-[12px] text-textMuted">Locked</span></div>
+              <p className="text-[18px] font-semibold text-ink mt-1 tabular-nums truncate">{privacyMode ? hide : fmt(aLocked)}</p>
+              <p className="text-[11px] text-textFaint mt-0.5">Pension, crypto, property</p>
+            </div>
+          </div>
+          <div className="relative flex justify-center mt-4">
+            <LiquidityGauge liqFrac={liqFrac} progress={aProg} />
+            <div className="absolute inset-x-0 bottom-0 text-center">
+              <p className="text-[9px] font-medium uppercase tracking-[1.2px] text-textFaint">Accessible ~48h</p>
+              <p className="text-[26px] font-bold text-ink leading-tight mt-0.5 tabular-nums">{Math.round(liqFrac * 100 * aProg)}%</p>
+              <p className="text-[11px]" style={{ color: LIQUID }}>liquid</p>
             </div>
           </div>
         </div>
@@ -111,17 +203,9 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
       <div className="flex justify-center gap-1.5 mt-4">
         {[0, 1].map(i => (
           <button key={i} onClick={() => go(i)} aria-label={`View ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all duration-300 ${slide === i ? 'bg-primary w-4' : 'bg-surfaceHi w-1.5 hover:bg-textFaint'}`} />
+            className={`h-1.5 rounded-full transition-all duration-300 ${slide === i ? 'bg-[#399d74] w-4' : 'bg-ink/20 w-1.5 hover:bg-ink/40'}`} />
         ))}
       </div>
-
-      {/* Liabilities subtraction line — only when present */}
-      {liabilities > 0 && (
-        <div className="mt-4 pt-3 border-t border-ink/5 flex items-center justify-between text-xs">
-          <span className="text-textMuted">Assets {val(assetsTotal)} <span className="text-rose-400">− Liabilities {val(liabilities)}</span></span>
-          <span className="text-ink font-medium">Net {val(assetsTotal - liabilities)}</span>
-        </div>
-      )}
     </div>
   );
 };

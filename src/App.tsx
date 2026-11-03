@@ -283,7 +283,8 @@ const TYPE_COLORS: Record<string, string> = {
   [AssetCategory.PENSION]: '#94a3b8',
   [AssetCategory.OTHER]: '#52525b'
 };
-const ALLOC_PALETTE = ['#10b981', '#e4e4e7', '#5eead4', '#a1a1aa', '#71717a', '#34d399', '#d4d4d8', '#52525b'];
+// Portfolio Overview palette — Home tokens (secondary, muted, faint) + two in-between greens.
+const OVERVIEW_PALETTE = ['#399d74', 'rgb(var(--muted))', 'rgb(var(--faint))', '#2b6b50', '#3f4a44'];
 
 // Auto liquidity by category (cash-like = high, marketable = medium, long-term/locked = low).
 // Users can override per asset; DEBT is excluded from liquidity entirely.
@@ -854,23 +855,33 @@ export default function App() {
       map.set(key, (map.get(key) || 0) + usdOf(a));
     });
     const total = [...map.values()].reduce((s, v) => s + v, 0) || 1;
-    const segs = [...map.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([key, usd], i) => ({
-        key,
-        pct: (usd / total) * 100,
-        usd,
-        color: allocMode === 'TYPE'
-          ? (TYPE_COLORS[key] || ALLOC_PALETTE[i % ALLOC_PALETTE.length])
-          : (key === Currency.BTC ? '#F7931A' : ALLOC_PALETTE[i % ALLOC_PALETTE.length])
-      }));
-    return segs;
+    let entries = [...map.entries()].sort((a, b) => b[1] - a[1]);
+    // Keep the palette to five shades: fold everything past the top four into "Others".
+    if (entries.length > OVERVIEW_PALETTE.length) {
+      const head = entries.slice(0, OVERVIEW_PALETTE.length - 1);
+      const rest = entries.slice(OVERVIEW_PALETTE.length - 1).reduce((s, [, v]) => s + v, 0);
+      entries = [...head, ['Others', rest]];
+    }
+    // Colors follow rank (largest = brightest), using the Home palette only.
+    return entries.map(([key, usd], i) => ({
+      key,
+      pct: (usd / total) * 100,
+      usd,
+      color: OVERVIEW_PALETTE[i % OVERVIEW_PALETTE.length],
+    }));
   }, [assets, rates, allocMode]);
 
   const fmtDisplay = (usd: number) => {
     const display = settings.displayCurrency;
     if (display === Currency.BTC) return `₿${(btcUsd ? usd / btcUsd : 0).toFixed(4)}`;
     return `${getCurrencySymbol(display)}${Math.round(usd * (rates[display] || 1)).toLocaleString()}`;
+  };
+  // Short form for tight spots (₱1.97M, ₱125K).
+  const fmtCompact = (usd: number) => {
+    const display = settings.displayCurrency;
+    if (display === Currency.BTC) return `₿${(btcUsd ? usd / btcUsd : 0).toFixed(3)}`;
+    const v = usd * (rates[display] || 1);
+    return `${getCurrencySymbol(display)}${new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: Math.abs(v) >= 1e6 ? 2 : 1 }).format(v)}`;
   };
 
   // Liquidity split (liquid vs locked) + gross assets and liabilities, all in USD base.
@@ -1737,6 +1748,7 @@ export default function App() {
                 liabilities={liquidityBreakdown.liabilities}
                 assetsTotal={liquidityBreakdown.assetsTotal}
                 fmt={fmtDisplay}
+                fmtCompact={fmtCompact}
                 privacyMode={privacyMode}
                 allocMode={allocMode}
                 onAllocMode={setAllocMode}
