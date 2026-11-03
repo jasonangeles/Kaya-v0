@@ -14,6 +14,7 @@ interface NetWorthChartProps {
 }
 
 const SECONDARY = '#399d74';
+const DOT_R = 4; // leading dot and drag dot share one size
 const reduceMotion = () =>
   typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -143,15 +144,22 @@ const ScrubChart: React.FC<{ data: HistoricalPoint[]; valueKey: 'totalValueBTC' 
           {/* Active line (also the path the entrance animation measures) */}
           <path ref={lineRef} d={line} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" clipPath={`url(#on-${uid})`} />
 
-          {scrubbing ? (
+          {scrubbing && (
             <>
               {/* 1px divider — same token as the Assets | Liabilities | Net dividers */}
               <line x1={cutX} x2={cutX} y1={0} y2={h} strokeWidth={1} style={{ stroke: 'rgb(var(--ink, 255 255 255) / 0.10)' }} />
-              <circle cx={cutX} cy={pts[scrubI!][1]} r={5} fill="#0b120e" stroke={color} strokeWidth={2} />
+              {/* Drag dot: solid, same size as the leading dot (no hollow centre) */}
+              <circle cx={cutX} cy={pts[scrubI!][1]} r={DOT_R} fill={color} />
             </>
-          ) : (
-            <circle cx={intro.done ? last[0] : intro.x} cy={intro.done ? last[1] : intro.y} r={4} fill={color} />
           )}
+          {/* Leading dot: travels with the line on entry, then fades out once it reaches the end */}
+          <circle
+            cx={intro.done ? last[0] : intro.x}
+            cy={intro.done ? last[1] : intro.y}
+            r={DOT_R}
+            fill={color}
+            style={{ opacity: !intro.done && !scrubbing ? 1 : 0, transition: intro.done ? 'opacity 300ms ease-out' : 'none' }}
+          />
         </svg>
       )}
     </div>
