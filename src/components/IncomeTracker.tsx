@@ -471,7 +471,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                 placeholder="0.00"
                 value={draft.amount || ''}
                 onChange={(e) => setDraft({ ...draft, amount: parseFloat(e.target.value) || 0 })}
-                className="w-full bg-transparent border-none text-[#399d74] text-2xl font-medium p-1 outline-none placeholder:text-textFaint"
+                className="w-full bg-transparent border-none text-ink text-2xl font-medium p-2 outline-none placeholder:text-textFaint"
                 autoFocus
               />
             </div>
