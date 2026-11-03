@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Icons } from './components/icons';
-import { NetWorthChart } from './components/NetWorthChart';
+import { NetWorthChart, ChartScrub } from './components/NetWorthChart';
 import { IncomeTracker } from './components/IncomeTracker';
 import { LockScreen, SetPinSheet, RecoverySheet, RecoveryCodeSheet, generateRecoveryCode, hashRecoveryCode, isBiometricAvailable, registerBiometric } from './components/AppLock';
 import { Landing } from './components/Landing';
@@ -820,6 +820,46 @@ export default function App() {
     return { symbol, value };
   }, [totalValueUSD, settings.displayCurrency, privacyMode, rates, btcUsd]);
 
+  // ---- Chart scrubbing: the header keeps its layout; only the numbers (and a date) change ----
+  const [homeScrub, setHomeScrub] = useState<ChartScrub>(null);
+  const [assetScrub, setAssetScrub] = useState<ChartScrub>(null);
+  useEffect(() => { setHomeScrub(null); setAssetScrub(null); }, [selectedTimeRange, settings.displayCurrency, selectedAssetId]);
+
+  // Split a value that's already in `code` into { symbol, value } like totalValueParts.
+  const partsFor = (val: number, code: string) => {
+    if (privacyMode) return { symbol: '', value: '••••••' };
+    if (code === Currency.BTC) return { symbol: '₿', value: val.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 6 }) };
+    try {
+      const parts = new Intl.NumberFormat('en-PH', { style: 'currency', currency: code }).formatToParts(val);
+      return {
+        symbol: parts.find(p => p.type === 'currency')?.value || '',
+        value: parts.filter(p => p.type !== 'currency' && p.type !== 'literal').map(p => p.value).join(''),
+      };
+    } catch { return { symbol: '', value: Math.round(val).toLocaleString() }; }
+  };
+  const scrubDate = (iso: string) => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return selectedTimeRange === '1D'
+      ? d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric' })
+      : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+  const shortDate = (iso: string) => {
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+  // Home headline: live total normally; the scrubbed point while dragging.
+  const homeParts = homeScrub ? partsFor(homeScrub.value, settings.displayCurrency) : totalValueParts;
+  const homeChange = useMemo(() => {
+    if (!homeScrub) return netChange === null ? null : { pct: netChange, label: rangeLabel[selectedTimeRange] };
+    const firstIdx = historyData.findIndex(p => (p.totalValueDisplay || 0) > 0);
+    if (firstIdx < 0) return null;
+    const first = historyData[firstIdx].totalValueDisplay || 0;
+    const cur = homeScrub.point.totalValueDisplay || 0;
+    return { pct: ((cur - first) / first) * 100, label: `since ${shortDate(historyData[firstIdx].date)}` };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [homeScrub, netChange, historyData, selectedTimeRange]);
+
   const topAssets = useMemo(() => {
     return assets
       .filter(a => !a.excluded && a.category !== AssetCategory.DEBT)
@@ -1354,9 +1394,14 @@ export default function App() {
                 </div>
 
                 <div className="flex flex-col items-start mb-2 relative z-10">
-                    <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase">
-                        {selectedAsset.name}
-                    </p>
+                    <div className="w-full flex items-center justify-between gap-2">
+                        <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase truncate">
+                            {selectedAsset.name}
+                        </p>
+                        <span className={`shrink-0 text-[11px] font-medium text-textFaint tabular-nums transition-opacity duration-150 ${assetScrub ? 'opacity-100' : 'opacity-0'}`}>
+                            {assetScrub ? scrubDate(assetScrub.point.date) : ''}
+                        </span>
+                    </div>
                     {selectedAsset.institution && (
                         <p className="text-textFaint text-[11px] font-medium tracking-[1.2px] uppercase">{selectedAsset.institution}</p>
                     )}
@@ -1364,8 +1409,8 @@ export default function App() {
                         <span className="text-2xl font-normal text-textFaint">
                             <Sym code={selectedAsset.currency} />
                         </span>
-                        <span className="text-4xl font-medium text-ink tracking-tight">
-                            {selectedAsset.amount.toLocaleString()}
+                        <span className="text-4xl font-medium text-ink tracking-tight tabular-nums">
+                            {(assetScrub ? assetScrub.value : selectedAsset.amount).toLocaleString()}
                         </span>
                     </div>
                 </div>
@@ -1376,6 +1421,7 @@ export default function App() {
                         mode={selectedAsset.currency === Currency.BTC ? 'BTC' : 'FIAT'}
                         displayCurrency={selectedAsset.currency}
                         timeRange={selectedTimeRange}
+                        onScrub={setAssetScrub}
                     />
                 </div>
 
@@ -1484,14 +1530,20 @@ export default function App() {
       <div className="glass-panel rounded-[24px] p-5 relative overflow-visible z-20">
          <div className="flex justify-between items-start mb-0 relative">
             <div className="flex-1">
-                 <div className="flex items-center gap-2 mb-1">
-                    <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase">Net Worth</p>
-                    <button
-                        onClick={() => setPrivacyMode(!privacyMode)}
-                        className="text-textMuted hover:text-ink transition-colors p-1"
-                    >
-                        {privacyMode ? <Icons.EyeOff size={14} /> : <Icons.Eye size={14} />}
-                    </button>
+                 <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="flex items-center gap-2">
+                        <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase">Net Worth</p>
+                        <button
+                            onClick={() => setPrivacyMode(!privacyMode)}
+                            className="text-textMuted hover:text-ink transition-colors p-1"
+                        >
+                            {privacyMode ? <Icons.EyeOff size={14} /> : <Icons.Eye size={14} />}
+                        </button>
+                    </div>
+                    {/* Date of the scrubbed point (only while dragging on the chart) */}
+                    <span className={`text-[11px] font-medium text-textFaint tabular-nums transition-opacity duration-150 ${homeScrub ? 'opacity-100' : 'opacity-0'}`}>
+                        {homeScrub ? scrubDate(homeScrub.point.date) : ''}
+                    </span>
                  </div>
 
                  <div className="relative inline-block">
@@ -1499,8 +1551,8 @@ export default function App() {
                         onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
                         className={`flex items-baseline cursor-pointer hover:opacity-80 transition-opacity gap-1 ${settings.displayCurrency === Currency.BTC ? 'text-[#F7931A]' : 'text-ink'}`}
                     >
-                        <span className="text-3xl font-normal text-textFaint font-sans">{settings.displayCurrency === 'AED' ? <DirhamSign /> : totalValueParts.symbol}</span>
-                        <span className="text-4xl font-medium font-sans tracking-tight">{totalValueParts.value}</span>
+                        <span className="text-3xl font-normal text-textFaint font-sans">{settings.displayCurrency === 'AED' ? <DirhamSign /> : homeParts.symbol}</span>
+                        <span className="text-4xl font-medium font-sans tracking-tight tabular-nums">{homeParts.value}</span>
                         <Icons.ChevronDown className="w-4 h-4 self-center text-textFaint ml-0.5" />
                     </h2>
                     {isCurrencyDropdownOpen && (
@@ -1523,12 +1575,12 @@ export default function App() {
                     )}
                  </div>
 
-                 {netChange !== null && !privacyMode && (
+                 {homeChange !== null && !privacyMode && (
                    <div className="mt-1 flex items-center gap-2">
-                      <span className={`text-[13px] font-medium flex items-center gap-1 ${netChange >= 0 ? 'text-[#399d74]' : 'text-rose-400'}`}>
-                          {netChange >= 0 ? <Icons.Trend size={14} /> : <Icons.TrendDown size={14} />} {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}%
+                      <span className={`text-[13px] font-medium flex items-center gap-1 tabular-nums ${homeChange.pct >= 0 ? 'text-[#399d74]' : 'text-rose-400'}`}>
+                          {homeChange.pct >= 0 ? <Icons.Trend size={14} /> : <Icons.TrendDown size={14} />} {homeChange.pct >= 0 ? '+' : ''}{homeChange.pct.toFixed(1)}%
                       </span>
-                      <span className="text-textMuted text-xs">{rangeLabel[selectedTimeRange]}</span>
+                      <span className="text-textMuted text-xs">{homeChange.label}</span>
                    </div>
                  )}
             </div>
@@ -1539,6 +1591,7 @@ export default function App() {
                 mode={settings.displayCurrency === Currency.BTC ? 'BTC' : 'FIAT'}
                 displayCurrency={settings.displayCurrency}
                 timeRange={selectedTimeRange}
+                onScrub={setHomeScrub}
             />
          </div>
          <div className="flex justify-between items-center mt-2">

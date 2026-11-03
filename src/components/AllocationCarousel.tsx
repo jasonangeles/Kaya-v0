@@ -56,7 +56,7 @@ export const LiquidityGauge: React.FC<{ liqFrac: number; progress: number }> = (
   const arc = (a0: number, a1: number, color: string) => {
     if (a1 < a0) return null;
     const [x0, y0] = pt(a0), [x1, y1] = pt(Math.max(a1, a0 + 0.0004)); // tiny length still draws a round dot
-    return <path d={`M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}`} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" />;
+    return <path d={`M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}`} fill="none" strokeWidth={sw} strokeLinecap="round" style={{ stroke: color }} />;
   };
   // Rounded caps extend sw/2 past each end — trim so caps sit inside the arc.
   // Visible gap = 3 CSS px (viewBox renders ~1.25× on phones → 2.4 units).
