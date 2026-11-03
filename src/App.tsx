@@ -2139,7 +2139,13 @@ export default function App() {
     <div className="h-[100dvh] max-w-md mx-auto relative isolate overflow-hidden flex items-center justify-center" aria-busy="true" aria-label="Loading Kaya">
       <DitherBackground theme={theme} />
       <div className="flex flex-col items-center gap-4">
-        <img src="/logo-icon.svg" alt="" width={44} height={44} draggable={false} className="kaya-splash-logo animate-[subtlePulse_2.2s_ease-in-out_infinite]" />
+        {/* Logo drawn inline (not an <img>) so it paints on the very first frame */}
+        <svg width={44} height={44} viewBox="0 0 32 32" fill="none" aria-hidden className="kaya-splash-logo animate-[subtlePulse_2.2s_ease-in-out_infinite]">
+          <path d="M30 29H20L10 16H20L30 29Z" fill="white" />
+          <path d="M10 16H20L30 3H20L10 16Z" fill="#399D74" />
+          <path d="M20 16L10 29H2V26.3994L10 16H20Z" fill="#399D74" />
+          <rect x="2" y="3" width="8" height="26" fill="white" />
+        </svg>
         {cloudError && <p className="text-[13px] text-textFaint animate-[kayaFadeUp_0.3s_ease-out]">Can't reach Kaya. Retrying…</p>}
       </div>
     </div>
@@ -2157,8 +2163,10 @@ export default function App() {
   if (isSupabaseEnabled && session && !cloudLoaded && getOwner() !== session.user.id) {
     return bootSplash;
   }
-  // New sign-ups only (flag set when their account is first created).
-  if (isSupabaseEnabled && session && cloudLoaded && settings.onboardingComplete === false) {
+  // New sign-ups only (flag set when their account is first created). No need to wait for the
+  // cloud here: an uncached account is already held on the splash above, and a cached one
+  // already knows it hasn't finished onboarding — so this shows instantly on refresh.
+  if (isSupabaseEnabled && session && settings.onboardingComplete === false) {
     return <Onboarding onFinish={handleOnboardingFinish} />;
   }
 
