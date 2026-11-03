@@ -382,19 +382,10 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
               </defs>
               <XAxis dataKey="label" tick={{ fill: '#6e8777', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={10} />
               <YAxis hide domain={[0, 'auto']} />
-              <Tooltip
-                cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                content={({ active, payload, label }: any) => {
-                  if (!active || !payload || !payload.length) return null;
-                  // Same colors as the active toggles: muted fill, black text.
-                  return (
-                    <div className="bg-textMuted text-paper px-3 py-2 rounded-xl shadow-lg shadow-black/30">
-                      <p className="text-[11px] font-medium text-paper/60 leading-none mb-1">{label}</p>
-                      <p className="text-sm font-semibold leading-none tabular-nums">{privacyMode ? '••••' : fmt(payload[0].value, displayCurrency)}</p>
-                    </div>
-                  );
-                }}
-              />
+              {/* No tooltip box — the headline (top-left) already shows the tapped period,
+                  same as the Home chart. Tooltip stays mounted (renders nothing) so the chart
+                  still tracks which column is under the finger for tap-to-select. */}
+              <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={() => null} />
               <Bar dataKey="total" radius={[6, 6, 2, 2]} animationDuration={700} maxBarSize={48}>
                 {/* Every bar uses the gradient; the selected period (default: latest) is full strength. */}
                 {chartData.map((entry, i) => {

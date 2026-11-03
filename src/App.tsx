@@ -1520,7 +1520,7 @@ export default function App() {
             <button
                 onClick={() => goTab('SETTINGS')}
                 aria-label="Profile and settings"
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-surface3 text-textMuted hover:text-ink transition-colors"
+                className="glass-panel w-9 h-9 flex items-center justify-center rounded-full text-textMuted hover:text-ink transition-colors"
             >
                 <Icons.User size={22} />
             </button>
