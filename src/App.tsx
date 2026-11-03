@@ -2126,15 +2126,16 @@ export default function App() {
               {/* invisible wider tap area (icon itself is 24px, per Figma) */}
               <span aria-hidden className="absolute inset-y-0 -inset-x-4" />
               {active && (
-                // Figma: 48×48 secondary circle + layer blur 40, centered on the island's
-                // bottom edge. Built as a radial gradient (no CSS `filter: blur`) — iOS Safari
-                // renders blurred children of a backdrop-filter container as square tiles.
-                <span
-                  className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-28 h-28 rounded-full"
-                  style={{
-                    top: 14,
-                    background: 'radial-gradient(circle closest-side, rgba(57,157,116,0.6) 0%, rgba(57,157,116,0.32) 45%, rgba(57,157,116,0) 100%)',
-                  }}
+                // Glow exported from Figma (public/glow.png, 256px @2x → 128px), centered on
+                // the island's bottom edge under the icon. A pre-rendered image avoids CSS
+                // `filter: blur`, which iOS Safari draws as square tiles inside the frosted dock.
+                <img
+                  src="/glow.png"
+                  alt=""
+                  aria-hidden
+                  draggable={false}
+                  className="pointer-events-none select-none absolute left-1/2 -translate-x-1/2 w-32 h-32 max-w-none"
+                  style={{ top: 6 }}
                 />
               )}
               {/* All dock icons stay regular (outline) weight per design;
