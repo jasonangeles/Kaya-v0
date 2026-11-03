@@ -385,7 +385,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
               {/* No tooltip box — the headline (top-left) already shows the tapped period,
                   same as the Home chart. Tooltip stays mounted (renders nothing) so the chart
                   still tracks which column is under the finger for tap-to-select. */}
-              <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={() => null} />
+              <Tooltip cursor={false} content={() => null} />
               <Bar dataKey="total" radius={[6, 6, 2, 2]} animationDuration={700} maxBarSize={48}>
                 {/* Every bar uses the gradient; the selected period (default: latest) is full strength. */}
                 {chartData.map((entry, i) => {
