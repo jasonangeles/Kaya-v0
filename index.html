@@ -218,10 +218,14 @@
       .kaya-btn {
         background: rgb(var(--muted)); color: rgb(var(--paper));
         font-weight: 600; font-size: 15px;
-        transition: opacity 0.2s ease, transform 0.15s ease;
+        transition: background-color 0.2s ease, transform 0.15s ease;
       }
-      .kaya-btn:hover { opacity: 0.9; }
-      .kaya-btn:active { transform: scale(0.98); }
+      /* Solid hover/pressed shades (never opacity — the + button floats over content).
+         Hover only on real pointers so it doesn't "stick" after a tap on iPhone. */
+      @media (hover: hover) { .kaya-btn:hover { background: #c6e8cb; } }
+      .kaya-btn:active { background: #b8e0be; transform: scale(0.98); }
+      @media (hover: hover) { html.light .kaya-btn:hover { background: #5e5e63; } }
+      html.light .kaya-btn:active { background: #545459; }
       .kaya-btn:disabled { opacity: 0.5; transform: none; }
       /* Secondary: same shape, quiet frosted fill */
       .kaya-btn-secondary {
