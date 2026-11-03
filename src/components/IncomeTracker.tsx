@@ -296,17 +296,25 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
           </div>
         </div>
 
-        {/* Amount + growth (growth sits under the toggle, right-aligned) */}
-        <div className="flex items-end justify-between mt-2 mb-1">
-          <div className="flex items-baseline gap-1 min-w-0">
-            <span className="text-2xl font-normal text-textFaint"><Sym code={displayCurrency} /></span>
-            <span className="text-4xl font-medium text-ink tracking-tight truncate">
-              {privacyMode ? '••••••' : Math.round(current).toLocaleString()}
-            </span>
+        {/* Left: amount + "Averaging…" line. Right: change vs previous period,
+            bottom-aligned so "vs Oct" sits on the same line as "Averaging…". */}
+        <div className="flex items-end justify-between gap-3 mt-2 mb-3">
+          <div className="min-w-0">
+            <div className="flex items-baseline gap-1 min-w-0">
+              <span className="text-2xl font-normal text-textFaint"><Sym code={displayCurrency} /></span>
+              <span className="text-4xl font-medium text-ink tracking-tight truncate">
+                {privacyMode ? '••••••' : Math.round(current).toLocaleString()}
+              </span>
+            </div>
+            <p className="text-[12px] leading-[18px] text-textFaint mt-1">
+              {mode === 'MONTH' && avgMonthly > 0
+                ? <>Averaging <span className="text-[#399d74] font-medium">{hide(fmt(avgMonthly, displayCurrency))}</span> a month {viewYear === currentYear ? 'this year' : `in ${viewYear}`}</>
+                : <>{mode === 'MONTH' ? 'No income yet for this year' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
+            </p>
           </div>
           {/* Change vs the previous period, with what it's compared against spelled out */}
           {(growth !== null || summary.isNew) && (
-            <div className="shrink-0 mb-1 text-right">
+            <div className="shrink-0 text-right">
               {growth !== null ? (
                 <div className={`flex items-center justify-end gap-1 text-[13px] font-medium tabular-nums ${positive ? 'text-[#399d74]' : 'text-rose-400'}`}>
                   {positive ? <Icons.ArrowUp size={13} weight="bold" /> : <Icons.ArrowDown size={13} weight="bold" />}
@@ -315,15 +323,10 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               ) : (
                 <div className="text-[13px] font-medium text-[#399d74]">New</div>
               )}
-              <div className="text-[11px] text-textFaint mt-0.5">vs {summary.vs}</div>
+              <div className="text-[12px] leading-[18px] text-textFaint mt-0.5">vs {summary.vs}</div>
             </div>
           )}
         </div>
-        <p className="text-[12px] text-textFaint mb-3">
-          {mode === 'MONTH' && avgMonthly > 0
-            ? <>Averaging <span className="text-[#399d74] font-medium">{hide(fmt(avgMonthly, displayCurrency))}</span> a month {viewYear === currentYear ? 'this year' : `in ${viewYear}`}</>
-            : <>{mode === 'MONTH' ? 'No income yet for this year' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
-        </p>
 
         {mode === 'MONTH' && (
           <div className="flex items-center justify-center gap-5 mb-2">
