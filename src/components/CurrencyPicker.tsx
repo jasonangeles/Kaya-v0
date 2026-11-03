@@ -33,8 +33,8 @@ export const CurrencyPicker: React.FC<Props> = ({ value, onChange, variant = 'fi
         onClick={() => setOpen(o => !o)}
         className={
           variant === 'inline'
-            ? 'flex items-center gap-1 bg-surfaceHi text-zinc-200 text-sm rounded-lg px-2.5 py-1.5 mr-3 hover:bg-zinc-700 transition-colors'
-            : 'w-full flex items-center justify-between bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-ink/40 outline-none transition-all'
+            ? 'flex items-center gap-1 bg-ink/10 text-ink text-sm rounded-full px-3 py-1.5 mr-3 hover:bg-ink/15 transition-colors'
+            : 'kaya-field flex items-center justify-between outline-none transition-all'
         }
       >
         <span className="font-medium">{value}</span>
@@ -44,14 +44,14 @@ export const CurrencyPicker: React.FC<Props> = ({ value, onChange, variant = 'fi
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={close} />
-          <div className={`absolute top-full mt-2 z-50 bg-surface3 border border-ink/10 rounded-xl shadow-2xl overflow-hidden ${variant === 'inline' ? 'left-0 min-w-[200px]' : 'left-0 right-0'}`}>
+          <div className={`absolute top-full mt-2 z-50 kaya-pop rounded-xl overflow-hidden ${variant === 'inline' ? 'left-0 min-w-[200px]' : 'left-0 right-0'}`}>
             <div className="p-2 border-b border-ink/5">
               <input
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search currency…"
-                className="w-full bg-surface2 border border-ink/10 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:border-ink/40 placeholder:text-textFaint"
+                className="w-full bg-ink/5 border border-ink/10 rounded-[10px] px-3 py-2 text-[16px] text-ink outline-none focus:border-ink/30 placeholder:text-textFaint"
               />
             </div>
             <div className="max-h-60 overflow-y-auto no-scrollbar">

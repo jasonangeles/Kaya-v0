@@ -44,14 +44,14 @@ const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
   return (
     <>
       <div 
-        className={`fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
       <div
         style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}
-        className={`fixed bottom-0 inset-x-0 z-50 bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto ${isOpen ? '' : 'pointer-events-none'}`}
+        className={`fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] p-6  transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto ${isOpen ? '' : 'pointer-events-none'}`}
       >
-        <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
+        <div className="w-10 h-1 bg-ink/20 rounded-full mx-auto mb-6" />
         <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
         {isOpen ? children : null}
       </div>
@@ -141,18 +141,20 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
   const isPositive = entry.change >= 0;
   const Icon = isPositive ? Icons.ArrowUp : Icons.ArrowDown;
   const iconColorClass = isPositive ? 'text-[#399d74]' : 'text-rose-400';
-  const iconBgClass = isPositive ? 'bg-emerald-500/10' : 'bg-rose-500/10';
+  const iconBgClass = isPositive ? 'bg-[#399d74]/15' : 'bg-rose-500/10';
 
   return (
-    <div className="relative overflow-hidden group">
+    <div className={`relative overflow-hidden group ${!isLast ? 'border-b border-ink/5' : ''}`}>
+      {/* Delete reveal: only as wide as the swipe, so the transparent row never shows red through it */}
       <div
-        className={`absolute inset-y-0 right-0 w-full bg-red-500/20 flex items-center justify-end px-6 rounded-none transition-opacity duration-200 ${offset < -10 ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-y-0 right-0 bg-rose-500/15 flex items-center justify-end px-5 transition-opacity duration-200 ${offset < -10 ? 'opacity-100' : 'opacity-0'}`}
+        style={{ width: Math.max(0, -offset) }}
       >
-        <Icons.Delete className="text-red-500" size={20} />
+        <Icons.Delete className="text-rose-400 shrink-0" size={20} />
       </div>
 
       <div
-        className={`relative bg-surface2 p-4 flex justify-between items-center transition-transform duration-200 ease-out cursor-pointer select-none ${!isLast ? 'border-b border-ink/5' : ''}`}
+        className="relative px-4 py-3.5 flex justify-between items-center gap-3 transition-transform duration-200 ease-out cursor-pointer select-none hover:bg-ink/5"
         style={{ transform: `translateX(${offset}px)` }}
         onTouchStart={(e) => begin(e.targetTouches[0].clientX)}
         onTouchMove={(e) => drag(e.targetTouches[0].clientX)}
@@ -163,21 +165,21 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
         onMouseLeave={finish}
         onClick={handleClick}
       >
-        <div className="flex items-center gap-3 pointer-events-none">
-          <div className={`p-2 rounded-xl border border-ink/5 ${iconBgClass} ${iconColorClass}`}>
+        <div className="flex items-center gap-3 min-w-0 pointer-events-none">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBgClass} ${iconColorClass}`}>
             <Icon size={18} />
           </div>
-          <div>
-            <p className="text-sm font-medium text-ink">
+          <div className="min-w-0">
+            <p className="text-[15px] font-medium text-ink truncate">
               {new Date(entry.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
-            <p className={`text-xs ${entry.change >= 0 ? 'text-[#399d74]' : 'text-rose-400'}`}>
+            <p className={`text-[12px] mt-0.5 tabular-nums ${entry.change >= 0 ? 'text-[#399d74]' : 'text-rose-400'}`}>
               {entry.change > 0 ? '+' : ''}{entry.change.toLocaleString()}
             </p>
           </div>
         </div>
-        <div className="text-right pointer-events-none">
-          <p className="text-sm font-medium text-ink">
+        <div className="text-right shrink-0 pointer-events-none">
+          <p className="text-[15px] font-semibold text-ink tabular-nums">
             <Sym code={currency} />{entry.amount.toLocaleString()}
           </p>
         </div>
@@ -275,17 +277,6 @@ const DEFAULT_FX_PAIRS = [
   { first: 'USD', second: 'CAD' }
 ];
 
-// Muted, on-brand allocation colors. Crypto/BTC keeps its signature orange.
-const TYPE_COLORS: Record<string, string> = {
-  [AssetCategory.CRYPTO]: '#F7931A',
-  [AssetCategory.BANK_PH]: '#10b981',
-  [AssetCategory.BANK_INTL]: '#5eead4',
-  [AssetCategory.STOCKS]: '#e4e4e7',
-  [AssetCategory.CASH]: '#a1a1aa',
-  [AssetCategory.REAL_ESTATE]: '#71717a',
-  [AssetCategory.PENSION]: '#94a3b8',
-  [AssetCategory.OTHER]: '#52525b'
-};
 // Portfolio Overview palette — Home tokens (secondary, muted, faint) + two in-between greens.
 const OVERVIEW_PALETTE = ['#399d74', 'rgb(var(--muted))', 'rgb(var(--faint))', '#2b6b50', '#3f4a44'];
 
@@ -1346,7 +1337,7 @@ export default function App() {
     if (!selectedAsset) return null;
     return (
         <div className="animate-[fadeIn_0.3s_ease-out]">
-            <div className="glass-panel rounded-t-[32px] rounded-b-3xl p-5 mb-6 relative overflow-visible shadow-lg z-20">
+            <div className="glass-panel rounded-[24px] p-5 mb-6 relative overflow-visible z-20">
                 <div className="flex justify-between items-center mb-2 -mt-1">
                      <button 
                         onClick={() => setSelectedAssetId(null)}
@@ -1379,8 +1370,8 @@ export default function App() {
                     </div>
                 </div>
 
-                <div className="h-28 -mx-4 mt-2">
-                    <NetWorthChart 
+                <div className="h-28 -mx-5 mt-2">
+                    <NetWorthChart
                         data={assetHistoryData}
                         mode={selectedAsset.currency === Currency.BTC ? 'BTC' : 'FIAT'}
                         displayCurrency={selectedAsset.currency}
@@ -1388,14 +1379,14 @@ export default function App() {
                     />
                 </div>
 
-                <div className="flex justify-between items-center bg-surface2 rounded-full p-0.5 mt-2">
+                <div className="flex justify-between items-center mt-2">
                     {(['1D', '1W', '1M', '3M', 'YTD', '1Y', 'ALL'] as TimeRange[]).map((range) => (
                         <button
                             key={range}
                             onClick={() => setSelectedTimeRange(range)}
-                            className={`flex-1 py-1.5 text-[10px] font-medium rounded-full transition-all ${
-                                selectedTimeRange === range 
-                                ? 'bg-surfaceHi text-ink shadow-sm' 
+                            className={`px-[10px] py-[6px] text-[10px] font-medium rounded-full transition-all ${
+                                selectedTimeRange === range
+                                ? 'bg-textMuted text-paper shadow-sm'
                                 : 'text-textFaint hover:text-ink'
                             }`}
                         >
@@ -1405,18 +1396,18 @@ export default function App() {
                  </div>
             </div>
 
-            <div className="px-1">
-                <div className="flex justify-between items-center mb-3">
+            <div>
+                <div className="flex justify-between items-center mb-2.5">
                     <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">Value History</h3>
-                    <button 
+                    <button
                         onClick={handleOpenUpdateBalance}
-                        className="px-3 py-1.5 rounded-full bg-ink/5 text-xs font-medium text-ink hover:bg-ink/10 transition-colors border border-ink/5"
+                        className="text-[13px] font-medium text-textFaint hover:text-ink transition-colors"
                     >
                         Add
                     </button>
                 </div>
 
-                <div className="rounded-3xl overflow-hidden shadow-lg bg-surface2 border border-ink/5">
+                <div className="glass-panel rounded-[20px] overflow-hidden">
                     {selectedAsset.history.length === 0 && (
                         <div className="p-6 text-center text-textMuted text-sm">No history yet.</div>
                     )}
@@ -1470,7 +1461,7 @@ export default function App() {
                 {showStreakTooltip && (
                     <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowStreakTooltip(false)}></div>
-                        <div className="absolute top-full right-0 mt-2 w-48 bg-surface3 border border-ink/10 rounded-xl shadow-2xl z-50 p-3 animate-[fadeIn_0.1s_ease-out]">
+                        <div className="absolute top-full right-0 mt-2 w-48 kaya-pop rounded-xl z-50 p-3 animate-[fadeIn_0.1s_ease-out]">
                             <p className="text-ink text-xs font-semibold mb-1">Monthly Streak</p>
                             <p className="text-[10px] text-textMuted leading-relaxed">
                                 You've logged your wealth {currentStreak} {currentStreak === 1 ? 'month' : 'months'} in a row. Log again next month to keep it going!
@@ -1513,7 +1504,7 @@ export default function App() {
                         <Icons.ChevronDown className="w-4 h-4 self-center text-textFaint ml-0.5" />
                     </h2>
                     {isCurrencyDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-44 max-h-64 overflow-y-auto no-scrollbar bg-surface3 border border-ink/10 rounded-xl shadow-2xl z-50 animate-[fadeIn_0.1s_ease-out]">
+                        <div className="absolute top-full left-0 mt-2 w-44 max-h-64 overflow-y-auto no-scrollbar kaya-pop rounded-xl z-50 animate-[fadeIn_0.1s_ease-out]">
                             {COMMON_CURRENCY_CODES.map(curr => (
                                 <button
                                     key={curr}
@@ -1651,7 +1642,7 @@ export default function App() {
       <div className="px-1">
         <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-3">Insights</h3>
         {isLoadingInsights ? (
-            <div className="p-4 rounded-3xl glass-panel animate-pulse h-24"></div>
+            <div className="p-4 rounded-[20px] glass-panel animate-pulse h-24"></div>
         ) : (
             <div
                 className="glass-panel rounded-[20px] relative overflow-hidden select-none shadow-lg cursor-grab active:cursor-grabbing"
@@ -1687,7 +1678,7 @@ export default function App() {
                             className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
                                 idx === activeInsightIndex 
                                 ? 'bg-primary w-4' 
-                                : 'bg-zinc-700 hover:bg-zinc-600'
+                                : 'bg-ink/20 hover:bg-ink/40'
                             }`}
                         />
                     ))}
@@ -1919,7 +1910,7 @@ export default function App() {
                         Reset all
                     </button>
                 )}
-                <button onClick={() => setFilterOpen(false)} className="flex-1 bg-ink text-paper font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity">
+                <button onClick={() => setFilterOpen(false)} className="flex-1 kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
                     Show {filteredAssets.length} {filteredAssets.length === 1 ? 'account' : 'accounts'}
                 </button>
             </div>
@@ -2162,7 +2153,7 @@ export default function App() {
 
       {/* Undo Toast */}
       {showUndoToast && lastDeletedAsset && (
-        <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-surface3 border border-ink/10 shadow-2xl rounded-xl px-6 py-4 flex items-center gap-4 min-w-[320px] animate-[fadeIn_0.3s_ease-out]">
+        <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 kaya-pop rounded-xl px-6 py-4 flex items-center gap-4 min-w-[320px] animate-[fadeIn_0.3s_ease-out]">
             <span className="text-ink text-sm font-medium">Deleted {lastDeletedAsset.name}</span>
             <button onClick={handleUndoDelete} className="ml-auto text-primary font-bold text-sm hover:text-ink tracking-wide">UNDO</button>
             <button onClick={() => setShowUndoToast(false)} className="text-textFaint hover:text-ink">✕</button>
@@ -2177,10 +2168,10 @@ export default function App() {
       <Modal isOpen={showFeedback} onClose={() => { setShowFeedback(false); setFeedbackStatus('idle'); }}>
         {feedbackStatus === 'sent' ? (
           <div className="text-center py-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3"><Icons.Check size={22} /></div>
+            <div className="w-12 h-12 rounded-2xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center mx-auto mb-3"><Icons.Check size={22} /></div>
             <h2 className="text-2xl font-medium text-ink mb-1">Thank you!</h2>
             <p className="text-textMuted text-sm">Your feedback helps shape Kaya.</p>
-            <button onClick={() => { setShowFeedback(false); setFeedbackStatus('idle'); }} className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-6 hover:opacity-90 transition-opacity">Done</button>
+            <button onClick={() => { setShowFeedback(false); setFeedbackStatus('idle'); }} className="w-full kaya-btn py-4 rounded-[14px] mt-6 hover:opacity-90 transition-opacity">Done</button>
           </div>
         ) : (
           <>
@@ -2193,12 +2184,12 @@ export default function App() {
               rows={5}
               autoFocus
               placeholder="What's on your mind?"
-              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none focus:border-ink/40 transition-all resize-none placeholder:text-textFaint"
+              className="kaya-field transition-all resize-none placeholder:text-textFaint"
             />
             <button
               onClick={submitFeedback}
               disabled={!feedbackText.trim() || feedbackStatus === 'sending'}
-              className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full kaya-btn py-4 rounded-[14px] mt-3 hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {feedbackStatus === 'sending' ? 'Sending…' : 'Send feedback'}
             </button>
@@ -2210,10 +2201,10 @@ export default function App() {
       <Modal isOpen={showContact} onClose={() => { setShowContact(false); setContactStatus('idle'); }}>
         {contactStatus === 'sent' ? (
           <div className="text-center py-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3"><Icons.Check size={22} /></div>
+            <div className="w-12 h-12 rounded-2xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center mx-auto mb-3"><Icons.Check size={22} /></div>
             <h2 className="text-2xl font-medium text-ink mb-1">Message sent</h2>
             <p className="text-textMuted text-sm">Thanks for reaching out — I'll get back to you if you left an email.</p>
-            <button onClick={() => { setShowContact(false); setContactStatus('idle'); }} className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-6 hover:opacity-90 transition-opacity">Done</button>
+            <button onClick={() => { setShowContact(false); setContactStatus('idle'); }} className="w-full kaya-btn py-4 rounded-[14px] mt-6 hover:opacity-90 transition-opacity">Done</button>
           </div>
         ) : (
           <>
@@ -2226,20 +2217,20 @@ export default function App() {
               rows={4}
               autoFocus
               placeholder="How can I help?"
-              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none focus:border-ink/40 transition-all resize-none placeholder:text-textFaint"
+              className="kaya-field transition-all resize-none placeholder:text-textFaint"
             />
             <input
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
               placeholder="Your email (optional, so I can reply)"
-              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 mt-3 text-ink outline-none focus:border-ink/40 transition-all placeholder:text-textFaint"
+              className="kaya-field mt-3 outline-none transition-all placeholder:text-textFaint"
             />
             {contactStatus === 'error' && <p className="text-rose-400 text-sm mt-2">Couldn't send — please try again.</p>}
             <button
               onClick={submitContact}
               disabled={!contactText.trim() || contactStatus === 'sending'}
-              className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full kaya-btn py-4 rounded-[14px] mt-3 hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {contactStatus === 'sending' ? 'Sending…' : 'Send message'}
             </button>
@@ -2267,9 +2258,9 @@ export default function App() {
             maxLength={24}
             placeholder="e.g. Jason"
             autoComplete="given-name"
-            className="w-full bg-surface2 border border-ink/10 rounded-xl px-4 py-3.5 text-ink text-base outline-none focus:border-ink/30 transition-colors"
+            className="kaya-field transition-colors"
           />
-          <button type="submit" className="w-full bg-ink text-paper font-bold py-4 rounded-xl mt-5 hover:opacity-90 transition-opacity">
+          <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] mt-5 hover:opacity-90 transition-opacity">
             Save
           </button>
         </form>
@@ -2278,7 +2269,7 @@ export default function App() {
       <Modal isOpen={showAutoLock} onClose={() => setShowAutoLock(false)}>
         <h2 className="text-2xl font-medium mb-1 text-ink">Auto-lock</h2>
         <p className="text-textMuted text-sm mb-5">Require your PIN after Kaya has been in the background for…</p>
-        <div className="rounded-2xl overflow-hidden bg-surface2 border border-ink/5">
+        <div className="rounded-[14px] overflow-hidden bg-ink/[0.04] border border-ink/10">
           {LOCK_DELAY_OPTIONS.map((o, i) => (
             <button
               key={o.sec}
@@ -2301,7 +2292,7 @@ export default function App() {
           <p>A copy is kept on your device so the app works offline. When you sign in, your data syncs to your private account, isolated so no other user can read it, and encrypted in transit and at rest.</p>
           <p>We use passwordless email sign-in, so there's no password to steal. You can export a backup or wipe everything anytime in <span className="text-ink">Settings → Data</span>. No ads, ever.</p>
         </div>
-        <button onClick={() => setShowPrivacy(false)} className="w-full bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-6">
+        <button onClick={() => setShowPrivacy(false)} className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity mt-6">
           Got it
         </button>
       </Modal>
@@ -2325,7 +2316,7 @@ export default function App() {
               </div>
             </div>
           ))}
-          <button onClick={saveFx} className="w-full bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+          <button onClick={saveFx} className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
             Save
           </button>
         </div>
@@ -2358,7 +2349,7 @@ export default function App() {
                 <h2 className="text-2xl font-medium mb-6 text-ink">{editingEntryId ? 'Edit Entry' : 'Add Balance'}</h2>
                 <form onSubmit={handleSaveAsset} className="space-y-6">
                     <div>
-                        <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Date</label>
+                        <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Date</label>
                         <div className="relative">
                             <input
                                 required
@@ -2366,15 +2357,15 @@ export default function App() {
                                 name="date"
                                 key={editingEntryId || 'new'}
                                 defaultValue={updateDate}
-                                className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint"
+                                className="kaya-field transition-all placeholder:text-textFaint"
                             />
                             <Icons.Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-textFaint pointer-events-none" size={20} />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">New Balance</label>
-                        <div className="flex items-center bg-surface2 border border-ink/10 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+                        <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">New Balance</label>
+                        <div className="flex items-center kaya-field kaya-field-wrap transition-all">
                              <span className="text-textFaint font-medium mr-2">{selectedAsset.currency}</span>
                              <input
                                 key={editingEntryId || 'new'}
@@ -2395,14 +2386,14 @@ export default function App() {
                             <button
                                 type="button"
                                 onClick={() => { handleDeleteHistoryEntry(editingEntryId); handleCloseModal(); }}
-                                className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                                className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold py-4 rounded-[14px] transition-colors flex items-center justify-center gap-2"
                             >
                                 <Icons.Delete size={18} /> Delete
                             </button>
                         )}
                         <button
                             type="submit"
-                            className={`bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity ${editingEntryId ? 'flex-[2]' : 'w-full'}`}
+                            className={`kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity ${editingEntryId ? 'flex-[2]' : 'w-full'}`}
                         >
                             {editingEntryId ? 'Save Entry' : 'Add Balance'}
                         </button>
@@ -2419,18 +2410,18 @@ export default function App() {
                 </h2>
                 <form onSubmit={handleSaveAsset} className="space-y-5">
                     <div>
-                        <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">{modalCategory === AssetCategory.DEBT ? 'Liability Name' : 'Asset Name'}</label>
-                        <input required name="name" defaultValue={selectedAsset?.name} placeholder={modalCategory === AssetCategory.DEBT ? 'e.g., Car Loan' : 'e.g., BDO Savings'} className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
+                        <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">{modalCategory === AssetCategory.DEBT ? 'Liability Name' : 'Asset Name'}</label>
+                        <input required name="name" defaultValue={selectedAsset?.name} placeholder={modalCategory === AssetCategory.DEBT ? 'e.g., Car Loan' : 'e.g., BDO Savings'} className="kaya-field transition-all placeholder:text-textFaint" />
                     </div>
                     
                     {!selectedAsset && (
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">{modalCategory === AssetCategory.DEBT ? 'Amount Owed' : 'Amount'}</label>
-                                <input required name="amount" type="number" step="any" placeholder="0.00" className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
+                                <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">{modalCategory === AssetCategory.DEBT ? 'Amount Owed' : 'Amount'}</label>
+                                <input required name="amount" type="number" step="any" placeholder="0.00" className="kaya-field transition-all placeholder:text-textFaint" />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Currency</label>
+                                <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Currency</label>
                                 <input type="hidden" name="currency" value={modalCurrency} />
                                 <CurrencyPicker value={modalCurrency} onChange={setModalCurrency} />
                             </div>
@@ -2438,9 +2429,9 @@ export default function App() {
                     )}
 
                     <div>
-                        <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Category</label>
+                        <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Category</label>
                         <div className="relative">
-                            <select name="category" value={modalCategory} onChange={(e) => setModalCategory(e.target.value as AssetCategory)} className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none appearance-none focus:border-primary transition-all">
+                            <select name="category" value={modalCategory} onChange={(e) => setModalCategory(e.target.value as AssetCategory)} className="kaya-field  transition-all">
                                 {Object.values(AssetCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-textMuted"><Icons.ChevronDown size={20} /></div>
@@ -2448,15 +2439,15 @@ export default function App() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">{getInstitutionLabel(modalCategory)} (Optional)</label>
-                        <input name="institution" defaultValue={selectedAsset?.institution} placeholder={getInstitutionLabel(modalCategory)} className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-textFaint" />
+                        <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">{getInstitutionLabel(modalCategory)} (Optional)</label>
+                        <input name="institution" defaultValue={selectedAsset?.institution} placeholder={getInstitutionLabel(modalCategory)} className="kaya-field transition-all placeholder:text-textFaint" />
                     </div>
 
                     {modalCategory !== AssetCategory.DEBT && (
                         <div>
-                            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Liquidity (Optional)</label>
+                            <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Liquidity (Optional)</label>
                             <div className="relative">
-                                <select name="liquidity" defaultValue={selectedAsset?.liquidity ?? 'auto'} className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none appearance-none focus:border-primary transition-all">
+                                <select name="liquidity" defaultValue={selectedAsset?.liquidity ?? 'auto'} className="kaya-field  transition-all">
                                     <option value="auto">Auto · {CATEGORY_LIQUIDITY[modalCategory] ?? 'medium'} (by category)</option>
                                     <option value="high">High · cash-like, reachable in a day</option>
                                     <option value="medium">Medium · sellable in days</option>
@@ -2470,7 +2461,7 @@ export default function App() {
 
                     <label className="flex items-center justify-between gap-4 cursor-pointer">
                         <span className="min-w-0">
-                            <span className="block text-xs font-medium text-textMuted uppercase tracking-wider">Exclude from net worth</span>
+                            <span className="block text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">Exclude from net worth</span>
                             <span className="block text-[11px] text-textFaint mt-1">Still tracked, but not added to your total.</span>
                         </span>
                         <input type="checkbox" name="excluded" defaultChecked={selectedAsset?.excluded} className="peer sr-only" />
@@ -2479,9 +2470,9 @@ export default function App() {
 
                     <div className="flex gap-3 pt-4">
                         {selectedAsset && (
-                            <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
+                            <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold py-4 rounded-[14px] transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
                         )}
-                        <button type="submit" className={`flex-[2] bg-ink text-paper shadow-lg shadow-black/40 font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity ${!selectedAsset ? 'w-full' : ''}`}>
+                        <button type="submit" className={`flex-[2] kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity ${!selectedAsset ? 'w-full' : ''}`}>
                             {selectedAsset ? 'Save Changes' : (modalCategory === AssetCategory.DEBT ? 'Add Liability' : 'Add Asset')}
                         </button>
                     </div>

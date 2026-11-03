@@ -83,7 +83,7 @@ const Dots = ({ count, error }: { count: number; error?: boolean }) => (
       <div
         key={i}
         className={`w-3.5 h-3.5 rounded-full transition-all ${
-          error ? 'bg-rose-500' : i < count ? 'bg-ink' : 'bg-zinc-700'
+          error ? 'bg-rose-500' : i < count ? 'bg-textMuted' : 'bg-ink/20'
         }`}
       />
     ))}
@@ -230,11 +230,11 @@ export const RecoverySheet = ({
   return (
     <>
       <div
-        className={`fixed inset-0 z-[70] bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
-      <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-[70] bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 pb-10 shadow-2xl transition-transform duration-300 ease-out max-w-md mx-auto">
-        <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
+      <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-[70] kaya-sheet rounded-t-[28px] p-6 pb-10  transition-transform duration-300 ease-out max-w-md mx-auto">
+        <div className="w-10 h-1 bg-ink/20 rounded-full mx-auto mb-6" />
         <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
         <h2 className="text-2xl font-medium text-ink mb-1">Enter recovery code</h2>
         <p className="text-textMuted text-sm mb-5">The code shown when you first set your PIN.</p>
@@ -244,10 +244,10 @@ export const RecoverySheet = ({
             value={code}
             onChange={(e) => { setCode(e.target.value); setError(false); }}
             placeholder="XXXX-XXXX"
-            className={`w-full bg-surface2 border rounded-xl p-4 text-ink text-center text-xl tracking-[0.3em] uppercase outline-none transition-all placeholder:text-textFaint ${error ? 'border-rose-500' : 'border-ink/10 focus:border-ink/40'}`}
+            className={`kaya-field text-center text-xl tracking-[0.3em] uppercase outline-none transition-all placeholder:text-textFaint ${error ? 'border-rose-500' : 'border-ink/10'}`}
           />
           {error && <p className="text-rose-400 text-sm text-center">That code didn’t match. Try again.</p>}
-          <button type="submit" className="w-full bg-ink text-paper font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+          <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
             Unlock & set new PIN
           </button>
         </form>
@@ -262,14 +262,14 @@ export const RecoveryCodeSheet = ({ code, onClose }: { code: string | null; onCl
   const open = !!code;
   return (
     <>
-      <div className={`fixed inset-0 z-[70] bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} />
-      <div style={{ transform: open ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-[70] bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 pb-10 shadow-2xl transition-transform duration-300 ease-out max-w-md mx-auto">
-        <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
+      <div className={`fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} />
+      <div style={{ transform: open ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-[70] kaya-sheet rounded-t-[28px] p-6 pb-10  transition-transform duration-300 ease-out max-w-md mx-auto">
+        <div className="w-10 h-1 bg-ink/20 rounded-full mx-auto mb-6" />
         <h2 className="text-2xl font-medium text-ink mb-1">Save your recovery code</h2>
         <p className="text-textMuted text-sm mb-5">
           This is the only way back in if you forget your PIN. Write it down or store it somewhere safe — it won’t be shown again.
         </p>
-        <div className="bg-surface2 border border-ink/10 rounded-xl p-5 text-center mb-4">
+        <div className="bg-ink/[0.04] border border-ink/10 rounded-[14px] p-5 text-center mb-4">
           <span className="text-3xl font-medium text-ink tracking-[0.25em]">{code}</span>
         </div>
         <button
@@ -278,7 +278,7 @@ export const RecoveryCodeSheet = ({ code, onClose }: { code: string | null; onCl
         >
           {copied ? 'Copied ✓' : 'Copy code'}
         </button>
-        <button onClick={onClose} className="w-full bg-ink text-paper font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+        <button onClick={onClose} className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
           I’ve saved it
         </button>
       </div>
@@ -328,11 +328,11 @@ export const SetPinSheet = ({
   return (
     <>
       <div
-        className={`fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
-      <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-50 bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 pb-10 shadow-2xl transition-transform duration-300 ease-out max-w-md mx-auto">
-        <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
+      <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] p-6 pb-10  transition-transform duration-300 ease-out max-w-md mx-auto">
+        <div className="w-10 h-1 bg-ink/20 rounded-full mx-auto mb-6" />
         <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
         <h2 className="text-2xl font-medium text-ink text-center">
           {step === 'enter' ? 'Set a PIN' : 'Confirm PIN'}

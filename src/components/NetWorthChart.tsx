@@ -15,7 +15,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
   
   // Chart renders the value already in the chosen display currency.
   const dataKey = mode === 'BTC' ? 'totalValueBTC' : (isExchange ? 'totalValueUSD' : 'totalValueDisplay');
-  const color = mode === 'BTC' ? '#F7931A' : (isExchange ? '#e4e4e7' : '#10b981'); // Bitcoin Orange, Neutral, or Emerald Green
+  const color = mode === 'BTC' ? '#F7931A' : (isExchange ? '#e4e4e7' : '#399d74'); // Bitcoin orange, neutral, or Kaya secondary green
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -32,7 +32,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
         const btcVal = payload[0].value;
         const inflationVal = payload[1]?.value;
         return (
-           <div className="bg-surface3/95 backdrop-blur-md border border-ink/10 p-3 rounded-2xl shadow-2xl min-w-[120px]">
+           <div className="kaya-pop p-3 rounded-xl min-w-[120px]">
             <p className="text-textMuted text-xs font-medium mb-2">{dateLabel}</p>
             <div className="flex flex-col gap-2">
               <div>
@@ -51,8 +51,8 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
       if (isExchange) {
            const val = payload[0].value;
            return (
-            <div className="bg-surface3/90 backdrop-blur-md border border-ink/10 p-3 rounded-xl shadow-2xl">
-              <p className="text-ink font-bold text-sm">{val.toFixed(4)}</p>
+            <div className="bg-textMuted text-paper px-3 py-2 rounded-xl shadow-lg shadow-black/30">
+              <p className="text-sm font-semibold leading-none tabular-nums">{val.toFixed(4)}</p>
             </div>
           );
       }
@@ -64,9 +64,10 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
         : new Intl.NumberFormat('en-PH', { style: 'currency', currency: displayCurrency }).format(val);
 
       return (
-        <div className="bg-surface3/90 backdrop-blur-md border border-ink/10 p-4 rounded-2xl shadow-2xl min-w-[100px]">
-          <p className="text-textMuted text-xs font-medium mb-1">{dateLabel}</p>
-          <p className="text-ink font-bold text-lg tracking-tight leading-none">{formatted}</p>
+        // Same as the Income tooltip: muted fill, black text (matches the active toggles)
+        <div className="bg-textMuted text-paper px-3 py-2 rounded-xl shadow-lg shadow-black/30">
+          <p className="text-[11px] font-medium text-paper/60 leading-none mb-1">{dateLabel}</p>
+          <p className="text-sm font-semibold leading-none tabular-nums">{formatted}</p>
         </div>
       );
     }
@@ -137,12 +138,12 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ data, mode, displa
             hide={true} // Clean look, value in tooltip
              domain={['auto', 'auto']} // Allow graph to stretch
           />
-          <Tooltip content={<CustomTooltip />} cursor={!isExchange ? { stroke: '#52525b', strokeWidth: 1, strokeDasharray: '4 4' } : false} />
+          <Tooltip content={<CustomTooltip />} cursor={!isExchange ? { stroke: 'rgba(220,245,223,0.35)', strokeWidth: 1, strokeDasharray: '4 4' } : false} />
           <Area 
             type="monotone" 
             dataKey={dataKey} 
             stroke={color} 
-            strokeWidth={3}
+            strokeWidth={2.5}
             fillOpacity={1} 
             fill={`url(#color${mode})`} 
             animationDuration={1500}

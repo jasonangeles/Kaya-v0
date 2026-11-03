@@ -172,6 +172,60 @@
         pointer-events: none;
         z-index: 2;
       }
+      /* ---------- Shared surfaces (one source of truth for every sheet/field) ---------- */
+      /* Bottom sheets / modals: dark at the top easing into the app's green, like the main screen */
+      .kaya-sheet {
+        background:
+          radial-gradient(120% 60% at 50% 115%, rgba(57, 157, 116, 0.22) 0%, rgba(57, 157, 116, 0) 70%),
+          linear-gradient(180deg, #0c1310 0%, #080d0b 55%, #0b1712 100%);
+        border-top: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.55);
+      }
+      html.light .kaya-sheet { background: #ffffff; border-top-color: rgba(0, 0, 0, 0.08); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.08); }
+
+      /* Form fields: input / select / textarea / field-like wrappers */
+      .kaya-field {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 14px;
+        padding: 14px 16px;
+        color: rgb(var(--ink));
+        font-size: 16px; /* ≥16px stops iOS zooming on focus */
+        line-height: 1.4;
+        outline: none;
+        transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .kaya-field::placeholder { color: rgb(var(--faint)); }
+      .kaya-field:focus, .kaya-field:focus-within {
+        border-color: rgba(220, 245, 223, 0.45);
+        background: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 0 0 3px rgba(57, 157, 116, 0.18);
+      }
+      .kaya-field-wrap { padding-top: 8px; padding-bottom: 8px; } /* for prefix + big-number amount rows */
+      select.kaya-field {
+        appearance: none; -webkit-appearance: none; padding-right: 40px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236e8777' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 16px center;
+      }
+      select.kaya-field option { background: #0c1310; color: #fff; }
+      input[type="date"].kaya-field { min-height: 52px; }
+      html.light .kaya-field { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.10); }
+      html.light .kaya-field:focus, html.light .kaya-field:focus-within { border-color: rgba(0, 0, 0, 0.35); box-shadow: none; }
+
+      /* Primary button: same colors as the active toggles (muted fill, black text) */
+      .kaya-btn { background: rgb(var(--muted)); color: rgb(var(--paper)); font-weight: 600; }
+      .kaya-btn:disabled { opacity: 0.5; }
+
+      /* Popovers: dropdowns, tooltips, toasts */
+      .kaya-pop {
+        background: rgba(14, 21, 18, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+        -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      }
+      html.light .kaya-pop { background: rgba(255, 255, 255, 0.97); border-color: rgba(0, 0, 0, 0.08); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.10); }
+
       /* Overview widget motion */
       @keyframes kayaFadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
       @keyframes kayaSweep { from { clip-path: inset(0 100% 0 0 round 999px); } to { clip-path: inset(0 0 0 0 round 999px); } }

@@ -56,11 +56,11 @@ const monthLabel = (key: string) => {
 const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children?: React.ReactNode }) => (
   <>
     <div
-      className={`fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       onClick={onClose}
     />
-    <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-50 bg-surface3 border-t border-ink/10 rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto">
-      <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mb-6" />
+    <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)' }} className="fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] p-6  transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto">
+      <div className="w-10 h-1 bg-ink/20 rounded-full mx-auto mb-6" />
       <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
       {children}
     </div>
@@ -143,37 +143,46 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
 
   // Headline number + growth: current month (MoM) for this year, year total (YoY) when browsing a past year, year total (YoY) in Yearly mode.
   const summary = useMemo(() => {
-    const yearTotalOf = (y: number) => records.reduce((s, r) => new Date(r.date).getFullYear() === y ? s + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd) : s, 0);
-    const pct = (cur: number, prev: number) => prev > 0 ? ((cur - prev) / prev) * 100 : (cur > 0 ? 100 : 0);
+    const amt = (r: IncomeRecord) => toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd);
+    const yearTotalOf = (y: number) => records.reduce((s, r) => new Date(r.date).getFullYear() === y ? s + amt(r) : s, 0);
+    const monthTotalOf = (key: string) => records.reduce((s, r) => monthKey(new Date(r.date)) === key ? s + amt(r) : s, 0);
+    // "vs Aug" for months (with the year when it crosses into the previous one), "vs 2025" for years.
+    const monthVs = (y: number, m: number) => {
+      const d = new Date(y, m - 2, 1);
+      const short = d.toLocaleDateString('en-US', { month: 'short' });
+      return d.getFullYear() === y ? short : `${short} ${d.getFullYear()}`;
+    };
+    // growth = null → nothing to compare (both empty); isNew → prior period had no income.
+    const cmp = (label: string, value: number, prev: number, vs: string) => ({
+      label, value, vs,
+      isNew: prev <= 0 && value > 0,
+      growth: prev > 0 ? ((value - prev) / prev) * 100 : null as number | null,
+    });
 
     // A tapped bar drives the headline: its label, its total, and change vs the period before it.
     const selIdx = selectedKey ? chartData.findIndex(d => d.key === selectedKey) : -1;
     if (selIdx >= 0) {
       const sel = chartData[selIdx];
       if (mode === 'YEAR') {
-        return { label: sel.key, value: sel.total, growth: pct(sel.total, yearTotalOf(Number(sel.key) - 1)) };
+        const y = Number(sel.key);
+        return cmp(sel.key, sel.total, yearTotalOf(y - 1), `${y - 1}`);
       }
       const [y, m] = sel.key.split('-').map(Number);
-      const prevKey = monthKey(new Date(y, m - 2, 1));
-      const prevTotal = selIdx > 0
-        ? chartData[selIdx - 1].total
-        : records.reduce((s, r) => monthKey(new Date(r.date)) === prevKey ? s + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd) : s, 0);
       const label = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      return { label, value: sel.total, growth: pct(sel.total, prevTotal) };
+      return cmp(label, sel.total, monthTotalOf(monthKey(new Date(y, m - 2, 1))), monthVs(y, m));
     }
 
     if (mode === 'YEAR') {
       const cur = chartData[chartData.length - 1]?.total || 0;
-      const prev = chartData[chartData.length - 2]?.total || 0;
-      return { label: 'This year', value: cur, growth: pct(cur, prev) };
+      return cmp('This year', cur, yearTotalOf(currentYear - 1), `${currentYear - 1}`);
     }
     if (viewYear === currentYear) {
+      const now = new Date();
       const cur = chartData[chartData.length - 1]?.total || 0;   // current month
-      const prev = chartData[chartData.length - 2]?.total || 0;  // previous month
-      return { label: 'This month', value: cur, growth: pct(cur, prev) };
+      return cmp('This month', cur, monthTotalOf(monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1))), monthVs(now.getFullYear(), now.getMonth() + 1));
     }
     const total = chartData.reduce((s, d) => s + d.total, 0);
-    return { label: `${viewYear}`, value: total, growth: pct(total, yearTotalOf(viewYear - 1)) };
+    return cmp(`${viewYear}`, total, yearTotalOf(viewYear - 1), `${viewYear - 1}`);
   }, [mode, viewYear, currentYear, chartData, records, displayCurrency, rates, selectedKey]);
   const current = summary.value;
   const growth = summary.growth;
@@ -252,7 +261,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
   };
 
   const hide = (s: string) => privacyMode ? '••••••' : s;
-  const positive = growth >= 0;
+  const positive = (growth ?? 0) >= 0;
 
   return (
     <div className="space-y-6 animate-[fadeIn_0.4s_ease-out]">
@@ -289,10 +298,20 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               {privacyMode ? '••••••' : Math.round(current).toLocaleString()}
             </span>
           </div>
-          <div className={`shrink-0 mb-1 flex items-center gap-1 text-[13px] font-medium ${positive ? 'text-[#399d74]' : 'text-rose-400'}`}>
-            {positive ? <Icons.ArrowUp size={13} weight="bold" /> : <Icons.ArrowDown size={13} weight="bold" />}
-            {Math.abs(growth).toFixed(1)}%
-          </div>
+          {/* Change vs the previous period, with what it's compared against spelled out */}
+          {(growth !== null || summary.isNew) && (
+            <div className="shrink-0 mb-1 text-right">
+              {growth !== null ? (
+                <div className={`flex items-center justify-end gap-1 text-[13px] font-medium tabular-nums ${positive ? 'text-[#399d74]' : 'text-rose-400'}`}>
+                  {positive ? <Icons.ArrowUp size={13} weight="bold" /> : <Icons.ArrowDown size={13} weight="bold" />}
+                  {Math.abs(growth).toFixed(1)}%
+                </div>
+              ) : (
+                <div className="text-[13px] font-medium text-[#399d74]">New</div>
+              )}
+              <div className="text-[11px] text-textFaint mt-0.5">vs {summary.vs}</div>
+            </div>
+          )}
         </div>
         <p className="text-[12px] text-textFaint mb-3">
           {mode === 'MONTH' && avgMonthly > 0
@@ -433,8 +452,8 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
         <h2 className="text-2xl font-medium mb-6 text-ink">{editingId ? 'Edit Income' : 'Add Income'}</h2>
         <form onSubmit={save} className="space-y-5">
           <div>
-            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Amount</label>
-            <div className="flex items-center bg-surface2 border border-ink/10 rounded-xl px-4 py-2 focus-within:ring-1 focus-within:ring-ink/40 transition-all">
+            <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Amount</label>
+            <div className="flex items-center kaya-field kaya-field-wrap transition-all">
               <CurrencyPicker value={draft.currency} onChange={(code) => setDraft({ ...draft, currency: code })} variant="inline" />
               <input
                 required
@@ -450,23 +469,23 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Source</label>
+            <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Source</label>
             <input
               required
               placeholder="e.g. JFC, SM, BPI Savings"
               value={draft.source}
               onChange={(e) => setDraft({ ...draft, source: e.target.value })}
-              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-ink/40 outline-none transition-all placeholder:text-textFaint"
+              className="kaya-field transition-all placeholder:text-textFaint"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Category</label>
+            <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Category</label>
             <div className="relative">
               <select
                 value={draft.category}
                 onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-                className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink outline-none appearance-none focus:border-ink/40 transition-all"
+                className="kaya-field  transition-all"
               >
                 {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -475,45 +494,45 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Date</label>
+            <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Date</label>
             <div className="relative">
               <input
                 required
                 type="date"
                 value={draft.date}
                 onChange={(e) => setDraft({ ...draft, date: e.target.value })}
-                className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-ink/40 outline-none transition-all"
+                className="kaya-field transition-all"
               />
               <Icons.Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-textFaint pointer-events-none" size={20} />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-textMuted mb-2 uppercase tracking-wider">Note (optional)</label>
+            <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Note (optional)</label>
             <input
               placeholder="Anything to remember"
               value={draft.note || ''}
               onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-              className="w-full bg-surface2 border border-ink/10 rounded-xl p-4 text-ink focus:ring-1 focus:ring-ink/40 outline-none transition-all placeholder:text-textFaint"
+              className="kaya-field transition-all placeholder:text-textFaint"
             />
           </div>
 
           {editingId ? (
             <div className="space-y-3 pt-2">
-              <button type="submit" className="w-full bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity">
+              <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
                 Save
               </button>
               <div className="flex gap-3">
                 <button type="button" onClick={duplicate} className="flex-1 bg-ink/5 hover:bg-ink/10 text-ink border border-ink/10 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
                   <Icons.History size={18} /> Duplicate
                 </button>
-                <button type="button" onClick={remove} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                <button type="button" onClick={remove} className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold py-4 rounded-[14px] transition-colors flex items-center justify-center gap-2">
                   <Icons.Delete size={18} /> Delete
                 </button>
               </div>
             </div>
           ) : (
-            <button type="submit" className="w-full bg-ink text-paper shadow-lg shadow-black/40 font-bold py-4 rounded-xl hover:opacity-90 transition-opacity mt-2">
+            <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity mt-2">
               Add Income
             </button>
           )}
