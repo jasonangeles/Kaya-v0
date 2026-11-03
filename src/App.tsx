@@ -189,7 +189,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
 const SettingsGroup = ({ title, children }: { title?: string, children?: React.ReactNode }) => (
   <div className="mb-6">
     {title && <h4 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-2 px-2">{title}</h4>}
-    <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+    <div className="glass-panel rounded-[20px] overflow-hidden shadow-lg">
       {children}
     </div>
   </div>
@@ -227,9 +227,12 @@ const SettingsItem = ({
       {toggle && (
         <div
           onClick={(e) => { e.stopPropagation(); onToggle && onToggle(); }}
-          className={`w-11 h-6 rounded-full relative transition-colors duration-200 ${isToggled ? 'bg-ink' : 'bg-zinc-700'}`}
+          role="switch"
+          aria-checked={!!isToggled}
+          className={`w-11 h-6 rounded-full relative shrink-0 transition-colors duration-200 ${isToggled ? 'bg-textMuted' : 'bg-ink/15'}`}
         >
-          <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-200 shadow-sm ${isToggled ? 'left-6 bg-paper' : 'left-1 bg-ink'}`} />
+          {/* Same colors as the active segmented toggles: muted track, black knob when on */}
+          <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-200 ${isToggled ? 'left-6 bg-paper' : 'left-1 bg-textFaint'}`} />
         </div>
       )}
       {!toggle && <Icons.ChevronRight className="w-4 h-4 text-textFaint" />}
@@ -1590,12 +1593,12 @@ export default function App() {
                     <div className="flex items-center gap-3 min-w-0">
                         <InstitutionLogo name={asset.institution} category={asset.category} size={40} radius={12} />
                         <div className="min-w-0">
-                            <p className="font-medium text-ink text-[14px] truncate">{asset.name}</p>
+                            <p className="font-medium text-ink text-[15px] truncate">{asset.name}</p>
                             <p className="text-[12px] text-textMuted mt-0.5 truncate">{asset.institution}</p>
                         </div>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="font-semibold text-ink text-[14px]">
+                        <p className="font-semibold text-ink text-[15px] tabular-nums">
                             {privacyMode ? '•••••' : (
                                 <>
                                     <Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}
@@ -1651,7 +1654,7 @@ export default function App() {
             <div className="p-4 rounded-3xl glass-panel animate-pulse h-24"></div>
         ) : (
             <div
-                className="glass-panel rounded-3xl relative overflow-hidden select-none shadow-lg cursor-grab active:cursor-grabbing"
+                className="glass-panel rounded-[20px] relative overflow-hidden select-none shadow-lg cursor-grab active:cursor-grabbing"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -1700,12 +1703,12 @@ export default function App() {
     <div
         key={asset.id}
         onClick={() => setSelectedAssetId(asset.id)}
-        className={`p-5 flex justify-between items-center hover:bg-ink/5 transition-colors cursor-pointer group ${!isLast ? 'border-b border-ink/5' : ''}`}
+        className={`px-4 py-3.5 flex justify-between items-center gap-3 hover:bg-ink/5 transition-colors cursor-pointer group ${!isLast ? 'border-b border-ink/5' : ''}`}
     >
-        <div className="flex items-center gap-4 min-w-0">
-            <InstitutionLogo name={asset.institution} category={asset.category} size={44} radius={12} className="group-hover:border-primary/50 transition-colors" />
+        <div className="flex items-center gap-3 min-w-0">
+            <InstitutionLogo name={asset.institution} category={asset.category} size={40} radius={12} className="group-hover:border-primary/50 transition-colors" />
             <div className="min-w-0">
-                <p className="font-medium text-ink text-base truncate">{asset.name}</p>
+                <p className="font-medium text-ink text-[15px] truncate">{asset.name}</p>
                 {showCat ? (
                     <span className="flex items-center gap-1.5 mt-1 min-w-0">
                         <span
@@ -1719,15 +1722,15 @@ export default function App() {
                         {asset.institution && <span className="text-[10px] text-textFaint truncate">{asset.institution}</span>}
                     </span>
                 ) : (
-                    <p className="text-xs text-textMuted mt-0.5">{asset.institution}</p>
+                    <p className="text-[12px] text-textMuted mt-0.5 truncate">{asset.institution}</p>
                 )}
             </div>
         </div>
         <div className="text-right shrink-0">
-            <p className="font-semibold text-ink tracking-wide">
+            <p className="font-semibold text-ink text-[15px] tabular-nums">
                 {privacyMode ? '••••••' : (<><Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}{asset.amount.toLocaleString()}</>)}
             </p>
-            <p className="text-[10px] text-textMuted mt-1">{new Date(asset.lastUpdated).toLocaleDateString()}</p>
+            <p className="text-[11px] text-textFaint mt-0.5">{new Date(asset.lastUpdated).toLocaleDateString()}</p>
         </div>
     </div>
   );
@@ -1758,19 +1761,19 @@ export default function App() {
         {/* Read-only passive-income summary (not counted in net worth) */}
         <button
             onClick={() => goTab('INCOME')}
-            className="w-full text-left glass-panel rounded-3xl p-4 shadow-lg flex items-center justify-between hover:bg-ink/5 transition-colors mb-2"
+            className="w-full text-left glass-panel rounded-[20px] px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-ink/5 transition-colors mb-2"
         >
-            <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-[#399d74]/15 text-[#399d74]">
+            <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center shrink-0">
                     <Icons.BarChart size={18} />
                 </div>
-                <div>
-                    <p className="text-sm font-medium text-ink">Passive income</p>
-                    <p className="text-[11px] text-textMuted">Last 12 months · not in net worth</p>
+                <div className="min-w-0">
+                    <p className="text-[15px] font-medium text-ink truncate">Passive income</p>
+                    <p className="text-[12px] text-textMuted mt-0.5 truncate">Last 12 months · not in net worth</p>
                 </div>
             </div>
-            <div className="flex items-center gap-1.5">
-                <span className="text-sm font-medium text-[#399d74]">
+            <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[15px] font-semibold text-ink tabular-nums">
                     {privacyMode ? '••••' : `${getCurrencySymbol(settings.displayCurrency)}${Math.round(passiveIncome12mo).toLocaleString()}`}
                 </span>
                 <Icons.ChevronRight className="w-4 h-4 text-textFaint" />
@@ -1778,7 +1781,7 @@ export default function App() {
         </button>
 
         {assets.length === 0 && (
-            <div className="glass-panel rounded-3xl p-8 text-center shadow-lg mt-4">
+            <div className="glass-panel rounded-[20px] p-8 text-center shadow-lg mt-4">
                 <div className="w-12 h-12 rounded-2xl bg-ink/5 text-ink flex items-center justify-center mx-auto mb-3">
                     <Icons.Wallet size={22} />
                 </div>
@@ -1835,7 +1838,7 @@ export default function App() {
         )}
 
         {filteredAssets.length === 0 && assets.length > 0 && (
-            <div className="glass-panel rounded-3xl p-8 text-center shadow-lg">
+            <div className="glass-panel rounded-[20px] p-8 text-center shadow-lg">
                 <p className="text-ink font-medium mb-1">No matching accounts</p>
                 <p className="text-textMuted text-sm">Try clearing a filter.</p>
             </div>
@@ -1848,14 +1851,14 @@ export default function App() {
                 return (
                     <div key={category} className="mb-6">
                         <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-3 px-1">{category}</h3>
-                        <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+                        <div className="glass-panel rounded-[20px] overflow-hidden shadow-lg">
                             {categoryAssets.map((asset, index) => assetRow(asset, false, index === categoryAssets.length - 1))}
                         </div>
                     </div>
                 );
             })
         ) : (
-            <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+            <div className="glass-panel rounded-[20px] overflow-hidden shadow-lg">
                 {sortedFlat.map((asset, index) => assetRow(asset, true, index === sortedFlat.length - 1))}
             </div>
         )}
@@ -1868,7 +1871,7 @@ export default function App() {
                     <Icons.ChevronDown className={`w-4 h-4 text-textFaint transition-transform ${excludedOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {excludedOpen && (
-                    <div className="glass-panel rounded-3xl overflow-hidden shadow-lg opacity-70">
+                    <div className="glass-panel rounded-[20px] overflow-hidden shadow-lg opacity-70">
                         {excludedAssets.map((asset, index) => assetRow(asset, true, index === excludedAssets.length - 1))}
                     </div>
                 )}
@@ -1936,7 +1939,7 @@ export default function App() {
             <h1 className="text-2xl font-medium text-ink">Select Currency</h1>
         </header>
 
-        <div className="glass-panel rounded-3xl overflow-hidden shadow-lg">
+        <div className="glass-panel rounded-[20px] overflow-hidden shadow-lg">
             {ORDERED_CURRENCIES.map((option, index) => (
                 <div
                     key={option.code}
@@ -1966,13 +1969,17 @@ export default function App() {
       </header>
 
       {/* Premium Banner */}
-      <div className="mb-8 relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-zinc-800 to-zinc-900 border border-ink/10 shadow-lg cursor-pointer transform transition-transform active:scale-95">
-        <div className="relative z-10">
-          <h3 className="text-lg font-bold text-white mb-1">Kaya Premium</h3>
-          <p className="text-white/70 text-sm">Unlock unlimited history & AI insights.</p>
-        </div>
-        <div className="absolute top-0 right-0 p-4 opacity-20 text-white">
-           <Icons.Sparkles size={64} />
+      {/* Same widget style as Home/Portfolio/Income cards */}
+      <div className="glass-panel mb-8 overflow-hidden rounded-[24px] p-5 cursor-pointer transition-transform active:scale-[0.98]">
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center shrink-0">
+            <Icons.Sparkles size={20} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-medium uppercase tracking-[1.2px] text-textMuted">Kaya Premium</p>
+            <p className="text-[15px] font-medium text-ink mt-1">Unlock unlimited history & AI insights</p>
+          </div>
+          <Icons.ChevronRight className="w-4 h-4 text-textFaint shrink-0" />
         </div>
       </div>
 
@@ -2467,7 +2474,7 @@ export default function App() {
                             <span className="block text-[11px] text-textFaint mt-1">Still tracked, but not added to your total.</span>
                         </span>
                         <input type="checkbox" name="excluded" defaultChecked={selectedAsset?.excluded} className="peer sr-only" />
-                        <span className="shrink-0 w-11 h-6 rounded-full bg-zinc-700 peer-checked:bg-ink relative transition-colors duration-200 after:content-[''] after:absolute after:top-1 after:left-1 after:w-4 after:h-4 after:rounded-full after:shadow-sm after:transition-all after:duration-200 after:bg-ink peer-checked:after:bg-paper peer-checked:after:translate-x-5" />
+                        <span className="shrink-0 w-11 h-6 rounded-full bg-ink/15 peer-checked:bg-textMuted relative transition-colors duration-200 after:content-[''] after:absolute after:top-1 after:left-1 after:w-4 after:h-4 after:rounded-full after:transition-all after:duration-200 after:bg-textFaint peer-checked:after:bg-paper peer-checked:after:translate-x-5" />
                     </label>
 
                     <div className="flex gap-3 pt-4">

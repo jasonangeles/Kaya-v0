@@ -193,12 +193,12 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
           <div className="grid grid-cols-2 mt-4">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5"><i className="w-2 h-2 rounded-full" style={{ background: LIQUID }} /><span className="text-[12px] text-textMuted">Liquid</span></div>
-              <p className="text-[18px] font-semibold text-ink mt-1 tabular-nums truncate">{privacyMode ? hide : fmt(aLiquid)}</p>
+              <p className="text-[15px] font-semibold text-ink mt-1 tabular-nums truncate">{privacyMode ? hide : fmt(aLiquid)}</p>
               <p className="text-[11px] text-textFaint mt-0.5">Cash, banks, stocks</p>
             </div>
             <div className="min-w-0 border-l border-ink/10 pl-3.5">
               <div className="flex items-center gap-1.5"><i className="w-2 h-2 rounded-full" style={{ background: LOCKED }} /><span className="text-[12px] text-textMuted">Locked</span></div>
-              <p className="text-[18px] font-semibold text-ink mt-1 tabular-nums truncate">{privacyMode ? hide : fmt(aLocked)}</p>
+              <p className="text-[15px] font-semibold text-ink mt-1 tabular-nums truncate">{privacyMode ? hide : fmt(aLocked)}</p>
               <p className="text-[11px] text-textFaint mt-0.5">Pension, crypto, property</p>
             </div>
           </div>

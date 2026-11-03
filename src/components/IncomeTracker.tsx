@@ -145,6 +145,23 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
   const summary = useMemo(() => {
     const yearTotalOf = (y: number) => records.reduce((s, r) => new Date(r.date).getFullYear() === y ? s + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd) : s, 0);
     const pct = (cur: number, prev: number) => prev > 0 ? ((cur - prev) / prev) * 100 : (cur > 0 ? 100 : 0);
+
+    // A tapped bar drives the headline: its label, its total, and change vs the period before it.
+    const selIdx = selectedKey ? chartData.findIndex(d => d.key === selectedKey) : -1;
+    if (selIdx >= 0) {
+      const sel = chartData[selIdx];
+      if (mode === 'YEAR') {
+        return { label: sel.key, value: sel.total, growth: pct(sel.total, yearTotalOf(Number(sel.key) - 1)) };
+      }
+      const [y, m] = sel.key.split('-').map(Number);
+      const prevKey = monthKey(new Date(y, m - 2, 1));
+      const prevTotal = selIdx > 0
+        ? chartData[selIdx - 1].total
+        : records.reduce((s, r) => monthKey(new Date(r.date)) === prevKey ? s + toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd) : s, 0);
+      const label = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return { label, value: sel.total, growth: pct(sel.total, prevTotal) };
+    }
+
     if (mode === 'YEAR') {
       const cur = chartData[chartData.length - 1]?.total || 0;
       const prev = chartData[chartData.length - 2]?.total || 0;
@@ -157,7 +174,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
     }
     const total = chartData.reduce((s, d) => s + d.total, 0);
     return { label: `${viewYear}`, value: total, growth: pct(total, yearTotalOf(viewYear - 1)) };
-  }, [mode, viewYear, currentYear, chartData, records, displayCurrency, rates]);
+  }, [mode, viewYear, currentYear, chartData, records, displayCurrency, rates, selectedKey]);
   const current = summary.value;
   const growth = summary.growth;
   const allTimeTotal = useMemo(
@@ -385,21 +402,21 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                 <div
                   key={r.id}
                   onClick={() => openEdit(r)}
-                  className={`group p-5 flex justify-between items-center cursor-pointer hover:bg-ink/5 transition-colors ${idx !== group.items.length - 1 ? 'border-b border-ink/5' : ''}`}
+                  className={`group px-4 py-3.5 flex justify-between items-center gap-3 cursor-pointer hover:bg-ink/5 transition-colors ${idx !== group.items.length - 1 ? 'border-b border-ink/5' : ''}`}
                 >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-11 h-11 rounded-xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center shrink-0">
-                      <Icons.ArrowDownLeft size={20} />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center shrink-0">
+                      <Icons.ArrowDownLeft size={18} />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-ink text-base truncate">{r.source || r.category}</p>
-                      <p className="text-xs text-textMuted mt-0.5 truncate">
+                      <p className="font-medium text-ink text-[15px] truncate">{r.source || r.category}</p>
+                      <p className="text-[12px] text-textMuted mt-0.5 truncate">
                         {r.category} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="font-semibold text-ink tracking-wide tabular-nums">
+                    <p className="font-semibold text-ink text-[15px] tabular-nums">
                       {privacyMode ? '••••' : <>+<Sym code={r.currency} />{r.amount.toLocaleString()}</>}
                     </p>
                   </div>
