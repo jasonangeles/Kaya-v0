@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import { Icons } from './icons';
 import { IncomeRecord } from '../types';
@@ -218,9 +218,15 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
     setIsOpen(true);
   };
 
-  // Opened from the shared floating + button in App.
+  // Opened from the shared floating + button in App. Only react to a NEW tap:
+  // remember the tick value at mount so re-entering the tab (which remounts this
+  // component with a non-zero tick from earlier taps) doesn't reopen the sheet.
+  const seenAddTick = useRef(addTick);
   useEffect(() => {
-    if (addTick > 0) openAdd();
+    if (addTick !== seenAddTick.current) {
+      seenAddTick.current = addTick;
+      openAdd();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addTick]);
   const openEdit = (r: IncomeRecord) => {
@@ -519,7 +525,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
 
           {editingId ? (
             <div className="space-y-3 pt-2">
-              <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
+              <button type="submit" className="w-full kaya-btn py-4 rounded-[14px]">
                 Save
               </button>
               <div className="flex gap-3">
@@ -532,7 +538,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
               </div>
             </div>
           ) : (
-            <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity mt-2">
+            <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] mt-2">
               Add Income
             </button>
           )}

@@ -1906,11 +1906,11 @@ export default function App() {
 
             <div className="flex gap-3 mt-7">
                 {filtersActive && (
-                    <button type="button" onClick={resetFilters} className="px-5 py-3.5 rounded-xl border border-ink/15 text-ink font-medium hover:bg-ink/5 transition-colors whitespace-nowrap">
+                    <button type="button" onClick={resetFilters} className="kaya-btn-secondary px-5 py-4 rounded-[14px] whitespace-nowrap">
                         Reset all
                     </button>
                 )}
-                <button onClick={() => setFilterOpen(false)} className="flex-1 kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
+                <button onClick={() => setFilterOpen(false)} className="flex-1 kaya-btn py-4 rounded-[14px]">
                     Show {filteredAssets.length} {filteredAssets.length === 1 ? 'account' : 'accounts'}
                 </button>
             </div>
@@ -2078,7 +2078,8 @@ export default function App() {
                   else if (selectedAssetId) handleOpenUpdateBalance();
                   else handleOpenAddAsset();
                 }}
-                className="bg-ink text-paper w-14 h-14 rounded-2xl shadow-lg shadow-black/40 transition-all active:scale-95 flex items-center justify-center"
+                aria-label="Add"
+                className="kaya-btn w-14 h-14 rounded-2xl shadow-lg shadow-black/40 active:scale-95 flex items-center justify-center"
             >
                 <Icons.Add className="w-7 h-7" />
             </button>
@@ -2171,7 +2172,7 @@ export default function App() {
             <div className="w-12 h-12 rounded-2xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center mx-auto mb-3"><Icons.Check size={22} /></div>
             <h2 className="text-2xl font-medium text-ink mb-1">Thank you!</h2>
             <p className="text-textMuted text-sm">Your feedback helps shape Kaya.</p>
-            <button onClick={() => { setShowFeedback(false); setFeedbackStatus('idle'); }} className="w-full kaya-btn py-4 rounded-[14px] mt-6 hover:opacity-90 transition-opacity">Done</button>
+            <button onClick={() => { setShowFeedback(false); setFeedbackStatus('idle'); }} className="w-full kaya-btn py-4 rounded-[14px] mt-6">Done</button>
           </div>
         ) : (
           <>
@@ -2189,7 +2190,7 @@ export default function App() {
             <button
               onClick={submitFeedback}
               disabled={!feedbackText.trim() || feedbackStatus === 'sending'}
-              className="w-full kaya-btn py-4 rounded-[14px] mt-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full kaya-btn py-4 rounded-[14px] mt-3"
             >
               {feedbackStatus === 'sending' ? 'Sending…' : 'Send feedback'}
             </button>
@@ -2204,7 +2205,7 @@ export default function App() {
             <div className="w-12 h-12 rounded-2xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center mx-auto mb-3"><Icons.Check size={22} /></div>
             <h2 className="text-2xl font-medium text-ink mb-1">Message sent</h2>
             <p className="text-textMuted text-sm">Thanks for reaching out — I'll get back to you if you left an email.</p>
-            <button onClick={() => { setShowContact(false); setContactStatus('idle'); }} className="w-full kaya-btn py-4 rounded-[14px] mt-6 hover:opacity-90 transition-opacity">Done</button>
+            <button onClick={() => { setShowContact(false); setContactStatus('idle'); }} className="w-full kaya-btn py-4 rounded-[14px] mt-6">Done</button>
           </div>
         ) : (
           <>
@@ -2230,7 +2231,7 @@ export default function App() {
             <button
               onClick={submitContact}
               disabled={!contactText.trim() || contactStatus === 'sending'}
-              className="w-full kaya-btn py-4 rounded-[14px] mt-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full kaya-btn py-4 rounded-[14px] mt-3"
             >
               {contactStatus === 'sending' ? 'Sending…' : 'Send message'}
             </button>
@@ -2260,7 +2261,7 @@ export default function App() {
             autoComplete="given-name"
             className="kaya-field transition-colors"
           />
-          <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] mt-5 hover:opacity-90 transition-opacity">
+          <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] mt-5">
             Save
           </button>
         </form>
@@ -2292,7 +2293,7 @@ export default function App() {
           <p>A copy is kept on your device so the app works offline. When you sign in, your data syncs to your private account, isolated so no other user can read it, and encrypted in transit and at rest.</p>
           <p>We use passwordless email sign-in, so there's no password to steal. You can export a backup or wipe everything anytime in <span className="text-ink">Settings → Data</span>. No ads, ever.</p>
         </div>
-        <button onClick={() => setShowPrivacy(false)} className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity mt-6">
+        <button onClick={() => setShowPrivacy(false)} className="w-full kaya-btn py-4 rounded-[14px] mt-6">
           Got it
         </button>
       </Modal>
@@ -2316,7 +2317,7 @@ export default function App() {
               </div>
             </div>
           ))}
-          <button onClick={saveFx} className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
+          <button onClick={saveFx} className="w-full kaya-btn py-4 rounded-[14px]">
             Save
           </button>
         </div>
@@ -2393,7 +2394,7 @@ export default function App() {
                         )}
                         <button
                             type="submit"
-                            className={`kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity ${editingEntryId ? 'flex-[2]' : 'w-full'}`}
+                            className={`kaya-btn py-4 rounded-[14px] ${editingEntryId ? 'flex-[2]' : 'w-full'}`}
                         >
                             {editingEntryId ? 'Save Entry' : 'Add Balance'}
                         </button>
@@ -2472,7 +2473,7 @@ export default function App() {
                         {selectedAsset && (
                             <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold py-4 rounded-[14px] transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
                         )}
-                        <button type="submit" className={`flex-[2] kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity ${!selectedAsset ? 'w-full' : ''}`}>
+                        <button type="submit" className={`flex-[2] kaya-btn py-4 rounded-[14px] ${!selectedAsset ? 'w-full' : ''}`}>
                             {selectedAsset ? 'Save Changes' : (modalCategory === AssetCategory.DEBT ? 'Add Liability' : 'Add Asset')}
                         </button>
                     </div>

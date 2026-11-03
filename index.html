@@ -215,8 +215,24 @@
       html.light .kaya-field:focus, html.light .kaya-field:focus-within { border-color: rgba(0, 0, 0, 0.35); box-shadow: none; }
 
       /* Primary button: same colors as the active toggles (muted fill, black text) */
-      .kaya-btn { background: rgb(var(--muted)); color: rgb(var(--paper)); font-weight: 600; }
-      .kaya-btn:disabled { opacity: 0.5; }
+      .kaya-btn {
+        background: rgb(var(--muted)); color: rgb(var(--paper));
+        font-weight: 600; font-size: 15px;
+        transition: opacity 0.2s ease, transform 0.15s ease;
+      }
+      .kaya-btn:hover { opacity: 0.9; }
+      .kaya-btn:active { transform: scale(0.98); }
+      .kaya-btn:disabled { opacity: 0.5; transform: none; }
+      /* Secondary: same shape, quiet frosted fill */
+      .kaya-btn-secondary {
+        background: rgba(255, 255, 255, 0.04); color: rgb(var(--ink));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-weight: 600; font-size: 15px;
+        transition: background-color 0.2s ease, transform 0.15s ease;
+      }
+      .kaya-btn-secondary:hover { background: rgba(255, 255, 255, 0.08); }
+      .kaya-btn-secondary:active { transform: scale(0.98); }
+      html.light .kaya-btn-secondary { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.12); }
 
       /* Popovers: dropdowns, tooltips, toasts */
       .kaya-pop {

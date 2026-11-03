@@ -247,7 +247,7 @@ export const RecoverySheet = ({
             className={`kaya-field text-center text-xl tracking-[0.3em] uppercase outline-none transition-all placeholder:text-textFaint ${error ? 'border-rose-500' : 'border-ink/10'}`}
           />
           {error && <p className="text-rose-400 text-sm text-center">That code didn’t match. Try again.</p>}
-          <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
+          <button type="submit" className="w-full kaya-btn py-4 rounded-[14px]">
             Unlock & set new PIN
           </button>
         </form>
@@ -274,11 +274,11 @@ export const RecoveryCodeSheet = ({ code, onClose }: { code: string | null; onCl
         </div>
         <button
           onClick={() => { if (code) { navigator.clipboard?.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500); } }}
-          className="w-full bg-ink/5 hover:bg-ink/10 border border-ink/10 text-ink font-medium py-3.5 rounded-xl transition-colors mb-3"
+          className="w-full kaya-btn-secondary py-4 rounded-[14px] mb-3"
         >
           {copied ? 'Copied ✓' : 'Copy code'}
         </button>
-        <button onClick={onClose} className="w-full kaya-btn py-4 rounded-[14px] hover:opacity-90 transition-opacity">
+        <button onClick={onClose} className="w-full kaya-btn py-4 rounded-[14px]">
           I’ve saved it
         </button>
       </div>
