@@ -2190,16 +2190,15 @@ export default function App() {
                   style={{ top: 6 }}
                 />
               )}
-              {/* All dock icons stay regular (outline) weight per design;
-                  the active tab is marked by the muted color + glow. */}
+              {/* Active tab: filled Phosphor icon + muted color + glow; others: outline */}
               {key === 'HOME' ? (
-                <Icons.Home className="relative w-6 h-6" weight="regular" />
+                <Icons.Home className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
               ) : key === 'ASSETS' ? (
-                <Icons.Wallet className="relative w-6 h-6" weight="regular" />
+                <Icons.Wallet className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
               ) : key === 'INCOME' ? (
-                <Icons.BarChart className="relative w-6 h-6" weight="regular" />
+                <Icons.BarChart className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
               ) : (
-                <Icons.Settings className="relative w-6 h-6" weight="regular" />
+                <Icons.Settings className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
               )}
             </button>
           ))}

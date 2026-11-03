@@ -75,7 +75,7 @@ const ScrubChart: React.FC<{ data: HistoricalPoint[]; valueKey: 'totalValueBTC' 
     const end = pts[pts.length - 1];
     if (reduceMotion() || len === 0) { setIntro({ x: end[0], y: end[1], done: true }); return; }
     let raf = 0;
-    const t0 = performance.now(), dur = 1200;
+    const t0 = performance.now(), dur = 1700; // ~30% slower than the original 1.2s
     const step = (t: number) => {
       const p = Math.min(1, (t - t0) / dur);
       const e = 1 - Math.pow(1 - p, 3);
