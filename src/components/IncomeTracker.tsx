@@ -278,7 +278,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
       </header>
 
       {/* Summary + chart */}
-      <div className="glass-panel rounded-[24px] p-5">
+      <div className="glass-panel rounded-[24px] p-5 kaya-anim">
         {/* Header row: label + Monthly/Yearly toggle (same position/style as Portfolio "By type/By currency") */}
         <div className="flex items-center justify-between h-[25px]">
           <div className="flex items-center gap-2 min-w-0">
@@ -307,7 +307,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
 
         {/* Left: amount + "Averaging…" line. Right: change vs previous period,
             bottom-aligned so "vs Oct" sits on the same line as "Averaging…". */}
-        <div className="flex items-end justify-between gap-3 mt-2 mb-3">
+        <div key={`head-${mode}`} className="flex items-end justify-between gap-3 mt-2 mb-3 animate-[kayaFadeUp_0.3s_ease-out]">
           <div className="min-w-0">
             <div className="flex items-baseline gap-1 min-w-0">
               <span className="text-2xl font-normal text-textFaint"><Sym code={displayCurrency} /></span>
@@ -337,11 +337,18 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
           )}
         </div>
 
-        {mode === 'MONTH' && (
-          <div className="flex items-center justify-center gap-5 mb-2">
+        {/* Year stepper (Monthly only) — collapses/expands smoothly instead of popping in/out */}
+        <div
+          className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+          style={{ gridTemplateRows: mode === 'MONTH' ? '1fr' : '0fr', opacity: mode === 'MONTH' ? 1 : 0 }}
+          aria-hidden={mode !== 'MONTH'}
+        >
+          <div className="overflow-hidden min-h-0">
+          <div className="flex items-center justify-center gap-5 pb-2">
             <button
               onClick={() => setViewYear(y => Math.max(earliestYear, y - 1))}
               disabled={viewYear <= earliestYear}
+              tabIndex={mode === 'MONTH' ? 0 : -1}
               aria-label="Previous year"
               className="p-1 rounded-full text-textMuted hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors"
             >
@@ -351,15 +358,17 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
             <button
               onClick={() => setViewYear(y => Math.min(currentYear, y + 1))}
               disabled={viewYear >= currentYear}
+              tabIndex={mode === 'MONTH' ? 0 : -1}
               aria-label="Next year"
               className="p-1 rounded-full text-textMuted hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors"
             >
               <Icons.ChevronRight size={18} />
             </button>
           </div>
-        )}
+          </div>
+        </div>
 
-        <div className="h-36 -mx-2">
+        <div key={`chart-${mode}`} className="h-36 -mx-2 animate-[kayaFadeUp_0.35s_ease-out]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
@@ -418,7 +427,8 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
           <p className="text-textMuted text-sm">Tap + to add your first dividend or interest payment.</p>
         </div>
       ) : (
-        grouped.map(group => (
+        <div key={`list-${mode}`} className="space-y-6 kaya-anim animate-[kayaFadeUp_0.35s_ease-out]">
+        {grouped.map(group => (
           <div key={group.key}>
             <div className="flex justify-between items-center mb-3 px-1">
               <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">{group.label}</h3>
@@ -452,7 +462,8 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
               ))}
             </div>
           </div>
-        ))
+        ))}
+        </div>
       )}
 
       {/* Add / Edit sheet */}
