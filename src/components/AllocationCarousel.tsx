@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
+import { Icons } from './icons';
 
 export interface AllocSeg { key: string; pct: number; usd: number; color: string; }
 
@@ -11,6 +12,7 @@ interface Props {
   fmt: (usd: number) => string;
   fmtCompact: (usd: number) => string;
   privacyMode: boolean;
+  onTogglePrivacy?: () => void;
   allocMode: 'TYPE' | 'CURRENCY';
   onAllocMode: (m: 'TYPE' | 'CURRENCY') => void;
 }
@@ -92,7 +94,7 @@ export const LiquidityGauge: React.FC<{ liqFrac: number; progress: number }> = (
   );
 };
 
-export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liabilities, assetsTotal, fmt, fmtCompact, privacyMode, allocMode, onAllocMode }) => {
+export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liabilities, assetsTotal, fmt, fmtCompact, privacyMode, onTogglePrivacy, allocMode, onAllocMode }) => {
   const [slide, setSlide] = useState(0);
   const [seenLiquidity, setSeenLiquidity] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -121,9 +123,17 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
     <div className="glass-panel rounded-[24px] p-5 mb-2 kaya-anim">
       {/* Header: Overview + toggle on slide 1; Liquidity (no toggle) on slide 2 */}
       <div className="flex justify-between items-center h-[25px]">
-        <h3 key={slide} className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] animate-[kayaFadeUp_0.25s_ease-out]">
-          {slide === 0 ? 'Overview' : 'Liquidity'}
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 key={slide} className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] animate-[kayaFadeUp_0.25s_ease-out]">
+            {slide === 0 ? 'Overview' : 'Liquidity'}
+          </h3>
+          {onTogglePrivacy && (
+            <button onClick={onTogglePrivacy} aria-label={privacyMode ? 'Show amounts' : 'Hide amounts'}
+              className="text-textMuted hover:text-ink transition-colors p-1 -m-1">
+              {privacyMode ? <Icons.EyeOff size={14} /> : <Icons.Eye size={14} />}
+            </button>
+          )}
+        </div>
         <div className={`flex gap-0.5 transition-opacity duration-200 ${slide === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} aria-hidden={slide !== 0}>
           {(['TYPE', 'CURRENCY'] as const).map(m => (
             <button key={m} onClick={() => onAllocMode(m)} tabIndex={slide === 0 ? 0 : -1}

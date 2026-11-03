@@ -1744,6 +1744,7 @@ export default function App() {
                 fmt={fmtDisplay}
                 fmtCompact={fmtCompact}
                 privacyMode={privacyMode}
+                onTogglePrivacy={() => setPrivacyMode(p => !p)}
                 allocMode={allocMode}
                 onAllocMode={setAllocMode}
             />
@@ -2047,7 +2048,7 @@ export default function App() {
       <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+7.5rem+10px)]">
         {activeTab === 'SETTINGS' ? renderSettings() :
          activeTab === 'SETTINGS_CURRENCY' ? renderCurrencySelection() :
-         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} addTick={incomeAddTick} rates={rates} records={income} onRecordsChange={(next) => { if (next.length > income.length) registerStreakActivity(); setIncome(next); }} /> :
+         activeTab === 'INCOME' ? <IncomeTracker displayCurrency={settings.displayCurrency} privacyMode={privacyMode} onTogglePrivacy={() => setPrivacyMode(p => !p)} addTick={incomeAddTick} rates={rates} records={income} onRecordsChange={(next) => { if (next.length > income.length) registerStreakActivity(); setIncome(next); }} /> :
          selectedAssetId ? renderAssetDetail() :
          activeTab === 'ASSETS' ? renderPortfolioList() :
          renderHome()}

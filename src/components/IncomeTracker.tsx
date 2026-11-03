@@ -70,6 +70,7 @@ const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
 interface Props {
   displayCurrency: string;
   privacyMode: boolean;
+  onTogglePrivacy?: () => void;
   addTick: number;
   rates: Record<string, number>;
   records: IncomeRecord[];
@@ -86,7 +87,7 @@ const emptyDraft = (currency: string): IncomeRecord => ({
   note: ''
 });
 
-export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, addTick, rates, records, onRecordsChange }) => {
+export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, onTogglePrivacy, addTick, rates, records, onRecordsChange }) => {
   const [mode, setMode] = useState<Mode>('MONTH');
   const currentYear = new Date().getFullYear();
   const [viewYear, setViewYear] = useState(currentYear); // which year the Monthly view shows
@@ -280,9 +281,17 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
       <div className="glass-panel rounded-[24px] p-5">
         {/* Header row: label + Monthly/Yearly toggle (same position/style as Portfolio "By type/By currency") */}
         <div className="flex items-center justify-between h-[25px]">
-          <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase">
-            {summary.label}
-          </p>
+          <div className="flex items-center gap-2 min-w-0">
+            <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase truncate">
+              {summary.label}
+            </p>
+            {onTogglePrivacy && (
+              <button onClick={onTogglePrivacy} aria-label={privacyMode ? 'Show amounts' : 'Hide amounts'}
+                className="shrink-0 text-textMuted hover:text-ink transition-colors p-1 -m-1">
+                {privacyMode ? <Icons.EyeOff size={14} /> : <Icons.Eye size={14} />}
+              </button>
+            )}
+          </div>
           <div className="flex gap-0.5">
             {(['MONTH', 'YEAR'] as Mode[]).map(m => (
               <button
