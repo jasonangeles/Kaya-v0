@@ -441,6 +441,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(isSupabaseEnabled);
   const [cloudLoaded, setCloudLoaded] = useState(false);
+  const [cloudError, setCloudError] = useState(false); // cloud unreachable; load is retrying
 
   useEffect(() => {
     if (!isSupabaseEnabled || !supabase) return;
@@ -483,8 +484,18 @@ export default function App() {
     };
 
     (async () => {
-      const { data } = await supabase!.from('kaya_data').select('data, updated_at').eq('user_id', uid).maybeSingle();
-      if (!active) return;
+      // Retry until the cloud actually answers. A failed request must NEVER be read as
+      // "no row" — that would treat an existing user as brand new and overwrite their data.
+      let data: any = null;
+      for (let attempt = 0; ; attempt++) {
+        const res = await supabase!.from('kaya_data').select('data, updated_at').eq('user_id', uid).maybeSingle();
+        if (!active) return;
+        if (!res.error) { data = res.data; break; }
+        setCloudError(true);
+        await new Promise(r => setTimeout(r, Math.min(15000, 1500 * 2 ** attempt)));
+        if (!active) return;
+      }
+      setCloudError(false);
 
       // Trust local cache ONLY if it belongs to this exact user. Anything else
       // (different account, or an untagged stale cache) is not carried over —
@@ -1412,7 +1423,7 @@ export default function App() {
   const renderAssetDetail = () => {
     if (!selectedAsset) return null;
     return (
-        <div className="animate-[fadeIn_0.3s_ease-out]">
+        <div className="animate-[kayaRise_0.35s_ease-out]">
             <div className="glass-panel rounded-[24px] p-5 mb-6 relative overflow-visible z-20">
                 <div className="flex justify-between items-center mb-2 -mt-1">
                      <button 
@@ -1518,7 +1529,7 @@ export default function App() {
   })();
 
   const renderHome = () => (
-    <div className="space-y-6 animate-[fadeIn_0.5s_ease-out]">
+    <div className="space-y-6 animate-[kayaRise_0.4s_ease-out]">
       <header className="flex justify-between items-center">
         <div className="min-w-0 flex-1 pr-3">
             <h1 title={`Hi, ${greetingName}!`} className="text-[20px] font-semibold tracking-tight text-textMuted whitespace-nowrap overflow-hidden text-ellipsis">Hi, {greetingName}!</h1>
@@ -1816,7 +1827,7 @@ export default function App() {
   );
 
   const renderPortfolioList = () => (
-    <div className="space-y-4 animate-[fadeIn_0.5s_ease-out]">
+    <div className="space-y-4 animate-[kayaRise_0.4s_ease-out]">
          <header className="mb-6 px-1">
             <h1 className="text-3xl font-medium text-ink mb-2">Portfolio</h1>
             <p className="text-sm text-textMuted">Tap to view details</p>
@@ -2011,7 +2022,7 @@ export default function App() {
   );
 
   const renderCurrencySelection = () => (
-    <div className="animate-[fadeIn_0.3s_ease-out]">
+    <div className="animate-[kayaRise_0.35s_ease-out]">
         <header className="flex items-center gap-4 mb-6 px-1">
             <button 
                 onClick={() => setActiveTab('SETTINGS')}
@@ -2046,7 +2057,7 @@ export default function App() {
   );
 
   const renderSettings = () => (
-    <div className="animate-[fadeIn_0.5s_ease-out]">
+    <div className="animate-[kayaRise_0.4s_ease-out]">
       <header className="mb-8 px-1">
         <h1 className="text-3xl font-medium text-ink">Settings</h1>
       </header>
@@ -2121,11 +2132,30 @@ export default function App() {
     </div>
   );
 
+  // Branded loading screen (dither + logo) — shown while the session restores, and while a
+  // brand-new / not-yet-cached account loads from the cloud, so new sign-ups go straight to
+  // onboarding instead of flashing an empty Home first.
+  const bootSplash = (
+    <div className="h-[100dvh] max-w-md mx-auto relative isolate overflow-hidden flex items-center justify-center" aria-busy="true" aria-label="Loading Kaya">
+      <DitherBackground theme={theme} />
+      <div className="flex flex-col items-center gap-4">
+        <img src="/logo-icon.svg" alt="" width={44} height={44} draggable={false} className="kaya-splash-logo animate-[subtlePulse_2.2s_ease-in-out_infinite]" />
+        {cloudError && <p className="text-[13px] text-textFaint animate-[kayaFadeUp_0.3s_ease-out]">Can't reach Kaya. Retrying…</p>}
+      </div>
+    </div>
+  );
+
   if (isSupabaseEnabled && authLoading) {
-    return <div className="h-[100dvh] bg-paper" />;
+    return bootSplash;
   }
   if (isSupabaseEnabled && !session) {
     return <Landing />;
+  }
+  // Account not cached on this device yet (new sign-up or first sign-in here): wait for the
+  // cloud load before drawing anything, so we never flash an empty Home. Returning users on
+  // their own device skip this and see their cached data instantly.
+  if (isSupabaseEnabled && session && !cloudLoaded && getOwner() !== session.user.id) {
+    return bootSplash;
   }
   // New sign-ups only (flag set when their account is first created).
   if (isSupabaseEnabled && session && cloudLoaded && settings.onboardingComplete === false) {

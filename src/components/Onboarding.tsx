@@ -188,7 +188,7 @@ export const Onboarding: React.FC<{ onFinish: (r: OnboardingResult) => void }> =
         {[0, 1, 2].map(i => <i key={i} className={`flex-1 h-1 rounded-full transition-colors duration-300 ${i <= step ? 'bg-textMuted' : 'bg-ink/15'}`} />)}
       </div>
 
-      <div key={step} className="flex-1 min-h-0 flex flex-col px-5 animate-[kayaFadeUp_0.35s_ease-out]">
+      <div key={step} className="flex-1 min-h-0 flex flex-col px-5 animate-[kayaRise_0.35s_ease-out]">
         <div className="flex items-center justify-between h-6 mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[1.2px] text-textMuted">Step {step + 1} of 3</span>
           {step > 0 && Back}

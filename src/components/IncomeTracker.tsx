@@ -274,7 +274,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
   const positive = (growth ?? 0) >= 0;
 
   return (
-    <div className="space-y-6 animate-[fadeIn_0.4s_ease-out]">
+    <div className="space-y-6 animate-[kayaRise_0.4s_ease-out]">
       <header className="px-1">
         <h1 className="text-3xl font-medium text-ink mb-1">Passive Income</h1>
         <p className="text-sm text-textMuted">Track how your dividends & interest grow</p>
@@ -430,7 +430,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
           <p className="text-textMuted text-sm">Tap + to add your first dividend or interest payment.</p>
         </div>
       ) : (
-        <div key={`list-${mode}`} className="space-y-6 kaya-anim animate-[kayaFadeUp_0.35s_ease-out]">
+        <div key={`list-${mode}`} className="space-y-6 kaya-anim animate-[kayaRise_0.35s_ease-out]">
         {grouped.map(group => (
           <div key={group.key}>
             <div className="flex justify-between items-center mb-3 px-1">
