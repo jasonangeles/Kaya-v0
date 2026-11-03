@@ -242,27 +242,41 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
       </header>
 
       {/* Summary + chart */}
-      <div className="glass-panel rounded-3xl p-4 shadow-lg">
-        <div className="flex items-start justify-between mb-1">
-          <div>
-            <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase mb-1">
-              {summary.label}
-            </p>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-normal text-textFaint"><Sym code={displayCurrency} /></span>
-              <span className="text-4xl font-medium text-ink tracking-tight">
-                {privacyMode ? '••••••' : Math.round(current).toLocaleString()}
-              </span>
-            </div>
+      <div className="glass-panel rounded-[24px] p-5">
+        {/* Header row: label + Monthly/Yearly toggle (same position/style as Portfolio "By type/By currency") */}
+        <div className="flex items-center justify-between h-[25px]">
+          <p className="text-textMuted text-[11px] font-medium tracking-[1.2px] uppercase">
+            {summary.label}
+          </p>
+          <div className="flex gap-0.5">
+            {(['MONTH', 'YEAR'] as Mode[]).map(m => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`px-[10px] py-[6px] text-[10px] font-medium rounded-full transition-colors duration-200 ${mode === m ? 'bg-textMuted text-paper' : 'text-textFaint hover:text-ink'}`}
+              >
+                {m === 'MONTH' ? 'Monthly' : 'Yearly'}
+              </button>
+            ))}
           </div>
-          <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium ${positive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-            {positive ? <Icons.ArrowUp size={14} /> : <Icons.ArrowDown size={14} />}
+        </div>
+
+        {/* Amount + growth (growth sits under the toggle, right-aligned) */}
+        <div className="flex items-end justify-between mt-2 mb-1">
+          <div className="flex items-baseline gap-1 min-w-0">
+            <span className="text-2xl font-normal text-textFaint"><Sym code={displayCurrency} /></span>
+            <span className="text-4xl font-medium text-ink tracking-tight truncate">
+              {privacyMode ? '••••••' : Math.round(current).toLocaleString()}
+            </span>
+          </div>
+          <div className={`shrink-0 mb-1 flex items-center gap-1 text-[13px] font-medium ${positive ? 'text-[#399d74]' : 'text-rose-400'}`}>
+            {positive ? <Icons.ArrowUp size={13} weight="bold" /> : <Icons.ArrowDown size={13} weight="bold" />}
             {Math.abs(growth).toFixed(1)}%
           </div>
         </div>
-        <p className="text-[11px] text-textMuted mb-3">
+        <p className="text-[12px] text-textFaint mb-3">
           {mode === 'MONTH' && avgMonthly > 0
-            ? <>Averaging <span className="text-emerald-400 font-medium">{hide(fmt(avgMonthly, displayCurrency))}</span> a month {viewYear === currentYear ? 'this year' : `in ${viewYear}`}</>
+            ? <>Averaging <span className="text-[#399d74] font-medium">{hide(fmt(avgMonthly, displayCurrency))}</span> a month {viewYear === currentYear ? 'this year' : `in ${viewYear}`}</>
             : <>{mode === 'MONTH' ? 'No income yet for this year' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
         </p>
 
@@ -291,7 +305,14 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
         <div className="h-36 -mx-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
-              <XAxis dataKey="label" tick={{ fill: '#71717a', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={10} />
+              <defs>
+                {/* Main green at the base fading to muted at the top */}
+                <linearGradient id="incomeBarGrad" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0%" stopColor="#399d74" />
+                  <stop offset="100%" stopColor="#dcf5df" />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="label" tick={{ fill: '#6e8777', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={10} />
               <YAxis hide domain={[0, 'auto']} />
               <Tooltip
                 cursor={{ fill: 'rgba(255,255,255,0.04)' }}
@@ -300,20 +321,21 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                   return (
                     <div className="bg-surface3/95 border border-ink/10 p-3 rounded-xl shadow-2xl">
                       <p className="text-textMuted text-xs mb-1">{label}</p>
-                      <p className="text-emerald-400 font-bold text-sm">{fmt(payload[0].value, displayCurrency)}</p>
+                      <p className="text-[#399d74] font-bold text-sm">{fmt(payload[0].value, displayCurrency)}</p>
                     </div>
                   );
                 }}
               />
-              <Bar dataKey="total" radius={[4, 4, 0, 0]} animationDuration={700} maxBarSize={48}>
+              <Bar dataKey="total" radius={[6, 6, 2, 2]} animationDuration={700} maxBarSize={48}>
+                {/* Every bar uses the gradient; the current period is full strength, past ones softer. */}
                 {chartData.map((entry, i) => (
-                  <Cell key={i} fill={i === chartData.length - 1 ? '#10b981' : '#3f3f46'} />
+                  <Cell key={i} fill="url(#incomeBarGrad)" fillOpacity={i === chartData.length - 1 ? 1 : 0.45} />
                 ))}
               </Bar>
               {mode === 'MONTH' && avgMonthly > 0 && (
                 <ReferenceLine
                   y={avgMonthly}
-                  stroke="#10b981"
+                  stroke="#399d74"
                   strokeDasharray="4 4"
                   strokeOpacity={0.9}
                   ifOverflow="extendDomain"
@@ -323,24 +345,12 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
           </ResponsiveContainer>
         </div>
 
-        {/* Mode toggle */}
-        <div className="flex bg-surface2 rounded-full p-0.5 mt-3">
-          {(['MONTH', 'YEAR'] as Mode[]).map(m => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`flex-1 py-1.5 text-xs font-medium rounded-full transition-all ${mode === m ? 'bg-surfaceHi text-ink shadow-sm' : 'text-textFaint hover:text-ink'}`}
-            >
-              {m === 'MONTH' ? 'Monthly' : 'Yearly'}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Records grouped by period */}
       {records.length === 0 ? (
-        <div className="glass-panel rounded-3xl p-8 text-center shadow-lg">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3">
+        <div className="glass-panel rounded-[20px] p-8 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center mx-auto mb-3">
             <Icons.Trend size={22} />
           </div>
           <p className="text-ink font-medium mb-1">No income logged yet</p>
@@ -348,31 +358,32 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
         </div>
       ) : (
         grouped.map(group => (
-          <div key={group.key} className="px-1">
-            <div className="flex justify-between items-baseline mb-2 px-1">
+          <div key={group.key}>
+            <div className="flex justify-between items-center mb-3 px-1">
               <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px]">{group.label}</h3>
-              <span className="text-xs font-medium text-emerald-400">{hide(fmt(group.subtotal, displayCurrency))}</span>
+              <span className="text-[13px] font-medium text-[#399d74]">{hide(fmt(group.subtotal, displayCurrency))}</span>
             </div>
-            <div className="rounded-3xl overflow-hidden shadow-lg bg-surface2 border border-ink/5">
+            {/* Same frosted card + row style as the Portfolio account list */}
+            <div className="glass-panel rounded-[20px] overflow-hidden">
               {group.items.map((r, idx) => (
                 <div
                   key={r.id}
                   onClick={() => openEdit(r)}
-                  className={`group p-4 flex justify-between items-center cursor-pointer hover:bg-ink/5 transition-colors ${idx !== group.items.length - 1 ? 'border-b border-ink/5' : ''}`}
+                  className={`group p-5 flex justify-between items-center cursor-pointer hover:bg-ink/5 transition-colors ${idx !== group.items.length - 1 ? 'border-b border-ink/5' : ''}`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-ink/5">
-                      <Icons.ArrowDownLeft size={18} />
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-11 h-11 rounded-xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center shrink-0">
+                      <Icons.ArrowDownLeft size={20} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-ink truncate">{r.source || r.category}</p>
-                      <p className="text-[11px] text-textMuted truncate">
+                      <p className="font-medium text-ink text-base truncate">{r.source || r.category}</p>
+                      <p className="text-xs text-textMuted mt-0.5 truncate">
                         {r.category} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-sm font-medium text-emerald-400">
+                    <p className="font-semibold text-[#399d74] tracking-wide">
                       {privacyMode ? '••••' : <>+<Sym code={r.currency} />{r.amount.toLocaleString()}</>}
                     </p>
                   </div>
@@ -399,7 +410,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, a
                 placeholder="0.00"
                 value={draft.amount || ''}
                 onChange={(e) => setDraft({ ...draft, amount: parseFloat(e.target.value) || 0 })}
-                className="w-full bg-transparent border-none text-emerald-400 text-2xl font-medium p-1 outline-none placeholder:text-textFaint"
+                className="w-full bg-transparent border-none text-[#399d74] text-2xl font-medium p-1 outline-none placeholder:text-textFaint"
                 autoFocus
               />
             </div>

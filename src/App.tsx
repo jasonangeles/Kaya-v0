@@ -1711,8 +1711,8 @@ export default function App() {
                         <span
                             className="text-[9px] leading-none px-1.5 py-[3px] rounded-full shrink-0"
                             style={isLiquid(asset)
-                                ? { background: 'rgba(16,185,129,0.10)', color: '#5fb89a' }
-                                : { background: 'rgba(148,163,184,0.12)', color: '#8d9bad' }}
+                                ? { background: 'rgba(57,157,116,0.15)', color: '#399d74' }
+                                : { background: 'rgba(110,135,119,0.15)', color: 'rgb(var(--faint))' }}
                         >
                             {asset.category}
                         </span>
@@ -1761,7 +1761,7 @@ export default function App() {
             className="w-full text-left glass-panel rounded-3xl p-4 shadow-lg flex items-center justify-between hover:bg-ink/5 transition-colors mb-2"
         >
             <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-ink/5">
+                <div className="p-2.5 rounded-xl bg-[#399d74]/15 text-[#399d74]">
                     <Icons.BarChart size={18} />
                 </div>
                 <div>
@@ -1795,38 +1795,37 @@ export default function App() {
                 </span>
                 <button
                     onClick={() => setFilterOpen(true)}
-                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors ${filtersActive ? 'bg-surfaceHi text-ink border-ink/10' : 'bg-surface2 text-textMuted border-ink/5 hover:text-ink'}`}
+                    className={`flex items-center gap-2 h-9 px-3.5 rounded-full text-[12px] font-medium transition-colors ${filtersActive ? 'bg-textMuted text-paper' : 'glass-panel text-textMuted hover:text-ink'}`}
                 >
-                    {filtersActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
-                    Filter
+                    Filter{filtersActive ? ` · ${catFilter.length + curFilter.length}` : ''}
                     <Icons.BarChart size={14} className="rotate-90" />
                 </button>
             </div>
         )}
 
         {filteredSubtotal && filteredAssets.length > 0 && (
-            <div className="glass-panel rounded-2xl px-4 py-3.5 shadow-lg">
+            <div className="glass-panel rounded-[20px] px-5 py-4">
                 <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[9px] tracking-widest text-textFaint uppercase">Filtered total</span>
-                    <span className="text-[11px] text-textFaint">{filteredSubtotal.count} {filteredSubtotal.count === 1 ? 'account' : 'accounts'}</span>
+                    <span className="text-[11px] font-medium tracking-[1.2px] text-textMuted uppercase">Filtered total</span>
+                    <span className="text-[12px] text-textFaint">{filteredSubtotal.count} {filteredSubtotal.count === 1 ? 'account' : 'accounts'}</span>
                 </div>
-                <p className="text-2xl font-semibold text-ink mb-2.5">{privacyMode ? '••••••' : fmtDisplay(filteredSubtotal.usd)}</p>
+                <p className="text-2xl font-semibold text-ink mb-3">{privacyMode ? '••••••' : fmtDisplay(filteredSubtotal.usd)}</p>
                 {filteredSubtotal.pct !== null && (
-                    <div className="flex h-1.5 rounded-full overflow-hidden bg-surface2 mb-2.5">
-                        <div style={{ width: `${Math.max(0, Math.min(100, filteredSubtotal.pct))}%`, background: '#10b981' }} />
+                    <div className="flex h-2 rounded-full overflow-hidden bg-ink/10 mb-3">
+                        <div className="rounded-full" style={{ width: `${Math.max(0, Math.min(100, filteredSubtotal.pct))}%`, background: 'linear-gradient(90deg, #399d74, rgb(var(--muted)))' }} />
                     </div>
                 )}
                 <div className="flex items-center gap-1.5 flex-wrap">
                     {catFilter.map(c => (
                         <span key={c} className="text-[10px] px-2 py-0.5 rounded-full"
                             style={c !== AssetCategory.DEBT && (CATEGORY_LIQUIDITY[c] ?? 'medium') !== 'low'
-                                ? { background: 'rgba(16,185,129,0.10)', color: '#5fb89a' }
-                                : { background: 'rgba(148,163,184,0.12)', color: '#8d9bad' }}>
+                                ? { background: 'rgba(57,157,116,0.15)', color: '#399d74' }
+                                : { background: 'rgba(110,135,119,0.15)', color: 'rgb(var(--faint))' }}>
                             {c}
                         </span>
                     ))}
                     {curFilter.map(c => (
-                        <span key={c} className="text-[10px] px-2 py-0.5 rounded-full bg-surface2 text-textMuted">{c}</span>
+                        <span key={c} className="text-[10px] px-2 py-0.5 rounded-full bg-ink/10 text-textMuted">{c}</span>
                     ))}
                     {filteredSubtotal.pct !== null && (
                         <span className="text-[11px] text-textMuted ml-0.5">{filteredSubtotal.pct.toFixed(0)}% of net worth</span>
@@ -1880,10 +1879,10 @@ export default function App() {
             <h2 className="text-xl font-semibold text-ink mb-5">Sort &amp; filter</h2>
 
             <p className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-2">Sort</p>
-            <div className="flex bg-surface2 rounded-xl p-1 mb-6">
+            <div className="flex justify-between items-center mb-6">
                 {([['CATEGORY', 'Category'], ['VALUE', 'Value'], ['UPDATED', 'Updated'], ['LIQUIDITY', 'Liquidity']] as const).map(([m, label]) => (
                     <button key={m} onClick={() => setSortMode(m)}
-                        className={`flex-1 py-2 text-[12px] font-medium rounded-lg transition-all ${sortMode === m ? 'bg-surfaceHi text-ink shadow' : 'text-textFaint hover:text-ink'}`}>
+                        className={`px-3.5 py-2 text-[12px] font-medium rounded-full transition-colors duration-200 ${sortMode === m ? 'bg-textMuted text-paper' : 'text-textFaint hover:text-ink'}`}>
                         {label}
                     </button>
                 ))}
@@ -1895,8 +1894,8 @@ export default function App() {
             <div className="flex flex-wrap gap-2 mb-5">
                 {Object.values(AssetCategory).filter(c => assets.some(a => a.category === c)).map(c => (
                     <button key={c} onClick={() => toggleCat(c)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${catFilter.includes(c) ? 'bg-surfaceHi text-ink border-ink/20' : 'bg-surface2 text-textMuted border-ink/5 hover:text-ink'}`}>
-                        {c !== AssetCategory.DEBT && <i className="w-2 h-2 rounded-full" style={{ background: (CATEGORY_LIQUIDITY[c] ?? 'medium') === 'low' ? '#94a3b8' : '#10b981' }} />}{c}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors duration-200 ${catFilter.includes(c) ? 'bg-textMuted text-paper border-transparent' : 'border-ink/10 text-textMuted hover:text-ink'}`}>
+                        {c !== AssetCategory.DEBT && <i className="w-2 h-2 rounded-full" style={{ background: (CATEGORY_LIQUIDITY[c] ?? 'medium') === 'low' ? 'rgb(var(--faint))' : '#399d74' }} />}{c}
                     </button>
                 ))}
             </div>
@@ -1905,7 +1904,7 @@ export default function App() {
             <div className="flex flex-wrap gap-2">
                 {portfolioCurrencies.map(c => (
                     <button key={c} onClick={() => toggleCur(c)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${curFilter.includes(c) ? 'bg-surfaceHi text-ink border-ink/20' : 'bg-surface2 text-textMuted border-ink/5 hover:text-ink'}`}>
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors duration-200 ${curFilter.includes(c) ? 'bg-textMuted text-paper border-transparent' : 'border-ink/10 text-textMuted hover:text-ink'}`}>
                         {c}
                     </button>
                 ))}
