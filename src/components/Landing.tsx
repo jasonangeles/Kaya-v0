@@ -74,6 +74,51 @@ const HeroVisual: React.FC = () => {
   );
 };
 
+// Scroll-scrubbed word reveal (the GSAP SplitText + ScrollTrigger "scrub" look, done natively):
+// the text is split into words, every word starts dim, and words light up one after another
+// as the block moves up the screen, then dim again if you scroll back. The last line ends in
+// mint. Opacity only, written straight to the DOM in one rAF per scroll (no React re-renders).
+const ScrollWords: React.FC<{ lines: string[]; className?: string }> = ({ lines, className = '' }) => {
+  const root = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const words = Array.from(el.querySelectorAll<HTMLSpanElement>('[data-w]'));
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { words.forEach(w => (w.style.opacity = '1')); return; }
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = el.getBoundingClientRect(), vh = window.innerHeight;
+      // 0 when the block's top is at 85% of the screen, 1 when its bottom reaches 45%
+      const p = Math.min(1, Math.max(0, (vh * 0.85 - r.top) / (r.height + vh * 0.4)));
+      const n = words.length;
+      words.forEach((w, i) => {
+        const f = Math.min(1, Math.max(0, p * (n + 2) - i - 1));   // each word fades over ~1 step
+        w.style.opacity = (0.16 + 0.84 * f).toFixed(3);
+      });
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(raf); };
+  }, [lines]);
+  return (
+    <h2 ref={root} className={className} aria-label={lines.join(' ')}>
+      {lines.map((line, li) => (
+        <span key={li} className="block" aria-hidden="true" style={{ color: li === lines.length - 1 ? '#dcf5df' : '#ffffff' }}>
+          {line.split(' ').map((w, wi) => (
+            <React.Fragment key={wi}>
+              <span data-w className="inline-block" style={{ opacity: 0.16, transition: 'opacity .25s linear' }}>{w}</span>{' '}
+            </React.Fragment>
+          ))}
+        </span>
+      ))}
+    </h2>
+  );
+};
+
 // --- Landing --------------------------------------------------------------
 export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -235,11 +280,14 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
           <DitheringShader shape="gradient" type="16x16" colorBack="#070C0A" colorFront="#2A6E50" pxSize={1} levels={8} contrast={1.26} amplitude={2.5} speed={1} />
         </div>
 
-        <section className="max-w-6xl mx-auto px-6 pt-20 pb-24 sm:pb-32">
-          <Reveal className="text-center">
-            <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">See your whole<br />net worth today.</h2>
-            <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">Free to use. Nothing links to your bank.</p>
-            <button onClick={openSignUp} className="mt-8 bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[16px] font-semibold px-6 py-3.5 rounded-xl transition-colors">Start for free</button>
+        <section className="max-w-6xl mx-auto px-6 pt-24 sm:pt-32 pb-24 sm:pb-32 text-center">
+          <ScrollWords
+            lines={['Pesos in Manila.', 'Dollars in Toronto.', 'Sats in cold storage.', 'One number for all of it.']}
+            className="text-[44px] sm:text-[72px] lg:text-[92px] font-semibold leading-[0.95] tracking-[-0.038em]"
+          />
+          <Reveal className="mt-12">
+            <button onClick={openSignUp} className="bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[16px] font-semibold px-6 py-3.5 rounded-xl transition-colors">Start for free</button>
+            <p className="text-[12px] leading-4 mt-4" style={{ color: '#6e8777' }}>No bank logins · No ads · Your data stays yours</p>
           </Reveal>
         </section>
 
