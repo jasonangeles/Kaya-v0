@@ -3,6 +3,7 @@ import { Icons } from './icons';
 import { SignInModal } from './SignInModal';
 import { DitheringShader } from './ui/dithering-shader';
 import { OrbitWidgets } from './OrbitWidgets';
+import { ExploreFeatures } from './ExploreFeatures';
 
 // --- Scroll reveal (fade + rise, once) -----------------------------------
 const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({ children, delay = 0, className = '' }) => {
@@ -260,11 +261,6 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const props = [
-    { icon: <Icons.Global size={22} />, title: 'Any currency', desc: 'Pesos, dollars, dirhams, even sats. Kaya converts everything at live rates, so your total always adds up.' },
-    { icon: <Icons.Trend size={22} />, title: 'Passive income', desc: 'Log dividends and interest when they land. You can see what they bring in each month and whether it\'s going up.' },
-    { icon: <Icons.Lock size={22} />, title: 'Private by design', desc: 'You type in your own balances. Kaya never connects to your bank, and you can export or delete your data anytime.' }
-  ];
   const steps = [
     { t: 'Add your accounts', d: 'Pick your banks, wallets, stocks and crypto, then type in the balances.' },
     { t: 'See your net worth', d: 'Kaya converts everything to your currency. Switch to USD, CAD or Bitcoin anytime.' },
@@ -314,19 +310,12 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
         </div>
       </section>
 
-      {/* Value props */}
+      {/* Closer look: interactive feature explorer (replaces the 3 USP cards) */}
       <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid sm:grid-cols-3 gap-5">
-          {props.map((p, i) => (
-            <Reveal key={i} delay={i * 90}>
-              <div className="h-full rounded-3xl border border-white/10 bg-white/[0.02] p-6 hover:bg-white/[0.04] transition-colors">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-4">{p.icon}</div>
-                <h3 className="text-lg font-medium mb-1.5">{p.title}</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">{p.desc}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        <Reveal>
+          <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight mb-8 sm:mb-10">Take a closer look.</h2>
+        </Reveal>
+        <Reveal delay={120}><ExploreFeatures /></Reveal>
       </section>
 
       {/* Orbit: every account around one total */}

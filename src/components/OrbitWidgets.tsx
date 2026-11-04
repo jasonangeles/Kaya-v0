@@ -18,7 +18,7 @@ const MUTED = '#dcf5df';
 const FAINT = '#6e8777';
 
 // ---- Card shell (Kaya glass widget) ---------------------------------------
-const Card: React.FC<{ children: React.ReactNode; w: number; pad?: number; r?: number }> = ({ children, w, pad = 16, r = 20 }) => (
+export const Card: React.FC<{ children: React.ReactNode; w: number; pad?: number; r?: number }> = ({ children, w, pad = 16, r = 20 }) => (
   <div
     className="relative overflow-hidden text-left"
     style={{
@@ -48,17 +48,17 @@ const Card: React.FC<{ children: React.ReactNode; w: number; pad?: number; r?: n
   </div>
 );
 
-const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+export const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <p className="text-[10px] font-medium uppercase tracking-[1.2px]" style={{ color: MUTED, opacity: 0.8 }}>{children}</p>
 );
 
 // ---- Widgets (v1.2 dummy data) ---------------------------------------------
-const NetWorth = () => (
+export const NetWorth: React.FC<{ sym?: string; value?: string }> = ({ sym = '₱', value = '1,847,200' }) => (
   <Card w={260} pad={18} r={24}>
     <Label>Net worth</Label>
     <div className="flex items-baseline gap-1 mt-1.5">
-      <span className="text-xl" style={{ color: FAINT }}>₱</span>
-      <span className="text-[28px] font-medium tracking-tight text-white tabular-nums">1,847,200</span>
+      <span className="text-xl" style={{ color: FAINT }}>{sym}</span>
+      <span className="text-[28px] font-medium tracking-tight text-white tabular-nums">{value}</span>
     </div>
     <p className="text-[12px] mt-1 flex items-center gap-1.5">
       <span className="font-medium" style={{ color: GREEN }}>+4.2%</span>
@@ -76,7 +76,7 @@ const NetWorth = () => (
   </Card>
 );
 
-const Account: React.FC<{ inst: string; name: string; amount: string; w?: number }> = ({ inst, name, amount, w = 230 }) => (
+export const Account: React.FC<{ inst: string; name: string; amount: string; w?: number }> = ({ inst, name, amount, w = 230 }) => (
   <Card w={w} pad={12} r={18}>
     <div className="flex items-center gap-3">
       <InstitutionLogo name={inst} size={36} radius={11} />
@@ -89,7 +89,7 @@ const Account: React.FC<{ inst: string; name: string; amount: string; w?: number
   </Card>
 );
 
-const Liquidity = () => {
+export const Liquidity = () => {
   // Half-circle gauge, 58% liquid (same shape as the app's LiquidityGauge)
   const r = 54, cx = 70, cy = 66, half = Math.PI * r;
   const arc = (a0: number, a1: number) => {
@@ -116,7 +116,7 @@ const Liquidity = () => {
   );
 };
 
-const Income = () => {
+export const Income = () => {
   const bars = [48, 52, 61, 54, 69, 73, 66, 79, 77, 71, 84];
   return (
     <Card w={220} pad={16} r={22}>
@@ -139,7 +139,7 @@ const Income = () => {
   );
 };
 
-const Allocation = () => {
+export const Allocation = () => {
   const segs: [string, number, string][] = [['Equities', 38, ''], ['PH Banks', 27, MUTED], ['Crypto', 15, FAINT], ['Intl Banks', 12, '#2b6b50'], ['Others', 8, '#3f4a44']];
   return (
     <Card w={240} pad={16} r={22}>
@@ -161,14 +161,14 @@ const Allocation = () => {
   );
 };
 
-const Rate = () => (
+export const Rate = () => (
   <Card w={190} pad={14} r={18}>
     <p className="text-[14px] text-white tabular-nums">1 USD = <span className="font-semibold">63.55</span> PHP</p>
     <p className="text-[11px] mt-1" style={{ color: GREEN }}>▲ 0.41% <span style={{ color: FAINT }}>this week</span></p>
   </Card>
 );
 
-const Streak = () => (
+export const Streak = () => (
   <Card w={150} pad={12} r={16}>
     <div className="flex items-center gap-2.5">
       <span className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}><Icons.Fire size={16} weight="fill" /></span>
