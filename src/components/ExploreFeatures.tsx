@@ -507,15 +507,15 @@ const Stage: React.FC<{ active: number | null; cur: Swatch; setCur: (c: Swatch) 
 // ---------------------------------------------------------------------------
 // Controls
 const Plus = () => (
-  <span className="w-5 h-5 md:w-[22px] md:h-[22px] rounded-full border border-white/40 flex items-center justify-center shrink-0"><Icons.Add size={12} /></span>
+  <span className="w-5 h-5 md:w-[22px] md:h-[22px] rounded-full bg-[#dcf5df] text-black flex items-center justify-center shrink-0"><Icons.Add size={12} weight="bold" /></span>
 );
-const pill = 'inline-flex items-center gap-2.5 h-11 md:h-12 pl-3 md:pl-3.5 pr-5 md:pr-6 md:gap-3 rounded-full text-[14px] md:text-[15px] font-medium text-white bg-white/[0.08] hover:bg-white/[0.13] backdrop-blur-xl transition-colors whitespace-nowrap';
+const pill = 'inline-flex items-center gap-2.5 h-11 md:h-12 pl-3 md:pl-3.5 pr-5 md:pr-6 md:gap-3 rounded-full text-[14px] md:text-[15px] font-medium text-white kaya-frost hover:brightness-125 transition-[filter,box-shadow] whitespace-nowrap';
 
 const Swatches: React.FC<{ cur: Swatch; setCur: (s: Swatch) => void }> = ({ cur, setCur }) => (
-  <div className="flex gap-2 mt-4">
+  <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-4">
     {CURRENCIES.map(c => (
       <button key={c.key} onClick={(e) => { e.stopPropagation(); setCur(c); }} aria-label={`Show in ${c.label}`}
-        className={`h-8 px-2.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-colors ${cur.key === c.key ? 'bg-[#dcf5df] text-black' : 'bg-white/10 text-white/80 hover:bg-white/15'}`}>
+        className={`h-8 px-2 sm:px-2.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-colors ${cur.key === c.key ? 'bg-[#dcf5df] text-black' : 'bg-white/10 text-white/80 hover:bg-white/15'}`}>
         {c.sym} {c.label}
       </button>
     ))}
@@ -523,7 +523,8 @@ const Swatches: React.FC<{ cur: Swatch; setCur: (s: Swatch) => void }> = ({ cur,
 );
 
 const Detail: React.FC<{ item: Item; cur: Swatch; setCur: (s: Swatch) => void; className?: string }> = ({ item, cur, setCur, className = '' }) => (
-  <div onClick={e => e.stopPropagation()} className={`rounded-[28px] bg-[#1c1d1c]/90 backdrop-blur-xl p-6 text-[15px] leading-[1.45] text-white/70 animate-[kayaFadeUp_0.35s_ease-out] ${className}`}>
+  <div onClick={e => e.stopPropagation()} className={`kaya-frost min-w-0 rounded-[28px] p-6 text-[15px] leading-[1.45] text-white/70 animate-[kayaFadeUp_0.35s_ease-out] ${className}`}
+    style={{ background: 'rgba(28, 29, 28, 0.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
     <span className="font-semibold text-white">{item.title}</span> {item.body}
     {item.currency && <Swatches cur={cur} setCur={setCur} />}
   </div>
@@ -531,7 +532,7 @@ const Detail: React.FC<{ item: Item; cur: Swatch; setCur: (s: Swatch) => void; c
 
 const Round: React.FC<{ onClick: () => void; label: string; disabled?: boolean; children: React.ReactNode }> = ({ onClick, label, disabled, children }) => (
   <button onClick={(e) => { e.stopPropagation(); onClick(); }} aria-label={label} disabled={disabled}
-    className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 backdrop-blur-xl text-white flex items-center justify-center transition-colors disabled:opacity-30 shrink-0">
+    className="w-9 h-9 rounded-full bg-[#dcf5df] hover:bg-[#c6e8cb] text-black flex items-center justify-center transition-colors disabled:opacity-30 disabled:hover:bg-[#dcf5df] shrink-0">
     {children}
   </button>
 );
@@ -578,8 +579,8 @@ export const ExploreFeatures: React.FC = () => {
           style={{ left: 'clamp(0px, calc((100vw - 980px) / 2 - 24px), 62px)' }}>
           {active !== null && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 flex flex-col gap-2 pointer-events-auto">
-              <Round onClick={prev} label="Previous" disabled={active === 0}><Icons.ChevronDown size={16} className="rotate-180" /></Round>
-              <Round onClick={next} label="Next" disabled={active === n - 1}><Icons.ChevronDown size={16} /></Round>
+              <Round onClick={prev} label="Previous" disabled={active === 0}><Icons.ChevronDown size={16} weight="bold" className="rotate-180" /></Round>
+              <Round onClick={next} label="Next" disabled={active === n - 1}><Icons.ChevronDown size={16} weight="bold" /></Round>
             </div>
           )}
           <div className={`flex flex-col items-start gap-3 transition-[padding] duration-300 pointer-events-auto ${active !== null ? 'pl-14' : 'pl-0'}`}>
@@ -603,17 +604,17 @@ export const ExploreFeatures: React.FC = () => {
           <Stage active={active} cur={cur} setCur={setCur} mobile live={listIn} />
           {active !== null && (
             <>
-              <div className="absolute inset-x-3 bottom-3 z-10 flex items-end gap-2">
-                <Round onClick={prev} label="Previous" disabled={active === 0}><Icons.ChevronRight size={16} className="rotate-180" /></Round>
-                <Detail item={ITEMS[active]} cur={cur} setCur={setCur} className="flex-1 !p-5 !text-[14px]" />
-                <Round onClick={next} label="Next" disabled={active === n - 1}><Icons.ChevronRight size={16} /></Round>
+              <div className="absolute inset-x-2 sm:inset-x-3 bottom-3 z-10 flex items-end gap-1.5 sm:gap-2">
+                <Round onClick={prev} label="Previous" disabled={active === 0}><Icons.ChevronRight size={16} weight="bold" className="rotate-180" /></Round>
+                <Detail item={ITEMS[active]} cur={cur} setCur={setCur} className="flex-1 !p-4 sm:!p-5 !text-[13.5px] sm:!text-[14px]" />
+                <Round onClick={next} label="Next" disabled={active === n - 1}><Icons.ChevronRight size={16} weight="bold" /></Round>
               </div>
             </>
           )}
         </div>
-        <div className={`flex gap-2 overflow-x-auto overflow-y-hidden no-scrollbar px-6 -mx-6 pt-4 pb-1 transition-opacity ${active !== null ? 'opacity-40' : ''}`}>
+        <div className="flex gap-2 overflow-x-auto overflow-y-hidden no-scrollbar px-6 -mx-6 pt-4 pb-1">
           {ITEMS.map((it, i) => (
-            <button key={it.id} onClick={() => open(i)} className={`${pill} shrink-0 ${active === i ? '!bg-[#dcf5df] !text-black' : ''}`}>
+            <button key={it.id} onClick={() => open(i)} className={`${pill} shrink-0`} style={active === i ? { boxShadow: '0 0 0 1.5px rgba(220,245,223,0.7) inset' } : { opacity: 0.75 }}>
               <Plus />{it.title.replace(/\.$/, '')}
             </button>
           ))}
