@@ -34,47 +34,43 @@ const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: 
 };
 
 // Hero visual: the hand + phone PNG (Figma 120:5797), positioned as in the mockup.
-// It scrolls normally until it has fully come into view (the moment the rounded panel
-// below reaches the bottom of the window). From there it stays pinned in place while
-// that panel slides up and covers it, then it lets go once it's fully covered.
+// It scrolls normally until it's fully in view (the rounded panel below reaches the
+// bottom of the window), then stays put while that panel slides up over it.
+// Done with CSS position: sticky (no scroll listeners), so it never lags or wobbles.
+// The wrapper is twice the visual's height with a matching negative margin, which gives
+// the sticky layer room to stay pinned while the panel covers it without changing layout.
 // Placement at desktop size (1×): 1073 × 841, left edge 199.5px left of center,
 // 51px below the top of the visual block. Everything scales with --s on smaller screens.
 const HeroVisual: React.FC = () => {
-  const img = useRef<HTMLImageElement>(null);
-  const block = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const pin = useRef<HTMLDivElement>(null);
+  // The sticky offset only changes with the window size, so it's measured on resize, never on scroll.
+  // top = (window height − visual height): the visual is fully in view exactly when it reaches that
+  // spot. Capped at the visual's starting position so it never gets pushed down on tall screens.
   useEffect(() => {
-    const el = img.current, box = block.current;
-    if (!el || !box) return;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const cover = document.getElementById('kaya-cover');
-      if (!cover) return;
-      const sy = window.scrollY, vh = window.innerHeight;
-      const coverTop = cover.getBoundingClientRect().top + sy;
-      const blockTop = box.getBoundingClientRect().top + sy;
-      const pinStart = Math.max(0, coverTop - vh);   // visual fully on screen from here
-      const maxShift = Math.max(0, coverTop - blockTop); // fully covered by the panel
-      const shift = Math.min(Math.max(0, sy - pinStart), maxShift);
-      el.style.transform = `translate3d(0, ${shift.toFixed(1)}px, 0)`;
+    const set = () => {
+      const b = box.current, p = pin.current;
+      if (!b || !p) return;
+      const startTop = b.getBoundingClientRect().top + window.scrollY;
+      const h = p.offsetHeight;
+      p.style.top = `${Math.min(window.innerHeight - h, startTop)}px`;
     };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(raf); };
+    set();
+    window.addEventListener('resize', set);
+    return () => window.removeEventListener('resize', set);
   }, []);
   return (
-    <div ref={block} className="kaya-hero-visual relative w-full" aria-hidden="true">
+  <div ref={box} className="kaya-hero-visual relative w-full" aria-hidden="true">
+    <div ref={pin} className="kaya-hero-sticky sticky w-full">
       <img
-        ref={img}
         src="/hero-phone.webp"
         alt=""
         draggable={false}
-        className="absolute max-w-none select-none will-change-transform"
+        className="absolute max-w-none select-none"
         style={{ left: 'calc(50% - 199.5px * var(--s))', top: 'calc(51px * var(--s))', width: 'calc(1073px * var(--s))' }}
       />
     </div>
+  </div>
   );
 };
 
@@ -118,8 +114,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       <div aria-hidden={!scrolled}
         className="fixed inset-x-0 top-0 z-40 px-3 sm:px-6 pt-2 pointer-events-none transition-[transform,opacity] duration-500 ease-[cubic-bezier(.22,1,.36,1)]"
         style={{ transform: scrolled ? 'translateY(0)' : 'translateY(-110%)', opacity: scrolled ? 1 : 0 }}>
-        <div className="pointer-events-auto max-w-[980px] mx-auto h-[52px] rounded-[16px] pl-4 pr-2 flex items-center justify-between border border-white/10"
-          style={{ background: 'rgba(14, 21, 18, 0.96)' }}>
+        <div className="kaya-frost pointer-events-auto max-w-[980px] mx-auto h-[52px] rounded-[16px] pl-4 pr-2 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/logo-icon.svg" alt="" className="w-5 h-5" draggable={false} />
             <span className="text-[14px] font-bold uppercase tracking-[3px] text-white">Kaya</span>
@@ -133,10 +128,12 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
 
       {/* Hero: pulled up under the sticky header so the background reaches the top edge */}
       <section className="relative isolate -mt-16 pt-16">
-        {/* Animated dither (same settings as the app background), 700px tall like the mockup, fading out */}
+        {/* Animated dither, anchored to the bottom of the hero: black at the top, green at the
+            bottom. It runs 120px past the hero so the green shows around the rounded top
+            corners of the next section instead of being cut off. */}
         <div
-          className="absolute inset-x-0 top-0 h-[700px] -z-10 pointer-events-none"
-          style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 70%, transparent 100%)', maskImage: 'linear-gradient(to bottom, #000 70%, transparent 100%)' }}
+          className="absolute inset-x-0 -bottom-[120px] h-[820px] -z-10 pointer-events-none"
+          style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 30%)', maskImage: 'linear-gradient(to bottom, transparent 0%, #000 30%)' }}
         >
           <DitheringShader shape="gradient" type="16x16" colorBack="#070C0A" colorFront="#2A6E50" pxSize={1} levels={8} contrast={1.26} amplitude={2.5} speed={1} />
         </div>

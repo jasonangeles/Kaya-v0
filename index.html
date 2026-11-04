@@ -215,9 +215,20 @@
       html.light .kaya-field:focus, html.light .kaya-field:focus-within { border-color: rgba(0, 0, 0, 0.35); box-shadow: none; }
 
       /* Hero visual block: 744px tall at desktop (Figma), scaled by --s on smaller screens */
-      .kaya-hero-visual { --s: 0.6; height: calc(744px * var(--s)); }
+      .kaya-hero-visual { --s: 0.6; height: calc(744px * var(--s) * 2); margin-bottom: calc(744px * var(--s) * -1); }
+      /* Pins once the visible part of the visual (block minus the 51px offset) fits the window */
+      .kaya-hero-sticky { height: calc(744px * var(--s)); top: 0; } /* top is set in JS on resize */
       @media (min-width: 640px) { .kaya-hero-visual { --s: 0.8; } }
       @media (min-width: 1024px) { .kaya-hero-visual { --s: 1; } }
+
+      /* Frosted glass (same as the app's widgets): 10% gray, blur 12, white 10% → 0 gradient stroke */
+      .kaya-frost { position: relative; background: rgba(66, 66, 66, 0.10); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+      .kaya-frost::after {
+        content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+        background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0));
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+      }
 
       /* Landing headline gradient (Figma hero: white → mint → deep green, radial from top-left) */
       .kaya-grad-text {
