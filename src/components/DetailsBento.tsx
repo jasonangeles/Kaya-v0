@@ -35,8 +35,8 @@ const Tile: React.FC<{ title: string; body: string; className?: string; children
       {armed && (
         <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none transition-opacity duration-500 ease-out"
           style={{ opacity: shown ? 0.75 : 0 }}>
-          {/* Subtle: green only in the top half, fading to black before the middle */}
-          <DitheringShader shape="top" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} start={0.5} amplitude={1.5} speed={1.5} />
+          {/* Subtle: green from the top, fading to black over the bottom ~20% */}
+          <DitheringShader shape="top" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} start={0.8} amplitude={1.5} speed={1.5} />
         </div>
       )}
       {/* Strokes: the widget gradient edge (white 10% → 0) always, plus a mint edge on hover that
