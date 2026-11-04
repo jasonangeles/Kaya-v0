@@ -11,7 +11,7 @@ import React, { useEffect, useRef } from 'react';
  * Falls back to the static PNG when WebGL isn't available; renders one still frame
  * when the user prefers reduced motion; pauses when off-screen or the tab is hidden.
  */
-export type DitherShape = 'gradient' | 'wave' | 'radial';
+export type DitherShape = 'gradient' | 'wave' | 'radial' | 'swirl';
 export type DitherType = '2x2' | '4x4' | '8x8' | '16x16';
 
 interface Props {
@@ -95,6 +95,15 @@ void main() {
   // ordered dither of each RGB channel to N levels. (Contrast is what keeps the top
   // half pure black and the red channel at 0 — that's the look of bg-dither.png.)
   float v = clamp((top - u_start + wave) / (1.0 - u_start), 0.0, 1.0);
+  if (u_shape == 3) {
+    // Slow swirl: a soft round glow with spiral arms that rotate around the middle
+    vec2 d = (uv - 0.5) * vec2(u_res.x / u_res.y, 1.0);
+    float r = length(d);
+    float a = atan(d.y, d.x);
+    float arms = 0.5 + 0.5 * sin(3.0 * (a + t * 0.22) - r * 9.0 * u_freq);
+    // Gaussian falloff (no hard rim): the glow thins out gradually into sparse dots
+    v = clamp(exp(-(r * r) / (2.0 * 0.34 * 0.34)) * (0.72 + 0.28 * arms * u_amp), 0.0, 1.0);
+  } else
   if (u_shape == 2) {
     // Elliptical glow from the middle, breathing slowly
     vec2 d = (uv - 0.5) * vec2(1.0, 1.15);
@@ -169,7 +178,7 @@ export const DitheringShader: React.FC<Props> = ({
     gl.uniform1f(U('u_amp'), amplitude);
     gl.uniform1f(U('u_freq'), frequency);
     gl.uniform1f(U('u_glow'), glow);
-    gl.uniform1i(U('u_shape'), shape === 'wave' ? 1 : shape === 'radial' ? 2 : 0);
+    gl.uniform1i(U('u_shape'), shape === 'wave' ? 1 : shape === 'radial' ? 2 : shape === 'swirl' ? 3 : 0);
     gl.uniform1i(U('u_bayer'), parseInt(type, 10));
 
     let dpr = 1;

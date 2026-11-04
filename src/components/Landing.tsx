@@ -83,8 +83,13 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
   const [scrolled, setScrolled] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
   const openSignIn = onGetStarted ?? (() => setSignInOpen(true));
+  // The floating bar slides down from the top once the rounded second section
+  // (#kaya-cover) reaches the top of the window, and slides away again above it.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => {
+      const cover = document.getElementById('kaya-cover');
+      setScrolled(!!cover && cover.getBoundingClientRect().top <= 0);
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -98,9 +103,8 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
 
   return (
     <div className="min-h-[100dvh] bg-black text-white overflow-x-clip">
-      {/* Nav (Figma 120:5797): logo + KAYA wordmark, mint Sign in */}
-      <header className={`sticky top-0 z-30 transition-colors duration-300 ${scrolled ? 'bg-black/30' : 'bg-transparent'}`}
-        style={{ backdropFilter: scrolled ? 'blur(48px)' : 'none', WebkitBackdropFilter: scrolled ? 'blur(48px)' : 'none' }}>
+      {/* Nav (Figma 120:5797): logo + KAYA wordmark, mint Sign in. Sits on top of the hero, no blur. */}
+      <header className="relative z-30">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/logo-icon.svg" alt="" className="w-6 h-6" draggable={false} />
@@ -109,6 +113,23 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
           <button onClick={openSignIn} className="bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[14px] leading-5 font-semibold px-4 py-2 rounded-lg transition-colors">Sign in</button>
         </div>
       </header>
+
+      {/* Floating bar (Apple-style): drops in from the top once the second section reaches the top */}
+      <div aria-hidden={!scrolled}
+        className="fixed inset-x-0 top-0 z-40 px-3 sm:px-6 pt-2 pointer-events-none transition-[transform,opacity] duration-500 ease-[cubic-bezier(.22,1,.36,1)]"
+        style={{ transform: scrolled ? 'translateY(0)' : 'translateY(-110%)', opacity: scrolled ? 1 : 0 }}>
+        <div className="pointer-events-auto max-w-[980px] mx-auto h-[52px] rounded-[16px] pl-4 pr-2 flex items-center justify-between border border-white/10"
+          style={{ background: 'rgba(14, 21, 18, 0.96)' }}>
+          <div className="flex items-center gap-2.5">
+            <img src="/logo-icon.svg" alt="" className="w-5 h-5" draggable={false} />
+            <span className="text-[14px] font-bold uppercase tracking-[3px] text-white">Kaya</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={openSignIn} tabIndex={scrolled ? 0 : -1} className="h-8 px-3.5 rounded-full text-[12px] font-medium text-[#dcf5df] border border-[#dcf5df]/30 hover:border-[#dcf5df]/60 transition-colors">Sign in</button>
+            <button onClick={openSignIn} tabIndex={scrolled ? 0 : -1} className="h-8 px-3.5 rounded-full text-[12px] font-semibold text-black bg-[#dcf5df] hover:bg-[#c6e8cb] transition-colors">Start for free</button>
+          </div>
+        </div>
+      </div>
 
       {/* Hero: pulled up under the sticky header so the background reaches the top edge */}
       <section className="relative isolate -mt-16 pt-16">

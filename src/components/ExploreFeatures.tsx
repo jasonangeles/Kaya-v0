@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icons } from './icons';
 import { NetWorth, Liquidity, Account } from './OrbitWidgets';
+import { DitheringShader } from './ui/dithering-shader';
 
 /**
  * "Take a closer look" explorer (Apple iPhone page pattern).
@@ -470,7 +471,6 @@ const Overview: React.FC<{ mobile?: boolean }> = ({ mobile }) => {
   if (!failed) return <img src={`/explore/overview-${mobile ? 'mobile' : 'desktop'}.png`} alt="" onError={() => setFailed(true)} className="w-full h-full object-cover" draggable={false} />;
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 50% at 55% 50%, rgba(57,157,116,0.22), transparent 70%)' }} />
       <div className={`relative w-[360px] h-[300px] ${mobile ? 'scale-[0.85]' : ''}`}>
         <div className="absolute left-0 top-0 scale-90 origin-top-left"><NetWorth /></div>
         <div className="absolute right-0 top-24 scale-90 origin-top-right"><Liquidity /></div>
@@ -486,10 +486,16 @@ const Stage: React.FC<{ active: number | null; cur: Swatch; setCur: (c: Swatch) 
   const layer = (k: string) => ({ opacity: k === on ? 1 : 0, transform: k === on ? 'scale(1)' : 'scale(1.03)' });
   return (
     <div className={`absolute inset-0 ${active !== null ? 'cursor-pointer' : ''}`} onClick={() => { if (active !== null) onClose(); }}>
+      {/* One shared swirling dither glow behind every visual. It lives outside the fading
+          layers, so it never brightens or dims while the visuals crossfade. */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ WebkitMaskImage: 'radial-gradient(farthest-side, #000 35%, transparent 100%)', maskImage: 'radial-gradient(farthest-side, #000 35%, transparent 100%)' }}>
+        {/* contrast 1 (not 1.26) so the outer glow fades into scattered dots instead of snapping to black */}
+        <DitheringShader shape="swirl" type="16x16" colorBack="#000000" colorFront="#1A4433" pxSize={1} levels={8} contrast={1} amplitude={1} speed={0.5} />
+      </div>
       <div className="absolute inset-0 transition-[opacity,transform] duration-700 pointer-events-none" style={layer('overview')}><Overview mobile={mobile} /></div>
       {ITEMS.map(it => (
         <div key={it.id} className="absolute inset-0 flex justify-center transition-[opacity,transform] duration-700 ease-[cubic-bezier(.2,.7,.2,1)] pointer-events-none" style={layer(it.id)}>
-          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 40% 45% at 50% 30%, rgba(57,157,116,0.18), transparent 70%)' }} />
           <div className={`relative ${mobile ? 'mt-3 scale-[0.82] origin-top' : 'mt-8'}`}>
             <PhoneScene id={it.id} play={on === it.id} cur={cur} setCur={setCur} />
           </div>
