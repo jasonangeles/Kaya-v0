@@ -214,6 +214,27 @@
       html.light .kaya-field { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.10); }
       html.light .kaya-field:focus, html.light .kaya-field:focus-within { border-color: rgba(0, 0, 0, 0.35); box-shadow: none; }
 
+      /* Landing headline gradient (Figma hero: white → mint → deep green, radial from top-left) */
+      .kaya-grad-text {
+        background: radial-gradient(232% 220% at -30% -59%, #ffffff 44%, #ebffda 55%, #003a30 100%);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        padding-bottom: 0.08em; /* keeps descenders/commas from being clipped with tight leading */
+      }
+      /* Landing eyebrow chip: frosted pill with the widget gradient stroke */
+      .kaya-chip {
+        position: relative; display: inline-flex; align-items: center; gap: 6px;
+        padding: 10px 14px; border-radius: 999px;
+        font-size: 11px; font-weight: 500; color: #dcf5df;
+        background: rgba(66, 66, 66, 0.10);
+        -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      }
+      .kaya-chip::after {
+        content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+        background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0));
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+      }
+
       /* Primary button: same colors as the active toggles (muted fill, black text) */
       .kaya-btn {
         background: rgb(var(--muted)); color: rgb(var(--paper));

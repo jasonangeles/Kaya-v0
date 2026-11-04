@@ -224,10 +224,10 @@ export const ThemeShowcase: React.FC = () => {
   const Circle: React.FC<{ th: Theme }> = ({ th }) => {
     const on = sel === th.key;
     return (
-      <button onClick={() => setSel(th.key as typeof sel)} aria-label={th.name} aria-pressed={on} className="flex flex-col items-center gap-2 group">
-        <span className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full transition-transform group-hover:scale-105"
-          style={{ background: th.swatch, boxShadow: `0 0 0 1px rgba(255,255,255,0.12) inset${on ? ', 0 0 0 3px #0b1712, 0 0 0 5px #fff' : ''}` }} />
-        <span className={`text-[12px] font-medium transition-colors ${on ? 'text-white' : 'text-zinc-500'}`}>{th.name}</span>
+      <button onClick={() => setSel(th.key as typeof sel)} aria-label={th.name} aria-pressed={on}
+        className="relative w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-full flex items-center justify-center transition-transform hover:scale-105"
+        style={{ background: th.swatch, boxShadow: `0 0 0 1px rgba(255,255,255,0.12) inset${on ? ', 0 0 0 3px #0b1712, 0 0 0 5px #fff' : ''}` }}>
+        <span className="text-[11px] font-semibold" style={{ color: th.light ? '#18181b' : '#ffffff' }}>{th.name}</span>
       </button>
     );
   };
@@ -251,7 +251,6 @@ export const ThemeShowcase: React.FC = () => {
           <input ref={picker} type="color" value={hex} onChange={e => { setHex(e.target.value); setSel('custom'); }} className="sr-only" aria-label="Pick your own color" />
         </div>}
       </div>
-      <p key={t.key + hex} className="text-center text-sm text-zinc-400 mt-6 animate-[kayaFadeUp_.3s_ease-out]">{t.caption}</p>
 
       {/* Phones */}
       <div className="mt-4 pt-8 flex gap-4 sm:gap-6 justify-start lg:justify-center overflow-x-auto no-scrollbar snap-x snap-mandatory -mx-6 px-6 pb-2"

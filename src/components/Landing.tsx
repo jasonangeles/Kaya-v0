@@ -182,17 +182,16 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
         </div>
         <div className="max-w-6xl mx-auto px-6 pt-20 pb-24 relative">
           <Reveal className="text-center max-w-2xl mx-auto">
-            <span className="inline-block text-[11px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-6">Private net worth tracker</span>
-            <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight leading-[1.05]">
-              Your net worth,<br /><span className="text-zinc-500">in one number.</span>
+            <h1 className="kaya-grad-text text-[52px] sm:text-[76px] lg:text-[92px] font-semibold leading-[0.83] tracking-[-0.038em]">
+              Your net worth,<br />in one number.
             </h1>
-            <p className="text-lg text-zinc-400 mt-6 leading-relaxed">
+            <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-6">
               Pesos in BPI, dollars in a TFSA, a bit of Bitcoin. Kaya adds it all up in the currency you choose. You enter the balances, so there are no bank logins.
             </p>
             <div className="flex items-center justify-center gap-3 mt-8">
-              <button onClick={openSignIn} className="bg-white text-black font-semibold px-6 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Start for free</button>
+              <button onClick={openSignIn} className="bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[16px] font-semibold px-6 py-3.5 rounded-xl transition-colors">Start for free</button>
             </div>
-            <p className="text-xs text-zinc-600 mt-4">Free to start. No ads. Your data stays yours.</p>
+            <p className="text-[12px] leading-4 mt-4" style={{ color: '#6e8777' }}>No bank logins · No ads · Your data stays yours</p>
           </Reveal>
 
           <Reveal delay={150} className="flex justify-center mt-12">
@@ -212,7 +211,6 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       {/* Orbit: every account around one total */}
       <section className="max-w-6xl mx-auto px-6 pt-16 pb-8 overflow-hidden">
         <Reveal className="text-center max-w-2xl mx-auto">
-          <span className="inline-block text-[11px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-6">All your accounts</span>
           <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight leading-[1.08]">
             Different accounts.<br /><span className="text-zinc-500">One clear total.</span>
           </h2>
@@ -233,9 +231,8 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
               <DitheringShader shape="radial" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} speed={0.4} />
             </div>
             <div className="text-center max-w-2xl mx-auto mb-10">
-              <span className="inline-block text-[11px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-6">Light and dark</span>
-              <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight leading-[1.08]">Easy on the eyes.</h2>
-              <p className="text-zinc-300/80 mt-4 text-base sm:text-lg">Pick dark for late-night check-ins or light for bright days. Every screen follows along.</p>
+              <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">Easy on the eyes.</h2>
+              <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">Pick dark for late-night check-ins or light for bright days.</p>
             </div>
             <ThemeShowcase />
           </div>
@@ -245,8 +242,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       {/* The little things: bento grid of smaller features */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <Reveal className="max-w-2xl mb-10">
-          <span className="text-xs uppercase tracking-widest text-emerald-400">The details</span>
-          <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight mt-3 leading-[1.08]">The little things.</h2>
+          <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight leading-[1.08]">The little things.</h2>
           <p className="text-zinc-400 mt-4 text-base sm:text-lg">What you start to notice after a few months with Kaya.</p>
         </Reveal>
         <Reveal delay={120}><DetailsBento /></Reveal>
