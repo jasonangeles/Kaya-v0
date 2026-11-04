@@ -2405,7 +2405,7 @@ export default function App() {
             value={nameDraft}
             onChange={(e) => setNameDraft(e.target.value)}
             maxLength={24}
-            placeholder="e.g. Jason"
+            placeholder="e.g. Jazz"
             autoComplete="given-name"
             className="kaya-field transition-colors"
           />

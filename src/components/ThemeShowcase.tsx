@@ -110,7 +110,7 @@ const HomeScreen: React.FC<{ t: Theme }> = ({ t }) => {
   return (
     <>
       <Status t={t} />
-      <div className="px-4 pt-6"><p className={`text-[16px] font-semibold ${tr}`} style={{ color: t.ink }}>Hi, Jason!</p></div>
+      <div className="px-4 pt-6"><p className={`text-[16px] font-semibold ${tr}`} style={{ color: t.ink }}>Hi, Jazz!</p></div>
       <Card t={t} className="mx-3 mt-4 p-3.5">
         <Lbl t={t}>Net worth</Lbl>
         <div className="flex items-baseline gap-1 mt-1">

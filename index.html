@@ -214,6 +214,11 @@
       html.light .kaya-field { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.10); }
       html.light .kaya-field:focus, html.light .kaya-field:focus-within { border-color: rgba(0, 0, 0, 0.35); box-shadow: none; }
 
+      /* Hero visual block: 744px tall at desktop (Figma), scaled by --s on smaller screens */
+      .kaya-hero-visual { --s: 0.6; height: calc(744px * var(--s)); }
+      @media (min-width: 640px) { .kaya-hero-visual { --s: 0.8; } }
+      @media (min-width: 1024px) { .kaya-hero-visual { --s: 1; } }
+
       /* Landing headline gradient (Figma hero: white → mint → deep green, radial from top-left) */
       .kaya-grad-text {
         background: radial-gradient(232% 220% at -30% -59%, #ffffff 44%, #ebffda 55%, #003a30 100%);

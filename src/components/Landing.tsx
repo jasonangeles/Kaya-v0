@@ -33,110 +33,38 @@ const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: 
   );
 };
 
-// Larger, realistic iPhone-style hero device: thin frame, bottom fade-to-black,
-// gentle float + mouse-follow 3D tilt.
-const HeroPhone: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const onMove = (e: React.MouseEvent) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    setTilt({ x: -py * 9, y: px * 11 });
-  };
-  return (
-    <div className="relative mx-auto w-[282px] sm:w-[316px]" onMouseMove={onMove} onMouseLeave={() => setTilt({ x: 0, y: 0 })}>
-      {/* Green ambience, kept high behind the chart so it never lights the bottom */}
-      <div className="absolute inset-x-0 top-0 h-[42%] blur-3xl" style={{ background: 'radial-gradient(ellipse 64% 92% at 50% 20%, rgba(16,185,129,0.20), transparent 72%)' }} />
-      <div style={{ transform: `perspective(1100px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`, transition: 'transform .18s ease-out' }}>
-        <div
-          className="relative rounded-[3rem] p-[6px] bg-gradient-to-b from-zinc-700 via-zinc-900 to-black animate-[floatY_7s_ease-in-out_infinite]"
-          style={{ boxShadow: '0 38px 80px -38px rgba(0,0,0,0.95)' }}
-        >
-          <div className="rounded-[2.8rem] bg-black p-[1px]">
-            <div className="relative rounded-[2.75rem] overflow-hidden bg-black">
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 w-[32%] h-[26px] bg-black rounded-full ring-1 ring-white/5" />
-              <div className="h-12" />
-              {children}
-              <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 38%)' }} />
-            </div>
-          </div>
-          <span className="absolute left-[-1px] top-[120px] w-[2px] h-7 rounded-l bg-zinc-700" />
-          <span className="absolute left-[-1px] top-[165px] w-[2px] h-12 rounded-l bg-zinc-700" />
-          <span className="absolute left-[-1px] top-[225px] w-[2px] h-12 rounded-l bg-zinc-700" />
-          <span className="absolute right-[-1px] top-[185px] w-[2px] h-16 rounded-r bg-zinc-700" />
-        </div>
-      </div>
-      {/* Fixed fade overlay: darkens the bottom without clipping the moving device */}
-      <div className="pointer-events-none absolute inset-x-0 -bottom-8 h-[54%] z-20" style={{ background: 'linear-gradient(to bottom, transparent 0%, #000 70%)' }} />
-    </div>
-  );
-};
-
-// Count up from 0 to target with an ease-out curve (only when `run` is true).
-const useCountUp = (target: number, run: boolean, dur = 1300) => {
-  const [v, setV] = useState(run ? 0 : target);
+// Hero visual: the hand + phone PNG (Figma 120:5797), positioned as in the mockup and
+// drifting down a little slower than the page once you start scrolling (semi-parallax),
+// so the rounded second section slides up over it.
+// Placement at desktop size (1×): 1073 × 841, left edge 199.5px left of center,
+// 51px below the top of the visual block. Everything scales with --s on smaller screens.
+const HeroVisual: React.FC = () => {
+  const img = useRef<HTMLImageElement>(null);
   useEffect(() => {
-    if (!run) { setV(target); return; }
+    const el = img.current;
+    if (!el || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     let raf = 0;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / dur);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setV(Math.round(target * eased));
-      if (t < 1) raf = requestAnimationFrame(tick);
+    const update = () => {
+      raf = 0;
+      const y = Math.max(0, window.scrollY - 60);          // starts after a small scroll
+      el.style.transform = `translate3d(0, ${Math.min(y * 0.32, 420).toFixed(1)}px, 0)`;
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [run, target]);
-  return v;
-};
-
-// --- Recreated app screens (dummy data) ----------------------------------
-// `animate` triggers the hero's one-time count-up + left-to-right line draw.
-const OverviewScreen: React.FC<{ animate?: boolean }> = ({ animate = false }) => {
-  const [drawn, setDrawn] = useState(!animate);
-  const value = useCountUp(1847200, animate);
-  useEffect(() => {
-    if (!animate) return;
-    const id = requestAnimationFrame(() => setDrawn(true));
-    return () => cancelAnimationFrame(id);
-  }, [animate]);
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
+  }, []);
   return (
-  <div className="px-3 py-4 space-y-3">
-    <div className="flex items-center gap-1.5">
-      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-      <span className="text-[10px] font-medium tracking-widest uppercase text-white">Kaya</span>
+    <div className="kaya-hero-visual relative w-full" aria-hidden="true">
+      <img
+        ref={img}
+        src="/hero-phone.webp"
+        alt=""
+        draggable={false}
+        className="absolute max-w-none select-none will-change-transform"
+        style={{ left: 'calc(50% - 199.5px * var(--s))', top: 'calc(51px * var(--s))', width: 'calc(1073px * var(--s))' }}
+      />
     </div>
-    <div className="rounded-2xl bg-[#141414] border border-white/5 p-3.5">
-      <p className="text-[9px] text-zinc-500 uppercase tracking-widest mb-1">Net Worth</p>
-      <div className="flex items-baseline gap-1 mb-1">
-        <span className="text-base text-zinc-500">₱</span>
-        <span className="text-2xl font-semibold text-white tracking-tight tabular-nums">{value.toLocaleString('en-US')}</span>
-      </div>
-      <div className="flex items-center gap-1.5 mb-2">
-        <span className="text-emerald-400 text-[11px] font-medium">▲ 4.2%</span>
-        <span className="text-zinc-600 text-[10px]">past month</span>
-      </div>
-      <svg viewBox="0 0 200 56" className="w-full h-11" preserveAspectRatio="none">
-        <defs><linearGradient id="lgo" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity="0.35" /><stop offset="100%" stopColor="#10b981" stopOpacity="0" /></linearGradient></defs>
-        <path d="M0,44 C20,40 34,42 52,36 S96,34 120,26 S168,14 200,10 L200,56 L0,56 Z" fill="url(#lgo)" style={{ opacity: drawn ? 1 : 0, transition: 'opacity .9s ease .5s' }} />
-        <path d="M0,44 C20,40 34,42 52,36 S96,34 120,26 S168,14 200,10" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" pathLength={1} strokeDasharray={1} style={{ strokeDashoffset: drawn ? 0 : 1, transition: 'stroke-dashoffset 1.4s cubic-bezier(.4,.1,.2,1)' }} />
-      </svg>
-      <div className="flex justify-between mt-2">
-        {['1D', '1W', '1M', '3M', '1Y', 'ALL'].map((r, i) => (
-          <span key={r} className={`text-[8px] px-1.5 py-0.5 rounded-full ${i === 5 ? 'bg-zinc-800 text-white' : 'text-zinc-600'}`}>{r}</span>
-        ))}
-      </div>
-    </div>
-    <div className="rounded-2xl bg-[#141414] border border-white/5 overflow-hidden">
-      {[{ n: 'Emergency Fund', s: 'BPI', v: '₱220,000' }, { n: 'Roth IRA', s: 'Fidelity', v: '$16,800' }, { n: 'Bitcoin', s: 'Ledger', v: '₿0.21' }].map((a, i) => (
-        <div key={i} className={`flex items-center justify-between px-3 py-2.5 ${i < 2 ? 'border-b border-white/5' : ''}`}>
-          <div className="min-w-0"><p className="text-[11px] font-medium text-white truncate">{a.n}</p><p className="text-[9px] text-zinc-500">{a.s}</p></div>
-          <span className="text-[11px] font-medium text-zinc-200">{a.v}</span>
-        </div>
-      ))}
-    </div>
-  </div>
   );
 };
 
@@ -160,27 +88,28 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
 
   return (
     <div className="min-h-[100dvh] bg-black text-white overflow-x-clip">
-      {/* Nav */}
-      <header className={`sticky top-0 z-30 transition-colors duration-300 ${scrolled ? 'backdrop-blur-xl bg-black/40 supports-[backdrop-filter]:bg-black/30' : 'bg-transparent'}`}>
+      {/* Nav (Figma 120:5797): logo + KAYA wordmark, mint Sign in */}
+      <header className={`sticky top-0 z-30 transition-colors duration-300 ${scrolled ? 'bg-black/30' : 'bg-transparent'}`}
+        style={{ backdropFilter: scrolled ? 'blur(48px)' : 'none', WebkitBackdropFilter: scrolled ? 'blur(48px)' : 'none' }}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-medium tracking-wide uppercase">Kaya</span>
+          <div className="flex items-center gap-3">
+            <img src="/logo-icon.svg" alt="" className="w-6 h-6" draggable={false} />
+            <span className="text-[16px] font-bold uppercase tracking-[4px] text-white">Kaya</span>
           </div>
-          <button onClick={openSignIn} className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">Sign in</button>
+          <button onClick={openSignIn} className="bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[14px] leading-5 font-semibold px-4 py-2 rounded-lg transition-colors">Sign in</button>
         </div>
       </header>
 
       {/* Hero: pulled up under the sticky header so the background reaches the top edge */}
       <section className="relative isolate -mt-16 pt-16">
-        {/* Animated dither (same settings as the app background), fading into the page at the bottom */}
+        {/* Animated dither (same settings as the app background), 700px tall like the mockup, fading out */}
         <div
-          className="absolute inset-0 -z-10 pointer-events-none"
-          style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 78%, transparent 100%)', maskImage: 'linear-gradient(to bottom, #000 78%, transparent 100%)' }}
+          className="absolute inset-x-0 top-0 h-[700px] -z-10 pointer-events-none"
+          style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 70%, transparent 100%)', maskImage: 'linear-gradient(to bottom, #000 70%, transparent 100%)' }}
         >
           <DitheringShader shape="gradient" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} speed={0.6} />
         </div>
-        <div className="max-w-6xl mx-auto px-6 pt-20 pb-24 relative">
+        <div className="max-w-6xl mx-auto px-6 pt-20 relative">
           <Reveal className="text-center max-w-2xl mx-auto">
             <h1 className="kaya-grad-text text-[52px] sm:text-[76px] lg:text-[92px] font-semibold leading-[0.83] tracking-[-0.038em]">
               Your net worth,<br />in one number.
@@ -193,20 +122,21 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
             </div>
             <p className="text-[12px] leading-4 mt-4" style={{ color: '#6e8777' }}>No bank logins · No ads · Your data stays yours</p>
           </Reveal>
-
-          <Reveal delay={150} className="flex justify-center mt-12">
-            <HeroPhone><OverviewScreen animate /></HeroPhone>
-          </Reveal>
         </div>
+        <Reveal delay={150}>
+          <HeroVisual />
+        </Reveal>
       </section>
 
-      {/* Closer look: interactive feature explorer (replaces the 3 USP cards) */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
+      {/* Closer look: black panel with rounded top corners that slides up over the hero */}
+      <div className="relative z-10 bg-black rounded-t-[40px] sm:rounded-t-[80px]">
+      <section className="max-w-6xl mx-auto px-6 pt-16 sm:pt-[104px] pb-16">
         <Reveal className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
           <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">Take a closer look.</h2>
         </Reveal>
         <Reveal delay={120}><ExploreFeatures /></Reveal>
       </section>
+      </div>
 
       {/* Orbit: every account around one total */}
       <section className="max-w-6xl mx-auto px-6 pt-16 pb-8 overflow-hidden">

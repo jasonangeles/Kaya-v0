@@ -153,7 +153,7 @@ const CurrencyJourney: React.FC<{ play: boolean; cur: Swatch; onPick: (c: Swatch
     <>
       <StatusBar />
       <div className="px-4 pt-6 flex items-center justify-between">
-        <p className="text-[16px] font-semibold text-white">Hi, Jason!</p>
+        <p className="text-[16px] font-semibold text-white">Hi, Jazz!</p>
         <span className="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center" style={{ color: MUTED }}><Icons.User size={15} /></span>
       </div>
       <Glass className="mx-3 mt-4 p-3.5 relative">
@@ -414,7 +414,7 @@ const PrivateJourney: React.FC<{ play: boolean; screen: React.RefObject<HTMLDivE
       {/* Home, after unlock */}
       <div className="absolute inset-x-0 top-0 transition-all duration-700" style={{ opacity: unlocked ? 1 : 0, filter: unlocked ? 'none' : 'blur(8px)' }}>
         <div className="h-[34px]" />
-        <div className="px-4 pt-6"><p className="text-[16px] font-semibold text-white">Hi, Jason!</p></div>
+        <div className="px-4 pt-6"><p className="text-[16px] font-semibold text-white">Hi, Jazz!</p></div>
         <Glass className="mx-3 mt-4 p-3.5">
           <Lbl>Net worth</Lbl>
           <div className="flex items-baseline gap-1 mt-1"><span className="text-[18px]" style={{ color: FAINT }}>₱</span><span className="text-[26px] font-medium tracking-tight text-white">1,847,200</span></div>
