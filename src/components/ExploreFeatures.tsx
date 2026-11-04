@@ -523,7 +523,7 @@ const Swatches: React.FC<{ cur: Swatch; setCur: (s: Swatch) => void }> = ({ cur,
 );
 
 const Detail: React.FC<{ item: Item; cur: Swatch; setCur: (s: Swatch) => void; className?: string }> = ({ item, cur, setCur, className = '' }) => (
-  <div onClick={e => e.stopPropagation()} className={`kaya-frost min-w-0 rounded-[28px] p-6 text-[15px] leading-[1.45] text-white/70 animate-[kayaFadeUp_0.35s_ease-out] ${className}`}
+  <div onClick={e => e.stopPropagation()} className={`kaya-frost min-w-0 rounded-[28px] p-6 text-[15px] leading-[1.45] text-[#6e8777] animate-[kayaFadeUp_0.35s_ease-out] ${className}`}
     style={{ background: 'rgba(28, 29, 28, 0.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
     <span className="font-semibold text-white">{item.title}</span> {item.body}
     {item.currency && <Swatches cur={cur} setCur={setCur} />}
