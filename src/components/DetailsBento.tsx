@@ -30,7 +30,7 @@ const Tile: React.FC<{ title: string; body: string; className?: string; children
   }, [hover]);
   return (
     <div onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)}
-      className={`relative isolate overflow-hidden rounded-[28px] border border-white/[0.07] p-6 flex flex-col ${className}`}
+      className={`relative isolate overflow-hidden rounded-[28px] p-6 flex flex-col ${className}`}
       style={{ background: 'linear-gradient(160deg, rgba(220,245,223,0.05) 0%, rgba(117,126,118,0.08) 25%, rgba(66,66,66,0.10) 50%, rgba(57,157,116,0.06) 100%)' }}>
       {armed && (
         <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none transition-opacity duration-500 ease-out"
@@ -39,6 +39,11 @@ const Tile: React.FC<{ title: string; body: string; className?: string; children
           <DitheringShader shape="top" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} start={0.5} amplitude={1.5} speed={1.5} />
         </div>
       )}
+      {/* Strokes: the widget gradient edge (white 10% → 0) always, plus a mint edge on hover that
+          fades from the top so it isn't a solid outline all the way round */}
+      <span aria-hidden className="kaya-stroke" style={{ ['--stroke' as any]: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 100%)' }} />
+      <span aria-hidden className="kaya-stroke transition-opacity duration-500"
+        style={{ ['--stroke' as any]: 'linear-gradient(180deg, rgba(220,245,223,0.9) 0%, rgba(220,245,223,0.35) 35%, rgba(220,245,223,0) 75%)', opacity: hover ? 1 : 0 }} />
       <div className="flex-1 flex items-center justify-center min-h-[120px] mb-5">{children}</div>
       <h3 className="text-[17px] font-medium text-white">{title}</h3>
       <p className="text-[14px] mt-1.5 leading-relaxed" style={{ color: FAINT }}>{body}</p>

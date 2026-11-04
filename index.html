@@ -230,6 +230,14 @@
         mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
       }
 
+      /* Gradient border layer: give it --stroke (a gradient); sits on its rounded parent */
+      .kaya-stroke {
+        position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: 1;
+        background: var(--stroke);
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+      }
+
       /* Landing headline gradient (Figma hero: white → mint → deep green, radial from top-left) */
       .kaya-grad-text {
         background: radial-gradient(232% 220% at -30% -59%, #ffffff 44%, #ebffda 55%, #003a30 100%);
