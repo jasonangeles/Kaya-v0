@@ -236,7 +236,26 @@ export const ThemeShowcase: React.FC = () => {
     <div>
       {/* Picker */}
       <div className="flex items-start justify-center gap-4 sm:gap-5 flex-wrap">
-        <Circle th={DARK} /><Circle th={LIGHT} />
+        {/* Segmented Dark / Light toggle (Figma 120:5717 / 120:5789); the active pill slides */}
+        <div role="radiogroup" aria-label="Theme" className="relative inline-flex p-2 rounded-[20px] border border-white/10" style={{ background: 'rgba(255,255,255,0.02)' }}>
+          <span aria-hidden className="absolute top-2 bottom-2 left-2 w-[88px] rounded-[12px] overflow-hidden transition-transform duration-[450ms] ease-[cubic-bezier(.22,1,.36,1)]"
+            style={{ transform: sel === 'light' ? 'translateX(88px)' : 'none', boxShadow: '0 0 0 2px #dcf5df inset' }}>
+            {/* dark knob: black with a soft green glow; light knob: white */}
+            <span className="absolute inset-0 transition-opacity duration-300" style={{ background: 'radial-gradient(70% 90% at 50% 100%, rgba(16,185,129,0.25), rgba(16,185,129,0) 70%), #000', opacity: sel === 'light' ? 0 : 1 }} />
+            <span className="absolute inset-0 transition-opacity duration-300 bg-white" style={{ opacity: sel === 'light' ? 1 : 0 }} />
+            <span className="absolute inset-0 rounded-[12px]" style={{ boxShadow: '0 0 0 2px #dcf5df inset' }} />
+          </span>
+          {[DARK, LIGHT].map(th => {
+            const on = sel === th.key;
+            return (
+              <button key={th.key} role="radio" aria-checked={on} onClick={() => setSel(th.key as typeof sel)}
+                className="relative z-10 w-[88px] h-[52px] rounded-[12px] text-[16px] font-semibold transition-[color,opacity] duration-300"
+                style={{ color: on && th.light ? '#000' : '#dcf5df', opacity: on ? 1 : 0.45 }}>
+                {th.name}
+              </button>
+            );
+          })}
+        </div>
         {SHOW_COLOR_THEMES && <Circle th={ORANGE} />}
         {SHOW_COLOR_THEMES && <div className="flex flex-col items-center gap-2">
           <button

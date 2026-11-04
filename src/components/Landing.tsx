@@ -202,8 +202,8 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
 
       {/* Closer look: interactive feature explorer (replaces the 3 USP cards) */}
       <section className="max-w-6xl mx-auto px-6 py-16">
-        <Reveal>
-          <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight mb-8 sm:mb-10">Take a closer look.</h2>
+        <Reveal className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+          <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">Take a closer look.</h2>
         </Reveal>
         <Reveal delay={120}><ExploreFeatures /></Reveal>
       </section>
@@ -211,26 +211,22 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       {/* Orbit: every account around one total */}
       <section className="max-w-6xl mx-auto px-6 pt-16 pb-8 overflow-hidden">
         <Reveal className="text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight leading-[1.08]">
-            Different accounts.<br /><span className="text-zinc-500">One clear total.</span>
-          </h2>
+          <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">Different accounts.<br />One clear total.</h2>
+          <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">Banks, wallets, stocks and crypto in any currency. Kaya puts them on one screen so you stop switching apps.</p>
         </Reveal>
         <Reveal delay={120} className="mt-4 sm:mt-6">
           <OrbitWidgets />
-        </Reveal>
-        <Reveal className="text-center">
-          <p className="text-zinc-400 text-base sm:text-lg max-w-xl mx-auto">Banks, wallets, stocks and crypto in any currency. Kaya puts them on one screen so you stop switching apps.</p>
         </Reveal>
       </section>
 
       {/* Themes: light and dark, in its own dithered container */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <Reveal>
-          <div className="relative isolate overflow-hidden rounded-[32px] sm:rounded-[40px] px-5 pt-20 pb-12 sm:px-[72px] sm:pt-[128px] sm:pb-[88px]">
+          <div className="relative isolate overflow-hidden rounded-[32px] sm:rounded-[40px] px-5 pt-20 pb-12 sm:px-[72px] sm:pt-[72px] sm:pb-[56px]">
             <div className="absolute inset-0 -z-10">
               <DitheringShader shape="radial" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} speed={0.4} />
             </div>
-            <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+            <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
               <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">Easy on the eyes.</h2>
               <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">Pick dark for late-night check-ins or light for bright days.</p>
             </div>
@@ -241,18 +237,18 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
 
       {/* The little things: bento grid of smaller features */}
       <section className="max-w-6xl mx-auto px-6 py-20">
-        <Reveal className="max-w-2xl mb-10">
-          <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight leading-[1.08]">The little things.</h2>
-          <p className="text-zinc-400 mt-4 text-base sm:text-lg">What you start to notice after a few months with Kaya.</p>
+        <Reveal className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+          <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">The little things.</h2>
+          <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">What you start to notice after a few months with Kaya.</p>
         </Reveal>
         <Reveal delay={120}><DetailsBento /></Reveal>
       </section>
 
       {/* How it works */}
       <section className="max-w-6xl mx-auto px-6 py-20">
-        <Reveal className="text-center max-w-xl mx-auto mb-12">
-          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">Set up in a few minutes</h2>
-          <p className="text-zinc-400 mt-3 text-lg">Nothing to link and no spreadsheet to build.</p>
+        <Reveal className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+          <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">Set up in a few minutes.</h2>
+          <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">Nothing to link and no spreadsheet to build.</p>
         </Reveal>
         <div className="grid sm:grid-cols-3 gap-6 items-stretch">
           {steps.map((s, i) => (
@@ -271,8 +267,8 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       <section className="max-w-6xl mx-auto px-6 py-20">
         <Reveal>
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 p-12 text-center" style={{ background: 'radial-gradient(ellipse 70% 120% at 50% 0%, rgba(16,185,129,0.15), transparent 70%)' }}>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">See your whole net worth today</h2>
-            <p className="text-zinc-400 mt-3 text-lg">Free to use. Nothing links to your bank.</p>
+            <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">See your whole<br />net worth today.</h2>
+            <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">Free to use. Nothing links to your bank.</p>
             <button onClick={openSignIn} className="mt-7 bg-white text-black font-semibold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Start for free</button>
           </div>
         </Reveal>
