@@ -193,22 +193,34 @@ const Dividend = () => (
   </Card>
 );
 
-// Order around the loop. Big and small cards alternate so the ring feels balanced.
-// The first MOBILE_COUNT cards are the ones shown on phones.
-const WIDGETS: React.ReactNode[] = [
-  <NetWorth key="nw" />,
-  <Account key="bpi" inst="BPI" name="Emergency Fund" amount="₱220,000" w={250} />,
-  <Liquidity key="liq" />,
-  <Account key="ws" inst="Wealthsimple" name="TFSA" amount="C$16,800" w={240} />,
-  <Income key="inc" />,
-  <Rate key="fx" />,
-  <Account key="ledger" inst="Ledger" name="Bitcoin" amount="₿0.21" w={210} />,
-  <Allocation key="alloc" />,
-  <Streak key="streak" />,
-  <Dividend key="div" />,
-  <Account key="gcash" inst="GCash" name="GCash Wallet" amount="₱12,850" w={240} />,
+// Small floating account icon (logo only), for size variation between the cards.
+const IconChip: React.FC<{ inst: string; size: number }> = ({ inst, size }) => (
+  <div className="rounded-[14px] p-[3px]" style={{ background: 'rgba(66,66,66,0.18)', boxShadow: '0 0 0 1px rgba(255,255,255,0.08) inset, 0 10px 30px -12px rgba(0,0,0,0.8)' }}>
+    <InstitutionLogo name={inst} size={size} radius={Math.round(size * 0.3)} />
+  </div>
+);
+
+// Order on the globe. Cards and small icons alternate so the spread feels balanced.
+// `m` = also shown on phones (phones get fewer items so the front doesn't pile up).
+const WIDGETS: { node: React.ReactNode; m: boolean; icon?: boolean }[] = [
+  { node: <NetWorth />, m: true },
+  { node: <IconChip inst="BDO" size={44} />, m: true, icon: true },
+  { node: <Account inst="BPI" name="Emergency Fund" amount="₱220,000" w={250} />, m: true },
+  { node: <Liquidity />, m: true },
+  { node: <IconChip inst="Maya" size={34} />, m: false, icon: true },
+  { node: <Account inst="Wealthsimple" name="TFSA" amount="C$16,800" w={240} />, m: true },
+  { node: <Income />, m: true },
+  { node: <IconChip inst="COL Financial" size={52} />, m: true, icon: true },
+  { node: <Rate />, m: false },
+  { node: <Account inst="Ledger" name="Bitcoin" amount="₿0.21" w={210} />, m: true },
+  { node: <IconChip inst="RBC" size={38} />, m: false, icon: true },
+  { node: <Allocation />, m: false },
+  { node: <Streak />, m: false },
+  { node: <IconChip inst="Maribank" size={46} />, m: true, icon: true },
+  { node: <Dividend />, m: false },
+  { node: <IconChip inst="Wise" size={30} />, m: false, icon: true },
+  { node: <Account inst="GCash" name="GCash Wallet" amount="₱12,850" w={240} />, m: false },
 ];
-const MOBILE_COUNT = 7;
 
 // ---- Sphere math (quaternions keep the rotation stable over time) -------------
 type V3 = [number, number, number];
@@ -235,7 +247,6 @@ const spherePoints = (n: number): V3[] => Array.from({ length: n }, (_, i) => {
 
 export const OrbitWidgets: React.FC = () => {
   const stageRef = useRef<HTMLDivElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const toFront = useRef<(i: number) => void>(() => {});
 
@@ -253,32 +264,64 @@ export const OrbitWidgets: React.FC = () => {
     let omega: V3 = [dir[0] * IDLE, dir[1] * IDLE, 0];   // current angular velocity (rad/s)
     let target: V3 = [...omega];
     let q: Q = qNorm(qMul(qAxis([0, 1, 0], 0.5), qAxis([1, 0, 0], -0.25)));
-    let pts: V3[] = [], count = 0;
+    let pts: V3[] = [], active: number[] = [], small = false, slot: number[] = [];
     let raf = 0, visible = false, last = performance.now();
     let hover = false, mx = 0, my = 0;               // cursor offset from center, −1..1
-    let lx = 0, ly = 0;                               // eased logo parallax
     let focus: { from: Q; to: Q; t0: number } | null = null;
     // Touch drag (phones): spin by dragging, with inertia
     let drag: { x: number; y: number; t: number } | null = null;
 
+    // Screen geometry for the current stage size.
+    const geo = () => {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      return {
+        rx: Math.min(w * 0.44, w / 2 - (small ? 60 : 120)),
+        ry: h * 0.42,
+        base: small ? 0.6 : 0.85,
+      };
+    };
+
+    // Pick a starting angle where no near-side item covers the logo, so the first view
+    // shows the Kaya mark clearly; items drift over it later as the globe turns.
+    const clearStart = () => {
+      const { rx, ry, base } = geo();
+      const logoR = small ? 56 : 66;               // logo radius + a little breathing room
+      let best = q, bestScore = -Infinity;
+      for (let k = 0; k < 360; k++) {
+        const c = qNorm(qMul(qAxis([0, 1, 0], (k / 360) * Math.PI * 2), qAxis([1, 0, 0], ((k * 7) % 360) / 360 * 0.9 - 0.45)));
+        let worst = Infinity;
+        for (let j = 0; j < active.length; j++) {
+          const v = qRot(c, pts[j]);
+          if (v[2] < -0.1) continue;                  // far side passes behind the logo anyway
+          const persp = 0.8 + 0.2 * v[2], s = base * (0.6 + 0.4 * (v[2] + 1) / 2);
+          const half = (WIDGETS[active[j]].icon ? 34 : 115) * s;       // rough half-size of the item
+          const d = Math.hypot(v[0] * rx * persp, v[1] * ry * persp) - half - logoR;
+          worst = Math.min(worst, d);
+        }
+        if (worst > bestScore) { bestScore = worst; best = c; }
+      }
+      q = best;
+    };
+
     const layout = () => {
-      const w = stage.clientWidth;
-      const c = w < 640 ? MOBILE_COUNT : n;
-      if (c !== count) { count = c; pts = spherePoints(count); }
+      const isSmall = stage.clientWidth < 640;
+      if (isSmall === small && active.length) return;
+      small = isSmall;
+      active = WIDGETS.map((w, i) => (!small || w.m ? i : -1)).filter(i => i >= 0);
+      pts = spherePoints(active.length);
+      slot = WIDGETS.map(() => -1); active.forEach((i, j) => { slot[i] = j; });
+      clearStart();
     };
 
     const place = () => {
-      const w = stage.clientWidth, h = stage.clientHeight;
-      const small = w < 640;
-      const rx = Math.min(w * (small ? 0.40 : 0.40), w / 2 - (small ? 70 : 125));
-      const ry = h * 0.36;
-      const base = small ? 0.6 : 0.85;
+      const { rx, ry, base } = geo();
       for (let i = 0; i < n; i++) {
         const el = itemRefs.current[i];
         if (!el) continue;
-        if (i >= count) { el.style.display = 'none'; continue; }
+        const j = slot[i];
+        if (j < 0) { el.style.display = 'none'; continue; }
         el.style.display = '';
-        const v = qRot(q, pts[i]);
+        const v = qRot(q, pts[j]);
         const depth = (v[2] + 1) / 2;                 // 0 = far side of the globe, 1 = nearest
         const persp = 0.8 + 0.2 * v[2];               // a touch of perspective pull toward the middle
         const x = v[0] * rx * persp, y = -v[1] * ry * persp;
@@ -291,7 +334,6 @@ export const OrbitWidgets: React.FC = () => {
         el.style.zIndex = String(Math.round(depth * 100));
         el.style.pointerEvents = depth > 0.55 ? 'auto' : 'none';
       }
-      if (logoRef.current) logoRef.current.style.transform = `translate(calc(-50% + ${lx.toFixed(1)}px), calc(-50% + ${ly.toFixed(1)}px))`;
     };
 
     const ease = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -305,8 +347,9 @@ export const OrbitWidgets: React.FC = () => {
 
     // Click a card: rotate the globe so it comes to the front in 500ms (clickToFront: 500).
     toFront.current = (i: number) => {
-      if (i >= count) return;
-      const v = qRot(q, pts[i]);
+      const j = slot[i];
+      if (j < 0) return;
+      const v = qRot(q, pts[j]);
       const axis: V3 = [v[1], -v[0], 0];               // v × (0,0,1)
       const al = Math.hypot(axis[0], axis[1]);
       if (al < 1e-4) return;
@@ -337,10 +380,6 @@ export const OrbitWidgets: React.FC = () => {
         const sp = Math.hypot(omega[0], omega[1]);
         if (sp > 1e-6) q = qNorm(qMul(qAxis([omega[0] / sp, omega[1] / sp, 0], sp * dt), q));
       }
-      // Subtle logo parallax toward the cursor
-      const kl = 1 - Math.exp(-dt * 4);
-      lx += ((hover ? mx * 10 : 0) - lx) * kl;
-      ly += ((hover ? my * 8 : 0) - ly) * kl;
       place();
       if (visible && !document.hidden) raf = requestAnimationFrame(loop);
     };
@@ -396,7 +435,7 @@ export const OrbitWidgets: React.FC = () => {
   }, []);
 
   return (
-    <div ref={stageRef} className="relative w-full h-[520px] sm:h-[640px] select-none" style={{ touchAction: 'pan-y' }} aria-hidden="true">
+    <div ref={stageRef} className="relative w-full h-[560px] sm:h-[700px] select-none" style={{ touchAction: 'pan-y' }} aria-hidden="true">
       {/* Soft green light behind the logo */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[420px] max-w-full rounded-full blur-3xl pointer-events-none"
         style={{ background: 'radial-gradient(closest-side, rgba(57,157,116,0.22), rgba(57,157,116,0) 100%)' }} />
@@ -404,12 +443,12 @@ export const OrbitWidgets: React.FC = () => {
       {WIDGETS.map((wd, i) => (
         <div key={i} ref={el => { itemRefs.current[i] = el; }} onClick={() => toFront.current(i)}
           className="absolute left-1/2 top-1/2 will-change-transform cursor-default" style={{ transformOrigin: 'center' }}>
-          {wd}
+          {wd.node}
         </div>
       ))}
 
       {/* Kaya logo in the middle of the globe, in a circle (z between far and near cards) */}
-      <div ref={logoRef} className="absolute left-1/2 top-1/2 pointer-events-none" style={{ zIndex: 50, transform: 'translate(-50%, -50%)' }}>
+      <div className="absolute left-1/2 top-1/2 pointer-events-none" style={{ zIndex: 50, transform: 'translate(-50%, -50%)' }}>
         <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center"
           style={{ background: 'radial-gradient(circle at 50% 30%, #193F2F 0%, #0b1712 75%)', boxShadow: '0 0 0 1px rgba(220,245,223,0.10) inset, 0 0 60px 6px rgba(57,157,116,0.35)' }}>
           <img src="/logo-icon.svg" alt="" className="w-11 h-11 sm:w-12 sm:h-12" draggable={false} />
