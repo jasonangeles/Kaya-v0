@@ -283,11 +283,11 @@ export const ThemeShowcase: React.FC = () => {
         </div>}
       </div>
 
-      {/* Phones: each one fades out toward its own bottom (the raised middle phone fades sooner,
-          so its rounded bottom never shows), and they rise in one after another */}
+      {/* Phones: each one fades out toward its own bottom (same fade on all three, so no
+          phone's rounded bottom shows), and they rise in one after another */}
       <div className="mt-10 sm:mt-14 pt-8 pb-6 flex gap-4 sm:gap-6 justify-start lg:justify-center overflow-x-auto overflow-y-hidden lg:overflow-x-hidden no-scrollbar snap-x snap-mandatory lg:snap-none -mx-6 px-6">
         {[HomeScreen, PortfolioScreen, IncomeScreen].map((S, i) => {
-          const fade = i === 1 ? 'linear-gradient(to bottom, #000 38%, transparent 76%)' : 'linear-gradient(to bottom, #000 45%, transparent 86%)';
+          const fade = 'linear-gradient(to bottom, #000 38%, transparent 76%)'; // same fade on all three
           return (
             <div key={i} className={`shrink-0 snap-center ${i === 1 ? 'lg:-translate-y-6' : 'lg:translate-y-4'}`}
               style={{ width: 320 * 0.82, height: 660 * 0.82 }}>

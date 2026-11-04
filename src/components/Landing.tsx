@@ -214,37 +214,43 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
         <div className="grid sm:grid-cols-3 gap-6 items-stretch">
           {steps.map((s, i) => (
             <Reveal key={i} delay={i * 90} className="h-full">
-              <div className="h-full rounded-3xl border border-white/10 bg-white/[0.02] p-6">
-                <div className="w-9 h-9 rounded-full border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-sm font-semibold mb-4">{i + 1}</div>
-                <h3 className="text-lg font-medium mb-1.5">{s.t}</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">{s.d}</p>
+              <div className="relative h-full rounded-[28px] p-6"
+                style={{ background: 'linear-gradient(160deg, rgba(220,245,223,0.05) 0%, rgba(117,126,118,0.08) 25%, rgba(66,66,66,0.10) 50%, rgba(57,157,116,0.06) 100%)' }}>
+                <span aria-hidden className="kaya-stroke" style={{ ['--stroke' as any]: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0))' }} />
+                <div className="w-9 h-9 rounded-full bg-[#dcf5df] text-black flex items-center justify-center text-sm font-semibold mb-4">{i + 1}</div>
+                <h3 className="text-[17px] font-medium text-white mb-1.5">{s.t}</h3>
+                <p className="text-[14px] leading-relaxed" style={{ color: '#6e8777' }}>{s.d}</p>
               </div>
             </Reveal>
           ))}
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 p-12 text-center" style={{ background: 'radial-gradient(ellipse 70% 120% at 50% 0%, rgba(16,185,129,0.15), transparent 70%)' }}>
+      {/* CTA + footer, with the hero's dither rising from the very bottom of the page */}
+      <div className="relative isolate overflow-hidden">
+        <div className="absolute inset-x-0 bottom-0 h-[720px] -z-10 pointer-events-none"
+          style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 45%)', maskImage: 'linear-gradient(to bottom, transparent 0%, #000 45%)' }}>
+          <DitheringShader shape="gradient" type="16x16" colorBack="#070C0A" colorFront="#2A6E50" pxSize={1} levels={8} contrast={1.26} amplitude={2.5} speed={1} />
+        </div>
+
+        <section className="max-w-6xl mx-auto px-6 pt-20 pb-24 sm:pb-32">
+          <Reveal className="text-center">
             <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">See your whole<br />net worth today.</h2>
             <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">Free to use. Nothing links to your bank.</p>
-            <button onClick={openSignUp} className="mt-7 bg-white text-black font-semibold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Start for free</button>
-          </div>
-        </Reveal>
-      </section>
+            <button onClick={openSignUp} className="mt-8 bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[16px] font-semibold px-6 py-3.5 rounded-xl transition-colors">Start for free</button>
+          </Reveal>
+        </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="font-medium tracking-wide uppercase text-sm">Kaya</span>
+        <footer>
+          <div className="max-w-6xl mx-auto px-6 pt-6 pb-10 flex flex-col items-center gap-3 text-center">
+            <div className="flex items-center gap-3">
+              <img src="/logo-icon.svg" alt="" className="w-6 h-6" draggable={false} />
+              <span className="text-[16px] font-bold uppercase tracking-[4px] text-white">Kaya</span>
+            </div>
+            <p className="text-[12px] text-[#dcf5df]/70">Every account, every currency, one number · © {new Date().getFullYear()} Kaya</p>
           </div>
-          <p className="text-xs text-zinc-600">Made for Filipinos at home and abroad · © {new Date().getFullYear()} Kaya</p>
-        </div>
-      </footer>
+        </footer>
+      </div>
 
       <SignInModal open={signInOpen} mode={authMode} onClose={() => setSignInOpen(false)} />
     </div>
