@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Icons } from './icons';
 import { SignInModal } from './SignInModal';
 import { DitheringShader } from './ui/dithering-shader';
+import { OrbitWidgets } from './OrbitWidgets';
 
 // --- Scroll reveal (fade + rise, once) -----------------------------------
 const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({ children, delay = 0, className = '' }) => {
@@ -326,6 +327,22 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
             </Reveal>
           ))}
         </div>
+      </section>
+
+      {/* Orbit: every account around one total */}
+      <section className="max-w-6xl mx-auto px-6 pt-16 pb-8 overflow-hidden">
+        <Reveal className="text-center max-w-2xl mx-auto">
+          <span className="inline-block text-[11px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-6">All your accounts</span>
+          <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight leading-[1.08]">
+            Different accounts.<br /><span className="text-zinc-500">One clear total.</span>
+          </h2>
+        </Reveal>
+        <Reveal delay={120} className="mt-4 sm:mt-6">
+          <OrbitWidgets />
+        </Reveal>
+        <Reveal className="text-center">
+          <p className="text-zinc-400 text-base sm:text-lg max-w-xl mx-auto">Banks, wallets, stocks and crypto in any currency. Kaya puts them on one screen so you stop switching apps.</p>
+        </Reveal>
       </section>
 
       {/* Feature A */}
