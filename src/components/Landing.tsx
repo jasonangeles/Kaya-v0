@@ -226,11 +226,11 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       {/* Themes: light and dark, in its own dithered container */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <Reveal>
-          <div className="relative isolate overflow-hidden rounded-[32px] sm:rounded-[40px] px-5 py-14 sm:px-[72px] sm:py-[88px]">
+          <div className="relative isolate overflow-hidden rounded-[32px] sm:rounded-[40px] px-5 pt-20 pb-12 sm:px-[72px] sm:pt-[128px] sm:pb-[88px]">
             <div className="absolute inset-0 -z-10">
               <DitheringShader shape="radial" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} speed={0.4} />
             </div>
-            <div className="text-center max-w-2xl mx-auto mb-10">
+            <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
               <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">Easy on the eyes.</h2>
               <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">Pick dark for late-night check-ins or light for bright days.</p>
             </div>

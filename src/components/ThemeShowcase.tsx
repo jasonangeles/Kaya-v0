@@ -225,9 +225,9 @@ export const ThemeShowcase: React.FC = () => {
     const on = sel === th.key;
     return (
       <button onClick={() => setSel(th.key as typeof sel)} aria-label={th.name} aria-pressed={on}
-        className="relative w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-full flex items-center justify-center transition-transform hover:scale-105"
-        style={{ background: th.swatch, boxShadow: `0 0 0 1px rgba(255,255,255,0.12) inset${on ? ', 0 0 0 3px #0b1712, 0 0 0 5px #fff' : ''}` }}>
-        <span className="text-[11px] font-semibold" style={{ color: th.light ? '#18181b' : '#ffffff' }}>{th.name}</span>
+        className="relative w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] rounded-full flex items-center justify-center transition-transform hover:scale-105"
+        style={{ background: th.swatch, boxShadow: `0 0 0 1px rgba(255,255,255,0.12) inset${on ? ', 0 0 0 2px #0b1712, 0 0 0 3.5px #fff' : ''}` }}>
+        <span className="text-[9.5px] font-semibold transition-opacity duration-300" style={{ color: th.light ? '#18181b' : '#ffffff', opacity: on ? 1 : 0.45 }}>{th.name}</span>
       </button>
     );
   };
@@ -235,7 +235,7 @@ export const ThemeShowcase: React.FC = () => {
   return (
     <div>
       {/* Picker */}
-      <div className="flex items-start justify-center gap-5 sm:gap-7 flex-wrap">
+      <div className="flex items-start justify-center gap-4 sm:gap-5 flex-wrap">
         <Circle th={DARK} /><Circle th={LIGHT} />
         {SHOW_COLOR_THEMES && <Circle th={ORANGE} />}
         {SHOW_COLOR_THEMES && <div className="flex flex-col items-center gap-2">
@@ -243,7 +243,7 @@ export const ThemeShowcase: React.FC = () => {
             onClick={() => { setSel('custom'); picker.current?.click(); }}
             aria-pressed={sel === 'custom'}
             className="h-14 sm:h-16 pl-2 pr-5 rounded-full flex items-center gap-3 bg-white/[0.08] hover:bg-white/[0.13] transition-colors"
-            style={{ boxShadow: sel === 'custom' ? '0 0 0 3px #0b1712, 0 0 0 5px #fff' : 'none' }}>
+            style={{ boxShadow: sel === 'custom' ? '0 0 0 2px #0b1712, 0 0 0 3.5px #fff' : 'none' }}>
             <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" style={{ background: sel === 'custom' ? hex : 'conic-gradient(#ff5f6d, #ffc371, #f9f871, #4ade80, #22d3ee, #818cf8, #e879f9, #ff5f6d)' }} />
             <span className="text-[14px] font-medium text-white whitespace-nowrap">Choose your own</span>
           </button>
@@ -253,7 +253,7 @@ export const ThemeShowcase: React.FC = () => {
       </div>
 
       {/* Phones */}
-      <div className="mt-4 pt-8 pb-6 flex gap-4 sm:gap-6 justify-start lg:justify-center overflow-x-auto overflow-y-hidden lg:overflow-x-hidden no-scrollbar snap-x snap-mandatory lg:snap-none -mx-6 px-6"
+      <div className="mt-10 sm:mt-14 pt-8 pb-6 flex gap-4 sm:gap-6 justify-start lg:justify-center overflow-x-auto overflow-y-hidden lg:overflow-x-hidden no-scrollbar snap-x snap-mandatory lg:snap-none -mx-6 px-6"
         style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 92%)', maskImage: 'linear-gradient(to bottom, #000 62%, transparent 92%)' }}>
         {[HomeScreen, PortfolioScreen, IncomeScreen].map((S, i) => (
           <div key={i} className={`shrink-0 snap-center transition-transform duration-500 ${i === 1 ? 'lg:-translate-y-6' : 'lg:translate-y-4'}`}
