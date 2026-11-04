@@ -325,6 +325,19 @@ const setSyncedAt = (t: string) => { try { localStorage.setItem(SYNC_KEY, t); } 
 // data from leaking into another when accounts are switched on the same device.
 const OWNER_KEY = 'kaya.ownerId';
 const getOwner = () => { try { return localStorage.getItem(OWNER_KEY) || ''; } catch { return ''; } };
+// True when this device may already be signed in (Supabase keeps the session in
+// localStorage as "sb-<project>-auth-token"), or when we're landing back from a sign-in
+// link. Used so logged-out visitors see the landing page at once instead of the splash.
+const maybeSignedIn = (() => {
+  try {
+    if (/[#&?](access_token|code|token_hash)=/.test(window.location.href)) return true;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) || '';
+      if (/^sb-.*-auth-token$/.test(k)) return true;
+    }
+  } catch { /* storage blocked: fall back to waiting for auth */ return true; }
+  return false;
+})();
 const setOwner = (id: string) => { try { localStorage.setItem(OWNER_KEY, id); } catch {} };
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -2151,8 +2164,10 @@ export default function App() {
     </div>
   );
 
+  // Logged-out visitors (no saved session on this device) go straight to the landing page;
+  // the splash is only for people who are actually signing in.
   if (isSupabaseEnabled && authLoading) {
-    return bootSplash;
+    return maybeSignedIn ? bootSplash : <Landing />;
   }
   if (isSupabaseEnabled && !session) {
     return <Landing />;

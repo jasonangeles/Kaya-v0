@@ -253,7 +253,7 @@ export const ThemeShowcase: React.FC = () => {
       </div>
 
       {/* Phones */}
-      <div className="mt-4 pt-8 flex gap-4 sm:gap-6 justify-start lg:justify-center overflow-x-auto no-scrollbar snap-x snap-mandatory -mx-6 px-6 pb-2"
+      <div className="mt-4 pt-8 pb-6 flex gap-4 sm:gap-6 justify-start lg:justify-center overflow-x-auto overflow-y-hidden lg:overflow-x-hidden no-scrollbar snap-x snap-mandatory lg:snap-none -mx-6 px-6"
         style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 92%)', maskImage: 'linear-gradient(to bottom, #000 62%, transparent 92%)' }}>
         {[HomeScreen, PortfolioScreen, IncomeScreen].map((S, i) => (
           <div key={i} className={`shrink-0 snap-center transition-transform duration-500 ${i === 1 ? 'lg:-translate-y-6' : 'lg:translate-y-4'}`}

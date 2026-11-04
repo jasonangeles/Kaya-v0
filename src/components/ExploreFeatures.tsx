@@ -593,7 +593,7 @@ export const ExploreFeatures: React.FC = () => {
             </>
           )}
         </div>
-        <div className={`flex gap-2 overflow-x-auto no-scrollbar px-6 -mx-6 pt-4 pb-1 transition-opacity ${active !== null ? 'opacity-40' : ''}`}>
+        <div className={`flex gap-2 overflow-x-auto overflow-y-hidden no-scrollbar px-6 -mx-6 pt-4 pb-1 transition-opacity ${active !== null ? 'opacity-40' : ''}`}>
           {ITEMS.map((it, i) => (
             <button key={it.id} onClick={() => open(i)} className={`${pill} shrink-0 ${active === i ? '!bg-[#dcf5df] !text-black' : ''}`}>
               <Plus />{it.title.replace(/\.$/, '')}
