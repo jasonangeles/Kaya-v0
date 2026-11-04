@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Phone } from './ExploreFeatures';
 import { InstitutionLogo } from './InstitutionLogo';
 
@@ -220,6 +220,17 @@ export const ThemeShowcase: React.FC = () => {
   const custom = useMemo(() => customTheme(hex), [hex]);
   const themes = [DARK, LIGHT, ORANGE, custom];
   const t = themes.find(x => x.key === sel)!;
+  // Section entrance: the toggle, then the three phones, once the section scrolls into view
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setInView(true); return; }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); io.disconnect(); } }, { threshold: 0.2 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const Circle: React.FC<{ th: Theme }> = ({ th }) => {
     const on = sel === th.key;
@@ -233,9 +244,10 @@ export const ThemeShowcase: React.FC = () => {
   };
 
   return (
-    <div>
+    <div ref={rootRef}>
       {/* Picker */}
-      <div className="flex items-start justify-center gap-4 sm:gap-5 flex-wrap">
+      <div className="flex items-start justify-center gap-4 sm:gap-5 flex-wrap"
+        style={{ opacity: inView ? 1 : 0, transform: inView ? 'none' : 'translateY(16px)', transition: 'opacity .6s ease 100ms, transform .7s cubic-bezier(.22,1,.36,1) 100ms' }}>
         {/* Segmented Dark / Light toggle (Figma 120:5717 / 120:5789); the active pill slides */}
         <div role="radiogroup" aria-label="Theme" className="kaya-frost inline-flex p-2 rounded-[20px]">
           <span aria-hidden className="absolute top-2 bottom-2 left-2 w-[88px] rounded-[12px] overflow-hidden transition-transform duration-[450ms] ease-[cubic-bezier(.22,1,.36,1)]"
@@ -271,17 +283,26 @@ export const ThemeShowcase: React.FC = () => {
         </div>}
       </div>
 
-      {/* Phones */}
-      <div className="mt-10 sm:mt-14 pt-8 pb-6 flex gap-4 sm:gap-6 justify-start lg:justify-center overflow-x-auto overflow-y-hidden lg:overflow-x-hidden no-scrollbar snap-x snap-mandatory lg:snap-none -mx-6 px-6"
-        style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 92%)', maskImage: 'linear-gradient(to bottom, #000 62%, transparent 92%)' }}>
-        {[HomeScreen, PortfolioScreen, IncomeScreen].map((S, i) => (
-          <div key={i} className={`shrink-0 snap-center transition-transform duration-500 ${i === 1 ? 'lg:-translate-y-6' : 'lg:translate-y-4'}`}
-            style={{ width: 320 * 0.82, height: 660 * 0.82 }}>
-            <div className="origin-top-left" style={{ transform: 'scale(0.82)' }}>
-              <Phone bg={<Bg themes={themes} on={sel} />}><S t={t} /></Phone>
+      {/* Phones: each one fades out toward its own bottom (the raised middle phone fades sooner,
+          so its rounded bottom never shows), and they rise in one after another */}
+      <div className="mt-10 sm:mt-14 pt-8 pb-6 flex gap-4 sm:gap-6 justify-start lg:justify-center overflow-x-auto overflow-y-hidden lg:overflow-x-hidden no-scrollbar snap-x snap-mandatory lg:snap-none -mx-6 px-6">
+        {[HomeScreen, PortfolioScreen, IncomeScreen].map((S, i) => {
+          const fade = i === 1 ? 'linear-gradient(to bottom, #000 38%, transparent 76%)' : 'linear-gradient(to bottom, #000 45%, transparent 86%)';
+          return (
+            <div key={i} className={`shrink-0 snap-center ${i === 1 ? 'lg:-translate-y-6' : 'lg:translate-y-4'}`}
+              style={{ width: 320 * 0.82, height: 660 * 0.82 }}>
+              <div style={{
+                WebkitMaskImage: fade, maskImage: fade,
+                opacity: inView ? 1 : 0, transform: inView ? 'none' : 'translateY(36px)',
+                transition: `opacity .8s ease ${250 + i * 140}ms, transform .9s cubic-bezier(.22,1,.36,1) ${250 + i * 140}ms`,
+              }}>
+                <div className="origin-top-left" style={{ transform: 'scale(0.82)' }}>
+                  <Phone bg={<Bg themes={themes} on={sel} />}><S t={t} /></Phone>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
