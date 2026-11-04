@@ -11,7 +11,7 @@ import React, { useEffect, useRef } from 'react';
  * Falls back to the static PNG when WebGL isn't available; renders one still frame
  * when the user prefers reduced motion; pauses when off-screen or the tab is hidden.
  */
-export type DitherShape = 'gradient' | 'wave';
+export type DitherShape = 'gradient' | 'wave' | 'radial';
 export type DitherType = '2x2' | '4x4' | '8x8' | '16x16';
 
 interface Props {
@@ -53,7 +53,7 @@ uniform float u_px;
 uniform float u_levels;
 uniform float u_contrast;
 uniform float u_start;
-uniform int   u_shape;   // 0 gradient, 1 wave
+uniform int   u_shape;   // 0 gradient, 1 wave, 2 radial (bright center → dark edges)
 uniform int   u_bayer;   // 2, 4, 8, 16
 
 float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
@@ -84,6 +84,12 @@ void main() {
   // ordered dither of each RGB channel to N levels. (Contrast is what keeps the top
   // half pure black and the red channel at 0 — that's the look of bg-dither.png.)
   float v = clamp((top - u_start + wave) / (1.0 - u_start), 0.0, 1.0);
+  if (u_shape == 2) {
+    // Elliptical glow from the middle, breathing slowly
+    vec2 d = (uv - 0.5) * vec2(1.0, 1.15);
+    float r = length(d) / 0.62;
+    v = clamp(1.0 - r + wave * 0.8, 0.0, 1.0);
+  }
   vec3 col = mix(u_back, u_front, v);
   col = clamp((col - 0.5) * u_contrast + 0.5, 0.0, 1.0);
   // Tiny dead zone so near-black stays pure black (no stray dots at the top), scaled back up
@@ -146,7 +152,7 @@ export const DitheringShader: React.FC<Props> = ({
     gl.uniform1f(U('u_levels'), levels);
     gl.uniform1f(U('u_contrast'), contrast);
     gl.uniform1f(U('u_start'), start);
-    gl.uniform1i(U('u_shape'), shape === 'wave' ? 1 : 0);
+    gl.uniform1i(U('u_shape'), shape === 'wave' ? 1 : shape === 'radial' ? 2 : 0);
     gl.uniform1i(U('u_bayer'), parseInt(type, 10));
 
     let dpr = 1;

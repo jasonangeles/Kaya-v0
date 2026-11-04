@@ -432,14 +432,14 @@ const PrivateJourney: React.FC<{ play: boolean; screen: React.RefObject<HTMLDivE
 
 // ---------------------------------------------------------------------------
 // Phone shell. Uses /explore/phone-frame.png when present, else a drawn stand-in.
-const Phone: React.FC<{ children: React.ReactNode; screenRef: React.RefObject<HTMLDivElement> }> = ({ children, screenRef }) => {
+export const Phone: React.FC<{ children: React.ReactNode; screenRef?: React.RefObject<HTMLDivElement>; bg?: React.ReactNode }> = ({ children, screenRef, bg }) => {
   const [png, setPng] = useState(true);
   return (
     <div className="relative" style={{ width: 320, height: 660 }}>
       {!png && <div className="absolute inset-0 rounded-[52px] bg-gradient-to-b from-zinc-600 via-zinc-900 to-black p-[2px]"><div className="w-full h-full rounded-[50px] bg-black" /></div>}
       <div ref={screenRef} className="absolute overflow-hidden bg-black" style={{ left: 14, top: 14, width: SCREEN_W, height: SCREEN_H, borderRadius: 40 }}>
-        {/* app background (same dither as the app) */}
-        <div className="absolute inset-0" style={{ backgroundImage: 'url(/bg-dither.png)', backgroundSize: 'cover', backgroundPosition: 'center bottom' }} />
+        {/* app background: the app's dither unless a custom one is passed (theme showcase) */}
+        {bg ?? <div className="absolute inset-0" style={{ backgroundImage: 'url(/bg-dither.png)', backgroundSize: 'cover', backgroundPosition: 'center bottom' }} />}
         <div className="relative h-full">{children}</div>
       </div>
       {!png && <div className="absolute left-1/2 -translate-x-1/2 top-[24px] w-[92px] h-[26px] rounded-full bg-black z-50" />}

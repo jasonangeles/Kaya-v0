@@ -4,6 +4,8 @@ import { SignInModal } from './SignInModal';
 import { DitheringShader } from './ui/dithering-shader';
 import { OrbitWidgets } from './OrbitWidgets';
 import { ExploreFeatures } from './ExploreFeatures';
+import { ThemeShowcase } from './ThemeShowcase';
+import { DetailsBento } from './DetailsBento';
 
 // --- Scroll reveal (fade + rise, once) -----------------------------------
 const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({ children, delay = 0, className = '' }) => {
@@ -30,26 +32,6 @@ const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: 
     </div>
   );
 };
-
-// --- Phone frame ----------------------------------------------------------
-const Phone: React.FC<{ children: React.ReactNode; tilt?: number; float?: boolean }> = ({ children, tilt = 0, float = false }) => (
-  <div className="relative" style={{ transform: `perspective(1400px) rotateY(${tilt}deg) rotateX(2deg)` }}>
-    <div
-      className={`relative rounded-[2.6rem] p-2.5 bg-[#0a0a0a] border border-white/10 ${float ? 'animate-[floatY_7s_ease-in-out_infinite]' : ''}`}
-      style={{
-        boxShadow: '0 36px 80px -42px rgba(0,0,0,0.9)',
-        WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 95%)',
-        maskImage: 'linear-gradient(to bottom, #000 62%, transparent 95%)'
-      }}
-    >
-      <div className="w-[248px] rounded-[2.1rem] overflow-hidden bg-black">
-        <div className="mx-auto mt-2.5 mb-1 h-1 w-12 rounded-full bg-white/15" />
-        {children}
-        <div className="h-24" />
-      </div>
-    </div>
-  </div>
-);
 
 // Larger, realistic iPhone-style hero device: thin frame, bottom fade-to-black,
 // gentle float + mouse-follow 3D tilt.
@@ -89,14 +71,6 @@ const HeroPhone: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     </div>
   );
 };
-
-const GlowPhone: React.FC<{ children: React.ReactNode; tilt?: number }> = ({ children, tilt }) => (
-  <div className="relative flex justify-center">
-    {/* Glow kept in the upper half so it never pools below the device */}
-    <div className="absolute inset-x-0 top-0 h-[48%] blur-3xl" style={{ background: 'radial-gradient(ellipse 68% 92% at 50% 26%, rgba(16,185,129,0.18), transparent 70%)' }} />
-    <div className="relative"><Phone tilt={tilt}>{children}</Phone></div>
-  </div>
-);
 
 // Count up from 0 to target with an ease-out curve (only when `run` is true).
 const useCountUp = (target: number, run: boolean, dur = 1300) => {
@@ -165,89 +139,6 @@ const OverviewScreen: React.FC<{ animate?: boolean }> = ({ animate = false }) =>
   </div>
   );
 };
-
-const IncomeScreen = () => (
-  <div className="px-3 py-4 space-y-3">
-    <p className="text-sm font-medium text-white pt-1">Passive Income</p>
-    <div className="rounded-2xl bg-[#141414] border border-white/5 p-3.5">
-      <div className="flex items-start justify-between mb-0.5">
-        <div><p className="text-[9px] text-zinc-500 uppercase tracking-widest mb-1">This year</p><p className="text-xl font-semibold text-white">₱156,800</p></div>
-        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-medium self-center">▲ 11%</span>
-      </div>
-      <p className="text-[9px] text-zinc-500 mb-2.5">Averaging ₱13,000 a month this year</p>
-      <div className="flex items-center justify-center gap-3 mb-2">
-        <Icons.ChevronRight size={12} className="rotate-180 text-zinc-600" />
-        <span className="text-[10px] font-medium text-white tabular-nums">2026</span>
-        <Icons.ChevronRight size={12} className="text-zinc-600" />
-      </div>
-      <div className="relative h-16">
-        <div className="flex items-end gap-1.5 h-full">
-          {[42, 78, 55, 92, 64, 100].map((h, i) => (
-            <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 5 ? '#10b981' : '#3f3f46', maxWidth: 28 }} />
-          ))}
-        </div>
-        <div className="absolute inset-x-0 flex items-center" style={{ bottom: '60%' }}>
-          <div className="flex-1 border-t border-dashed border-zinc-300/50" />
-        </div>
-        <span className="absolute right-0 text-[7px] text-zinc-400" style={{ bottom: '62%' }}>₱13k /mo avg</span>
-      </div>
-      <div className="flex justify-between mt-1.5 px-0.5">
-        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map(m => <span key={m} className="text-[7px] text-zinc-600">{m}</span>)}
-      </div>
-    </div>
-    <div className="rounded-2xl bg-[#141414] border border-white/5 overflow-hidden">
-      {[{ s: 'JFC', c: 'Dividend · Jun 8', v: '+₱2,400' }, { s: 'SM', c: 'Dividend · Jun 1', v: '+₱3,150' }].map((r, i) => (
-        <div key={i} className={`flex items-center justify-between px-3 py-2.5 ${i < 1 ? 'border-b border-white/5' : ''}`}>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Icons.ArrowDownLeft size={12} /></span>
-            <div><p className="text-[11px] font-medium text-white">{r.s}</p><p className="text-[9px] text-zinc-500">{r.c}</p></div>
-          </div>
-          <span className="text-[11px] font-medium text-emerald-400">{r.v}</span>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const AllocationScreen = () => (
-  <div className="px-3 py-4 space-y-3">
-    <div className="flex items-center justify-between pt-1">
-      <p className="text-sm font-medium text-white">Portfolio</p>
-      <span className="flex items-center gap-1.5 text-[9px] font-medium text-zinc-300 bg-zinc-800 border border-white/10 px-2.5 py-1 rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Filter
-      </span>
-    </div>
-    <div className="rounded-2xl bg-[#141414] border border-white/5 p-3.5">
-      <p className="text-[8px] text-zinc-500 uppercase tracking-widest mb-2">Allocation</p>
-      <div className="flex gap-[2px] h-2.5 mb-3">
-        {[{ w: 30, c: '#10b981' }, { w: 22, c: '#e4e4e7' }, { w: 18, c: '#F7931A' }, { w: 16, c: '#a1a1aa' }, { w: 14, c: '#94a3b8' }].map((s, i) => (
-          <div key={i} className="rounded-sm" style={{ flexGrow: s.w, background: s.c }} />
-        ))}
-      </div>
-      {[{ n: 'Philippine Banks', c: '#10b981', p: '30%' }, { n: 'Equities', c: '#e4e4e7', p: '22%' }, { n: 'Crypto Assets', c: '#F7931A', p: '18%' }, { n: 'Cash & Wallets', c: '#a1a1aa', p: '16%' }, { n: 'Pension', c: '#94a3b8', p: '14%' }].map((s, i) => (
-        <div key={i} className="flex items-center justify-between py-1">
-          <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-sm" style={{ background: s.c }} /><span className="text-[11px] text-white">{s.n}</span></div>
-          <span className="text-[11px] font-medium text-zinc-400">{s.p}</span>
-        </div>
-      ))}
-    </div>
-    <div className="rounded-2xl bg-[#141414] border border-white/5 overflow-hidden">
-      {[
-        { m: 'M', mc: '#FF6B00', n: 'Juan Dela Cruz', cat: 'Philippine Banks', liquid: true, v: '₱1,842,500' },
-        { m: 'SSS', mc: '#5b6b7f', n: 'SSS', cat: 'Pension', liquid: false, v: '₱210,450' }
-      ].map((r, i) => (
-        <div key={i} className={`flex items-center gap-2.5 px-3 py-2.5 ${i < 1 ? 'border-b border-white/5' : ''}`}>
-          <span className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-semibold text-white shrink-0" style={{ background: r.mc }}>{r.m}</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-medium text-white leading-tight">{r.n}</p>
-            <span className="text-[8px] px-1.5 py-[2px] rounded-full mt-0.5 inline-block" style={r.liquid ? { background: 'rgba(16,185,129,0.10)', color: '#5fb89a' } : { background: 'rgba(148,163,184,0.12)', color: '#8d9bad' }}>{r.cat}</span>
-          </div>
-          <span className="text-[10px] font-medium text-zinc-200 shrink-0">{r.v}</span>
-        </div>
-      ))}
-    </div>
-  </div>
-);
 
 // --- Landing --------------------------------------------------------------
 export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted }) => {
@@ -334,40 +225,31 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
         </Reveal>
       </section>
 
-      {/* Feature A */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-          <Reveal>
-            <span className="text-xs uppercase tracking-widest text-emerald-400">One clear number</span>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3 leading-tight">One total for everything</h2>
-            <p className="text-zinc-400 mt-4 leading-relaxed text-lg">Savings in Manila, a TFSA in Toronto, Bitcoin on a Ledger. Kaya converts it all into one currency at live rates. Tap the total to see it in USD, CAD or Bitcoin.</p>
-          </Reveal>
-          <Reveal delay={120}><GlowPhone tilt={-9}><OverviewScreen /></GlowPhone></Reveal>
-        </div>
+      {/* Themes: light and dark, in its own dithered container */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <Reveal>
+          <div className="relative isolate overflow-hidden rounded-[32px] sm:rounded-[40px] px-5 py-14 sm:px-[72px] sm:py-[88px]">
+            <div className="absolute inset-0 -z-10">
+              <DitheringShader shape="radial" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} speed={0.4} />
+            </div>
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <span className="inline-block text-[11px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-6">Light and dark</span>
+              <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight leading-[1.08]">Easy on the eyes.</h2>
+              <p className="text-zinc-300/80 mt-4 text-base sm:text-lg">Pick dark for late-night check-ins or light for bright days. Every screen follows along.</p>
+            </div>
+            <ThemeShowcase />
+          </div>
+        </Reveal>
       </section>
 
-      {/* Feature B */}
+      {/* The little things: bento grid of smaller features */}
       <section className="max-w-6xl mx-auto px-6 py-20">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-          <Reveal className="lg:order-2">
-            <span className="text-xs uppercase tracking-widest text-emerald-400">Passive income</span>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3 leading-tight">Watch your dividends add up</h2>
-            <p className="text-zinc-400 mt-4 leading-relaxed text-lg">Log each dividend or interest payment as it arrives. Kaya shows your monthly average and lets you look back at any year. Repeat payouts take two taps to copy.</p>
-          </Reveal>
-          <Reveal delay={120} className="lg:order-1"><GlowPhone tilt={9}><IncomeScreen /></GlowPhone></Reveal>
-        </div>
-      </section>
-
-      {/* Feature C */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-          <Reveal>
-            <span className="text-xs uppercase tracking-widest text-emerald-400">Allocation and liquidity</span>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3 leading-tight">See where your money sits</h2>
-            <p className="text-zinc-400 mt-4 leading-relaxed text-lg">Break your wealth down by type or by currency. The liquidity view shows how much you could reach this week and how much is tied up in pensions, crypto or property.</p>
-          </Reveal>
-          <Reveal delay={120}><GlowPhone tilt={-9}><AllocationScreen /></GlowPhone></Reveal>
-        </div>
+        <Reveal className="max-w-2xl mb-10">
+          <span className="text-xs uppercase tracking-widest text-emerald-400">The details</span>
+          <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight mt-3 leading-[1.08]">The little things.</h2>
+          <p className="text-zinc-400 mt-4 text-base sm:text-lg">What you start to notice after a few months with Kaya.</p>
+        </Reveal>
+        <Reveal delay={120}><DetailsBento /></Reveal>
       </section>
 
       {/* How it works */}
