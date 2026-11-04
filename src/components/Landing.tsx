@@ -33,29 +33,39 @@ const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: 
   );
 };
 
-// Hero visual: the hand + phone PNG (Figma 120:5797), positioned as in the mockup and
-// drifting down a little slower than the page once you start scrolling (semi-parallax),
-// so the rounded second section slides up over it.
+// Hero visual: the hand + phone PNG (Figma 120:5797), positioned as in the mockup.
+// It scrolls normally until it has fully come into view (the moment the rounded panel
+// below reaches the bottom of the window). From there it stays pinned in place while
+// that panel slides up and covers it, then it lets go once it's fully covered.
 // Placement at desktop size (1×): 1073 × 841, left edge 199.5px left of center,
 // 51px below the top of the visual block. Everything scales with --s on smaller screens.
 const HeroVisual: React.FC = () => {
   const img = useRef<HTMLImageElement>(null);
+  const block = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = img.current;
-    if (!el || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const el = img.current, box = block.current;
+    if (!el || !box) return;
     let raf = 0;
     const update = () => {
       raf = 0;
-      const y = Math.max(0, window.scrollY - 60);          // starts after a small scroll
-      el.style.transform = `translate3d(0, ${Math.min(y * 0.32, 420).toFixed(1)}px, 0)`;
+      const cover = document.getElementById('kaya-cover');
+      if (!cover) return;
+      const sy = window.scrollY, vh = window.innerHeight;
+      const coverTop = cover.getBoundingClientRect().top + sy;
+      const blockTop = box.getBoundingClientRect().top + sy;
+      const pinStart = Math.max(0, coverTop - vh);   // visual fully on screen from here
+      const maxShift = Math.max(0, coverTop - blockTop); // fully covered by the panel
+      const shift = Math.min(Math.max(0, sy - pinStart), maxShift);
+      el.style.transform = `translate3d(0, ${shift.toFixed(1)}px, 0)`;
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     update();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
+    window.addEventListener('resize', onScroll);
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(raf); };
   }, []);
   return (
-    <div className="kaya-hero-visual relative w-full" aria-hidden="true">
+    <div ref={block} className="kaya-hero-visual relative w-full" aria-hidden="true">
       <img
         ref={img}
         src="/hero-phone.webp"
@@ -107,7 +117,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
           className="absolute inset-x-0 top-0 h-[700px] -z-10 pointer-events-none"
           style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 70%, transparent 100%)', maskImage: 'linear-gradient(to bottom, #000 70%, transparent 100%)' }}
         >
-          <DitheringShader shape="gradient" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} speed={0.6} />
+          <DitheringShader shape="gradient" type="16x16" colorBack="#070C0A" colorFront="#2A6E50" pxSize={1} levels={8} contrast={1.26} amplitude={2.5} speed={1} />
         </div>
         <div className="max-w-6xl mx-auto px-6 pt-20 relative">
           <Reveal className="text-center max-w-2xl mx-auto">
@@ -129,7 +139,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       </section>
 
       {/* Closer look: black panel with rounded top corners that slides up over the hero */}
-      <div className="relative z-10 bg-black rounded-t-[40px] sm:rounded-t-[80px]">
+      <div id="kaya-cover" className="relative z-10 bg-black rounded-t-[40px] sm:rounded-t-[80px]">
       <section className="max-w-6xl mx-auto px-6 pt-16 sm:pt-[104px] pb-16">
         <Reveal className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
           <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">Take a closer look.</h2>

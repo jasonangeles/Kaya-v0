@@ -28,6 +28,12 @@ interface Props {
   contrast?: number;
   /** Where the gradient starts, measured from the top (0–1). 0 = full height, like the Figma frame. */
   start?: number;
+  /** How strong the waves are (1 = original subtle drift). */
+  amplitude?: number;
+  /** How many wave crests fit across (1 = original). */
+  frequency?: number;
+  /** Overall brightness boost for the front color (1 = none). */
+  glow?: number;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -53,6 +59,9 @@ uniform float u_px;
 uniform float u_levels;
 uniform float u_contrast;
 uniform float u_start;
+uniform float u_amp;
+uniform float u_freq;
+uniform float u_glow;
 uniform int   u_shape;   // 0 gradient, 1 wave, 2 radial (bright center → dark edges)
 uniform int   u_bayer;   // 2, 4, 8, 16
 
@@ -75,9 +84,11 @@ void main() {
   float top = 1.0 - uv.y;                    // 0 at the top, 1 at the bottom
 
   // Slow, soft waves bend where the green begins and breathe its brightness.
-  float wave = 0.045 * sin(uv.x * 3.1 + t * 0.55)
-             + 0.025 * sin(uv.x * 7.3 - t * 0.8 + top * 3.0)
-             + 0.015 * sin((uv.x + top) * 11.0 + t * 1.1);
+  float f = u_freq;
+  float wave = (0.045 * sin(uv.x * 3.1 * f + t * 0.55)
+             + 0.025 * sin(uv.x * 7.3 * f - t * 0.8 + top * 3.0 * f)
+             + 0.015 * sin((uv.x + top) * 11.0 * f + t * 1.1)
+             + 0.020 * sin(top * 6.0 * f - t * 0.9)) * u_amp;   // last term: bands drifting down
   if (u_shape == 1) wave *= 2.2;
 
   // Same pipeline as the Figma Dither effect: linear gradient → contrast per channel →
@@ -90,7 +101,7 @@ void main() {
     float r = length(d) / 0.62;
     v = clamp(1.0 - r + wave * 0.8, 0.0, 1.0);
   }
-  vec3 col = mix(u_back, u_front, v);
+  vec3 col = mix(u_back, u_front * u_glow, v);
   col = clamp((col - 0.5) * u_contrast + 0.5, 0.0, 1.0);
   // Tiny dead zone so near-black stays pure black (no stray dots at the top), scaled back up
   // so the bottom green keeps its brightness.
@@ -115,6 +126,9 @@ export const DitheringShader: React.FC<Props> = ({
   levels = 8,
   contrast = 1.26,
   start = 0,
+  amplitude = 1,
+  frequency = 1,
+  glow = 1,
   className = '',
   style,
 }) => {
@@ -152,6 +166,9 @@ export const DitheringShader: React.FC<Props> = ({
     gl.uniform1f(U('u_levels'), levels);
     gl.uniform1f(U('u_contrast'), contrast);
     gl.uniform1f(U('u_start'), start);
+    gl.uniform1f(U('u_amp'), amplitude);
+    gl.uniform1f(U('u_freq'), frequency);
+    gl.uniform1f(U('u_glow'), glow);
     gl.uniform1i(U('u_shape'), shape === 'wave' ? 1 : shape === 'radial' ? 2 : 0);
     gl.uniform1i(U('u_bayer'), parseInt(type, 10));
 
@@ -194,7 +211,7 @@ export const DitheringShader: React.FC<Props> = ({
       document.removeEventListener('visibilitychange', onVis);
       gl.deleteBuffer(buf); gl.deleteProgram(prog);
     };
-  }, [shape, type, colorBack, colorFront, pxSize, speed, levels, contrast, start]);
+  }, [shape, type, colorBack, colorFront, pxSize, speed, levels, contrast, start, amplitude, frequency, glow]);
 
   return (
     <div className={`absolute inset-0 overflow-hidden ${className}`} style={style} aria-hidden="true">
