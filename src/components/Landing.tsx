@@ -227,9 +227,11 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       </section>
 
       {/* CTA + footer, with the hero's dither rising from the very bottom of the page */}
-      <div className="relative isolate overflow-hidden">
-        <div className="absolute inset-x-0 bottom-0 h-[720px] -z-10 pointer-events-none"
-          style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 45%)', maskImage: 'linear-gradient(to bottom, transparent 0%, #000 45%)' }}>
+      {/* No overflow clipping here: the dither layer is taller than this block and rises above it,
+          fading in from fully transparent, so there's no visible edge where the sections meet. */}
+      <div className="relative isolate">
+        <div className="absolute inset-x-0 bottom-0 h-[900px] -z-10 pointer-events-none"
+          style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 30%, #000 60%)', maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 30%, #000 60%)' }}>
           <DitheringShader shape="gradient" type="16x16" colorBack="#070C0A" colorFront="#2A6E50" pxSize={1} levels={8} contrast={1.26} amplitude={2.5} speed={1} />
         </div>
 
