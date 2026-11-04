@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icons } from './icons';
 import { NetWorth, Liquidity, Account } from './OrbitWidgets';
 import { DitheringShader } from './ui/dithering-shader';
+import { InstitutionLogo } from './InstitutionLogo';
 
 /**
  * "Take a closer look" explorer (Apple iPhone page pattern).
@@ -157,7 +158,8 @@ const CurrencyJourney: React.FC<{ play: boolean; cur: Swatch; onPick: (c: Swatch
         <p className="text-[16px] font-semibold text-white">Hi, Jazz!</p>
         <span className="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center" style={{ color: MUTED }}><Icons.User size={15} /></span>
       </div>
-      <Glass className="mx-3 mt-4 p-3.5 relative">
+      {/* z-20: keeps the currency dropdown above the accounts card below it */}
+      <Glass className="mx-3 mt-4 p-3.5 relative z-20">
         <Lbl>Net worth</Lbl>
         <div className="flex items-baseline gap-1 mt-1">
           <span className="text-[18px]" style={{ color: FAINT }}>{shown.sym}</span>
@@ -180,7 +182,7 @@ const CurrencyJourney: React.FC<{ play: boolean; cur: Swatch; onPick: (c: Swatch
       <Glass className="mx-3 mt-3 px-3 py-2.5">
         {[['BPI', 'Emergency Fund', '₱220,000'], ['Wealthsimple', 'TFSA', 'C$16,800']].map(([i, n, a]) => (
           <div key={n} className="flex items-center gap-2.5 py-1.5">
-            <span className="w-7 h-7 rounded-[9px] bg-white/10" />
+            <InstitutionLogo name={i} size={28} radius={9} />
             <span className="flex-1 text-[11px] font-medium text-white">{n}<br /><span className="text-[9px] font-normal" style={{ color: FAINT }}>{i}</span></span>
             <span className="text-[11px] font-semibold text-white tabular-nums">{a}</span>
           </div>
