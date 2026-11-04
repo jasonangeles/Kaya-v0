@@ -39,11 +39,11 @@ const Tile: React.FC<{ title: string; body: string; className?: string; children
           <DitheringShader shape="top" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} start={0.8} amplitude={1.5} speed={1.5} />
         </div>
       )}
-      {/* Strokes: the widget gradient edge (white 10% → 0) always, plus a mint edge on hover that
-          fades from the top so it isn't a solid outline all the way round */}
+      {/* Strokes: the widget gradient edge (white 10% → 0) always, plus a mint edge on hover
+          (100% at the top → 10% at the bottom) so the whole card shape reads */}
       <span aria-hidden className="kaya-stroke" style={{ ['--stroke' as any]: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 100%)' }} />
       <span aria-hidden className="kaya-stroke transition-opacity duration-500"
-        style={{ ['--stroke' as any]: 'linear-gradient(180deg, rgba(220,245,223,0.9) 0%, rgba(220,245,223,0.35) 35%, rgba(220,245,223,0) 75%)', opacity: hover ? 1 : 0 }} />
+        style={{ ['--stroke' as any]: 'linear-gradient(180deg, rgba(220,245,223,1) 0%, rgba(220,245,223,0.10) 100%)', opacity: hover ? 1 : 0 }} />
       <div className="flex-1 flex items-center justify-center min-h-[120px] mb-5">{children}</div>
       <h3 className="text-[17px] font-medium text-white">{title}</h3>
       <p className="text-[14px] mt-1.5 leading-relaxed" style={{ color: FAINT }}>{body}</p>
@@ -85,7 +85,7 @@ export const DetailsBento: React.FC = () => (
 
     <Tile title="Logging streak" body="Update your balances once a month and keep the flame going.">
       <div className="text-center">
-        <span className="inline-flex w-12 h-12 rounded-2xl items-center justify-center animate-[subtlePulse_2.4s_ease-in-out_infinite]" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}><Icons.Fire size={24} weight="fill" /></span>
+        <span className="inline-flex w-12 h-12 rounded-2xl items-center justify-center animate-[subtlePulse_2.4s_ease-in-out_infinite]" style={{ background: 'linear-gradient(rgba(245,158,11,0.15), rgba(245,158,11,0.15)), #0d0f0e', color: '#f59e0b' }}><Icons.Fire size={24} weight="fill" /></span>
         <p className="text-[20px] font-semibold text-white mt-2">3 months</p>
         <div className="flex justify-center gap-1.5 mt-2">
           {['J', 'J', 'A', 'S', 'O', 'N'].map((m, i) => (
