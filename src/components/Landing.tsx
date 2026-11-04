@@ -76,8 +76,11 @@ const HeroVisual: React.FC = () => {
 
 // Scroll-scrubbed word reveal (the GSAP SplitText + ScrollTrigger "scrub" look, done natively):
 // the text is split into words, every word starts dim, and words light up one after another
-// as the block moves up the screen, then dim again if you scroll back. The last line ends in
-// mint. Opacity only, written straight to the DOM in one rAF per scroll (no React re-renders).
+// as the block moves up the screen (and dim again if you scroll back).
+// End state = the hero's gradient text: each word paints its own slice of ONE gradient sized
+// to the whole heading (positions measured on resize), so the gradient stays seamless while
+// words fade individually. Opacity only, one rAF per scroll, no React re-renders.
+const GRAD = 'radial-gradient(232% 220% at -30% -59%, #ffffff 44%, #ebffda 55%, #003a30 100%)';
 const ScrollWords: React.FC<{ lines: string[]; className?: string }> = ({ lines, className = '' }) => {
   const root = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -85,32 +88,47 @@ const ScrollWords: React.FC<{ lines: string[]; className?: string }> = ({ lines,
     if (!el) return;
     const words = Array.from(el.querySelectorAll<HTMLSpanElement>('[data-w]'));
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { words.forEach(w => (w.style.opacity = '1')); return; }
+    // Give every word its slice of the shared gradient
+    const layout = () => {
+      const W = el.offsetWidth, H = el.offsetHeight;
+      const base = el.getBoundingClientRect();
+      words.forEach(w => {
+        const r = w.getBoundingClientRect();
+        w.style.backgroundSize = `${W}px ${H}px`;
+        w.style.backgroundPosition = `${-(r.left - base.left)}px ${-(r.top - base.top)}px`;
+      });
+    };
     let raf = 0;
     const update = () => {
       raf = 0;
       const r = el.getBoundingClientRect(), vh = window.innerHeight;
-      // 0 when the block's top is at 85% of the screen, 1 when its bottom reaches 45%
-      const p = Math.min(1, Math.max(0, (vh * 0.85 - r.top) / (r.height + vh * 0.4)));
+      // 0 when the block's top is at 90% of the screen, 1 when its bottom reaches 70%.
+      // Also forced to 1 at the very end of the page, so the last words always light up.
+      let p = Math.min(1, Math.max(0, (vh * 0.9 - r.top) / (r.height + vh * 0.2)));
+      const atEnd = window.scrollY + vh >= document.documentElement.scrollHeight - 4;
+      if (atEnd) p = 1;
       const n = words.length;
       words.forEach((w, i) => {
-        const f = Math.min(1, Math.max(0, p * (n + 2) - i - 1));   // each word fades over ~1 step
+        const f = reduce ? 1 : Math.min(1, Math.max(0, p * (n + 1) - i));
         w.style.opacity = (0.16 + 0.84 * f).toFixed(3);
       });
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
+    const onResize = () => { layout(); onScroll(); };
+    layout(); update();
+    document.fonts?.ready.then(onResize);
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(raf); };
+    window.addEventListener('resize', onResize);
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); };
   }, [lines]);
   return (
     <h2 ref={root} className={className} aria-label={lines.join(' ')}>
       {lines.map((line, li) => (
-        <span key={li} className="block" aria-hidden="true" style={{ color: li === lines.length - 1 ? '#dcf5df' : '#ffffff' }}>
+        <span key={li} className="block" aria-hidden="true">
           {line.split(' ').map((w, wi) => (
             <React.Fragment key={wi}>
-              <span data-w className="inline-block" style={{ opacity: 0.16, transition: 'opacity .25s linear' }}>{w}</span>{' '}
+              <span data-w className="inline-block"
+                style={{ opacity: 0.16, transition: 'opacity .25s linear', backgroundImage: GRAD, WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', paddingBottom: '0.08em', marginBottom: '-0.08em' }}>{w}</span>{' '}
             </React.Fragment>
           ))}
         </span>
@@ -282,7 +300,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
 
         <section className="max-w-6xl mx-auto px-6 pt-24 sm:pt-32 pb-24 sm:pb-32 text-center">
           <ScrollWords
-            lines={['Pesos in Manila.', 'Dollars in Toronto.', 'Sats in cold storage.', 'One number for all of it.']}
+            lines={['Every bank.', 'Every wallet.', 'Every currency.', 'One number.']}
             className="text-[44px] sm:text-[72px] lg:text-[92px] font-semibold leading-[0.95] tracking-[-0.038em]"
           />
           <Reveal className="mt-12">
