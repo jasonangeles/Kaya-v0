@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Icons } from './icons';
 import { InstitutionLogo } from './InstitutionLogo';
+import { DitheringShader } from './ui/dithering-shader';
 
 /** "The little things" bento grid: smaller features, each with a tiny live visual. */
 
@@ -8,17 +9,37 @@ const GREEN = '#399d74';
 const MUTED = '#dcf5df';
 const FAINT = '#6e8777';
 
-const Tile: React.FC<{ title: string; body: string; className?: string; children: React.ReactNode }> = ({ title, body, className = '', children }) => (
-  <div className={`relative overflow-hidden rounded-[28px] border border-white/[0.07] p-6 flex flex-col ${className}`}
-    style={{ background: 'linear-gradient(160deg, rgba(220,245,223,0.05) 0%, rgba(66,66,66,0.10) 50%, rgba(57,157,116,0.06) 100%)' }}>
-    <div className="flex-1 flex items-center justify-center min-h-[120px] mb-5">{children}</div>
-    <h3 className="text-[17px] font-medium text-white">{title}</h3>
-    <p className="text-[14px] text-zinc-400 mt-1.5 leading-relaxed">{body}</p>
-  </div>
-);
+// Card. On hover a waving dither glow fades in from the top-center (Figma 124:6983), so the
+// frosted widgets inside show their blur and gradient edges. The shader mounts while hovered
+// (and unmounts after the fade-out), so idle cards do no GPU work.
+const Tile: React.FC<{ title: string; body: string; className?: string; children: React.ReactNode }> = ({ title, body, className = '', children }) => {
+  const [hover, setHover] = useState(false);
+  const [armed, setArmed] = useState(false);
+  // Unmount the shader shortly after the fade-out so idle cards use no GPU
+  useEffect(() => {
+    if (hover) { setArmed(true); return; }
+    const t = setTimeout(() => setArmed(false), 700);
+    return () => clearTimeout(t);
+  }, [hover]);
+  return (
+    <div onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)}
+      className={`relative isolate overflow-hidden rounded-[28px] border border-white/[0.07] p-6 flex flex-col ${className}`}
+      style={{ background: 'linear-gradient(160deg, rgba(220,245,223,0.05) 0%, rgba(117,126,118,0.08) 25%, rgba(66,66,66,0.10) 50%, rgba(57,157,116,0.06) 100%)' }}>
+      {armed && (
+        <div aria-hidden className="absolute -z-10 pointer-events-none transition-opacity duration-500 animate-[fadeIn_.5s_ease-out]"
+          style={{ left: '-38%', width: '176%', top: 0, height: '167%', opacity: hover ? 1 : 0 }}>
+          <DitheringShader shape="top" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.1} amplitude={2} speed={1.5} />
+        </div>
+      )}
+      <div className="flex-1 flex items-center justify-center min-h-[120px] mb-5">{children}</div>
+      <h3 className="text-[17px] font-medium text-white">{title}</h3>
+      <p className="text-[14px] mt-1.5 leading-relaxed" style={{ color: FAINT }}>{body}</p>
+    </div>
+  );
+};
 
 const Chip: React.FC<{ icon: React.ReactNode; label: string; sub: string }> = ({ icon, label, sub }) => (
-  <div className="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-3">
+  <div className="kaya-frost flex items-center gap-3 rounded-2xl px-3.5 py-3">
     <span className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(57,157,116,0.15)', color: GREEN }}>{icon}</span>
     <span><span className="block text-[13px] font-medium text-white">{label}</span><span className="block text-[11px]" style={{ color: FAINT }}>{sub}</span></span>
   </div>
@@ -67,7 +88,7 @@ export const DetailsBento: React.FC = () => (
     </Tile>
 
     <Tile title="Debts count too" body="Add loans and credit cards. Kaya subtracts them, so your number stays honest.">
-      <div className="w-full max-w-[240px] space-y-2 text-[13px]">
+      <div className="kaya-frost w-full max-w-[260px] rounded-2xl px-4 py-3.5 space-y-2 text-[13px]">
         <div className="flex justify-between"><span className="text-zinc-400">Assets</span><span className="text-white font-semibold">₱1.92M</span></div>
         <div className="flex justify-between"><span className="text-zinc-400">Liabilities</span><span className="text-rose-400 font-semibold">−₱72.8K</span></div>
         <div className="border-t border-white/10 pt-2 flex justify-between"><span style={{ color: MUTED }}>Net worth</span><span className="font-semibold" style={{ color: MUTED }}>₱1.85M</span></div>
@@ -75,7 +96,7 @@ export const DetailsBento: React.FC = () => (
     </Tile>
 
     <Tile title="Rates you pick" body="Pin the currency pairs you care about and see how they moved this week.">
-      <div className="w-full max-w-[250px] space-y-2.5">
+      <div className="kaya-frost w-full max-w-[270px] rounded-2xl px-4 py-3 space-y-2.5">
         {[['USD', '63.55', 'PHP', '0.41', true], ['CAD', '45.48', 'PHP', '0.28', true], ['USD', '1.40', 'CAD', '0.12', false]].map(([a, v, b, c, up], i) => (
           <div key={i} className="flex items-center justify-between">
             <div>
@@ -91,7 +112,7 @@ export const DetailsBento: React.FC = () => (
     </Tile>
 
     <Tile title="Track without counting" body="Follow a joint account or a loan you manage for family, without adding it to your own total.">
-      <div className="w-full max-w-[260px] rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-3 flex items-center gap-3 opacity-80">
+      <div className="kaya-frost w-full max-w-[260px] rounded-2xl px-3.5 py-3 flex items-center gap-3">
         <InstitutionLogo name="BDO" size={36} radius={11} />
         <span className="flex-1 min-w-0">
           <span className="block text-[13px] font-medium text-white truncate">Mom's Savings</span>
@@ -102,7 +123,7 @@ export const DetailsBento: React.FC = () => (
     </Tile>
 
     <Tile className="md:col-span-2" title="Monthly reminders" body="A gentle nudge when it's time to update your balances. Nothing more.">
-      <div className="w-full max-w-[380px] rounded-[22px] bg-white/[0.07] backdrop-blur-xl px-4 py-3.5 flex items-start gap-3 animate-[kayaFadeUp_.6s_ease-out]">
+      <div className="kaya-frost w-full max-w-[380px] rounded-[22px] px-4 py-3.5 flex items-start gap-3 animate-[kayaFadeUp_.6s_ease-out]">
         <span className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(160deg, #193F2F, #0b1712)' }}><img src="/logo-icon.svg" alt="" className="w-5 h-5" /></span>
         <span className="flex-1 min-w-0">
           <span className="flex justify-between text-[12px]"><span className="font-semibold text-white">Kaya</span><span style={{ color: FAINT }}>now</span></span>
