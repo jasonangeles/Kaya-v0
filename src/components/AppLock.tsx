@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Icons } from './icons';
+import { DitherBackground } from './DitherBackground';
 
 // --- Crypto + WebAuthn helpers -------------------------------------------
 
@@ -135,7 +136,18 @@ const Keypad = ({
   </div>
 );
 
+// Name the biometric the way the device does.
+const biometricName = () => {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua)) return 'Face ID';
+  if (/Macintosh/.test(ua)) return 'Touch ID';
+  return 'fingerprint';
+};
+
 // Full-screen lock overlay shown when the app is locked.
+// Flow (same as the landing page demo): Kaya mark in a Face ID frame → "Unlock with Face ID"
+// (auto-prompted) → frame pulses while scanning → turns green with a check and "Unlocked" →
+// the lock screen fades away. PIN entry is one tap away ("Use PIN instead").
 export const LockScreen = ({
   expectedHash,
   biometric,
@@ -149,13 +161,27 @@ export const LockScreen = ({
   onUnlock: () => void;
   onForgot?: () => void;
 }) => {
+  const hasBio = biometric && !!biometricId;
+  const bioName = biometricName();
   const [digits, setDigits] = useState('');
   const [error, setError] = useState(false);
+  const [usePin, setUsePin] = useState(!hasBio);
+  const [phase, setPhase] = useState<'idle' | 'scanning' | 'ok'>('idle');
+  const [leaving, setLeaving] = useState(false);
+  const theme = typeof document !== 'undefined' && document.documentElement.classList.contains('light') ? 'light' : 'dark';
+
+  // Success: hold "Unlocked" for a beat, fade the lock screen out, then hand over.
+  const succeed = () => {
+    setPhase('ok');
+    setTimeout(() => setLeaving(true), 550);
+    setTimeout(onUnlock, 950);
+  };
 
   const tryBiometric = async () => {
-    if (!biometric || !biometricId) return;
-    const ok = await verifyBiometric(biometricId);
-    if (ok) onUnlock();
+    if (!hasBio || phase !== 'idle') return;
+    setPhase('scanning');
+    const ok = await verifyBiometric(biometricId!);
+    if (ok) succeed(); else setPhase('idle');
   };
 
   useEffect(() => {
@@ -165,13 +191,13 @@ export const LockScreen = ({
   }, []);
 
   const onDigit = async (d: string) => {
-    if (digits.length >= 4) return;
+    if (digits.length >= 4 || phase === 'ok') return;
     const next = digits + d;
     setDigits(next);
     if (next.length === 4) {
       const h = await hashPin(next);
       if (h === expectedHash) {
-        onUnlock();
+        succeed();
       } else {
         setError(true);
         setTimeout(() => { setError(false); setDigits(''); }, 600);
@@ -179,25 +205,55 @@ export const LockScreen = ({
     }
   };
 
+  const ok = phase === 'ok', scanning = phase === 'scanning';
+  const title = ok ? 'Unlocked' : 'Kaya is locked';
+  const sub = ok ? 'Welcome back' : scanning ? `Looking for your ${bioName === 'Face ID' ? 'face' : 'fingerprint'}…` : usePin ? 'Enter your PIN to unlock' : `Use ${bioName} or your PIN`;
+
   return (
-    <div className="fixed inset-0 z-[60] bg-paper flex flex-col items-center justify-center px-8 max-w-md mx-auto animate-[fadeIn_0.2s_ease-out]">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-2 h-2 rounded-full bg-ink animate-pulse" />
-        <h1 className="text-lg font-medium tracking-wide text-ink uppercase">Kaya</h1>
+    <div className="fixed inset-0 z-[60] bg-paper max-w-md mx-auto overflow-hidden isolate animate-[fadeIn_0.2s_ease-out]"
+      style={{ opacity: leaving ? 0 : 1, transform: leaving ? 'scale(1.04)' : 'none', transition: 'opacity .4s ease, transform .4s ease' }}>
+      <DitherBackground theme={theme} />
+      <div className="h-full flex flex-col items-center justify-center px-8">
+        {/* Face ID frame with the Kaya mark (check mark once unlocked) */}
+        <div className="relative w-20 h-20 flex items-center justify-center">
+          <span className="absolute inset-0 rounded-[22px] border-2 transition-colors duration-300"
+            style={{ borderColor: ok ? '#399d74' : scanning ? 'rgb(var(--muted))' : 'rgb(var(--ink) / 0.15)' }} />
+          {scanning && <span className="absolute inset-1.5 rounded-[17px] animate-pulse" style={{ background: 'rgb(var(--muted) / 0.08)' }} />}
+          {ok
+            ? <span className="text-[#399d74] animate-[kayaFadeUp_0.25s_ease-out]"><Icons.Check size={34} weight="bold" /></span>
+            : <img src="/logo-icon.svg" alt="" className="w-10 h-10 kaya-splash-logo" draggable={false} />}
+        </div>
+        <h1 key={title} className="text-[20px] font-semibold text-ink mt-5 animate-[kayaFadeUp_0.25s_ease-out]">{title}</h1>
+        <p className="text-textFaint text-sm mt-1">{sub}</p>
+
+        {usePin ? (
+          <div className={`transition-opacity duration-300 ${ok ? 'opacity-0 pointer-events-none' : ''}`}>
+            <Dots count={digits.length} error={error} />
+            <Keypad
+              onDigit={onDigit}
+              onBackspace={() => setDigits(d => d.slice(0, -1))}
+              biometric={hasBio}
+              onBiometric={() => { setUsePin(false); tryBiometric(); }}
+            />
+            <div className="flex flex-col items-center gap-3 mt-8">
+              {hasBio && (
+                <button onClick={() => { setUsePin(false); tryBiometric(); }} className="text-textMuted text-sm hover:text-ink transition-colors">Use {bioName} instead</button>
+              )}
+              {onForgot && (
+                <button onClick={onForgot} className="text-textFaint text-sm hover:text-ink transition-colors">Forgot PIN?</button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className={`flex flex-col items-center transition-opacity duration-300 ${ok ? 'opacity-0 pointer-events-none' : ''}`}>
+            <button onClick={tryBiometric} disabled={scanning}
+              className="kaya-btn mt-7 h-11 px-5 rounded-full inline-flex items-center gap-2 text-[14px] disabled:opacity-70">
+              <Icons.Fingerprint size={18} /> Unlock with {bioName}
+            </button>
+            <button onClick={() => setUsePin(true)} className="mt-4 text-textFaint text-sm hover:text-ink transition-colors">Use PIN instead</button>
+          </div>
+        )}
       </div>
-      <p className="text-textMuted text-sm mb-2">Enter your PIN to unlock</p>
-      <Dots count={digits.length} error={error} />
-      <Keypad
-        onDigit={onDigit}
-        onBackspace={() => setDigits(d => d.slice(0, -1))}
-        biometric={biometric && !!biometricId}
-        onBiometric={tryBiometric}
-      />
-      {onForgot && (
-        <button onClick={onForgot} className="mt-8 text-textMuted text-sm hover:text-ink transition-colors">
-          Forgot PIN?
-        </button>
-      )}
     </div>
   );
 };

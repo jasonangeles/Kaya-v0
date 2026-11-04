@@ -389,7 +389,7 @@ const PrivateJourney: React.FC<{ play: boolean; screen: React.RefObject<HTMLDivE
   const center = useCenter(screen);
   const [tap, setTap] = useState({ x: 146, y: 260 });
   useLayoutEffect(() => { if (step === 1 || step === 2) setTap(center(btn.current)); }, [step]); // eslint-disable-line
-  const scanning = step === 3, ok = step === 4, unlocked = step >= 5;
+  const scanning = step === 3, ok = step >= 4, unlocked = step >= 5; // ok stays on so the lock screen fades out still showing "Unlocked"
   return (
     <>
       <StatusBar />
