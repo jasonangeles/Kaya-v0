@@ -237,7 +237,7 @@ export const ThemeShowcase: React.FC = () => {
       {/* Picker */}
       <div className="flex items-start justify-center gap-4 sm:gap-5 flex-wrap">
         {/* Segmented Dark / Light toggle (Figma 120:5717 / 120:5789); the active pill slides */}
-        <div role="radiogroup" aria-label="Theme" className="relative inline-flex p-2 rounded-[20px] border border-white/10" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <div role="radiogroup" aria-label="Theme" className="kaya-frost inline-flex p-2 rounded-[20px]">
           <span aria-hidden className="absolute top-2 bottom-2 left-2 w-[88px] rounded-[12px] overflow-hidden transition-transform duration-[450ms] ease-[cubic-bezier(.22,1,.36,1)]"
             style={{ transform: sel === 'light' ? 'translateX(88px)' : 'none', boxShadow: '0 0 0 2px #dcf5df inset' }}>
             {/* dark knob: black with a soft green glow; light knob: white */}
