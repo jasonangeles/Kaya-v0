@@ -127,7 +127,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       </div>
 
       {/* Hero: pulled up under the sticky header so the background reaches the top edge */}
-      <section className="relative isolate -mt-16 pt-16">
+      <section className="relative isolate flow-root -mt-16 pt-16">
         {/* Animated dither, anchored to the bottom of the hero: black at the top, green at the
             bottom. It runs 120px past the hero so the green shows around the rounded top
             corners of the next section instead of being cut off. */}
