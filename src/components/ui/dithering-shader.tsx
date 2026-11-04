@@ -94,12 +94,12 @@ void main() {
   // Same pipeline as the Figma Dither effect: linear gradient → contrast per channel →
   // ordered dither of each RGB channel to N levels. (Contrast is what keeps the top
   // half pure black and the red channel at 0 — that's the look of bg-dither.png.)
-  float v = clamp((top - u_start + wave) / (1.0 - u_start), 0.0, 1.0);
+  float v = clamp((top - (u_shape == 4 ? 0.0 : u_start) + wave) / (1.0 - (u_shape == 4 ? 0.0 : u_start)), 0.0, 1.0);
   if (u_shape == 4) {
-    // Glow hanging from the top-center, edges rippling with the wave
-    vec2 d = (uv - vec2(0.5, 1.0)) * vec2(u_res.x / u_res.y, 1.0);
-    float r = length(d);
-    v = clamp(exp(-(r * r) / (2.0 * 0.55 * 0.55)) + wave * 1.4, 0.0, 1.0);
+    // 'top': green at the top fading to black, edge rippling with the wave
+    // Linear wash from the top that's gone by about the middle (u_start = where it ends)
+    float end = u_start > 0.0 ? u_start : 0.5;
+    v = clamp(1.0 - top / end + wave * 1.2, 0.0, 1.0);
   } else
   if (u_shape == 3) {
     // Slow swirl: a soft round glow with spiral arms that rotate around the middle

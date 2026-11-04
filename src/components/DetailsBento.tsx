@@ -14,11 +14,18 @@ const FAINT = '#6e8777';
 // (and unmounts after the fade-out), so idle cards do no GPU work.
 const Tile: React.FC<{ title: string; body: string; className?: string; children: React.ReactNode }> = ({ title, body, className = '', children }) => {
   const [hover, setHover] = useState(false);
-  const [armed, setArmed] = useState(false);
-  // Unmount the shader shortly after the fade-out so idle cards use no GPU
+  const [armed, setArmed] = useState(false);   // shader mounted
+  const [shown, setShown] = useState(false);   // shader faded in
+  // Mount on hover, fade in on the next frame (plain opacity), fade out on leave, then unmount
+  // so idle cards do no GPU work.
   useEffect(() => {
-    if (hover) { setArmed(true); return; }
-    const t = setTimeout(() => setArmed(false), 700);
+    if (hover) {
+      setArmed(true);
+      const r = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
+      return () => cancelAnimationFrame(r);
+    }
+    setShown(false);
+    const t = setTimeout(() => setArmed(false), 600);
     return () => clearTimeout(t);
   }, [hover]);
   return (
@@ -26,9 +33,10 @@ const Tile: React.FC<{ title: string; body: string; className?: string; children
       className={`relative isolate overflow-hidden rounded-[28px] border border-white/[0.07] p-6 flex flex-col ${className}`}
       style={{ background: 'linear-gradient(160deg, rgba(220,245,223,0.05) 0%, rgba(117,126,118,0.08) 25%, rgba(66,66,66,0.10) 50%, rgba(57,157,116,0.06) 100%)' }}>
       {armed && (
-        <div aria-hidden className="absolute -z-10 pointer-events-none transition-opacity duration-500 animate-[fadeIn_.5s_ease-out]"
-          style={{ left: '-38%', width: '176%', top: 0, height: '167%', opacity: hover ? 1 : 0 }}>
-          <DitheringShader shape="top" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.1} amplitude={2} speed={1.5} />
+        <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none transition-opacity duration-500 ease-out"
+          style={{ opacity: shown ? 0.75 : 0 }}>
+          {/* Subtle: green only in the top half, fading to black before the middle */}
+          <DitheringShader shape="top" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} start={0.5} amplitude={1.5} speed={1.5} />
         </div>
       )}
       <div className="flex-1 flex items-center justify-center min-h-[120px] mb-5">{children}</div>
