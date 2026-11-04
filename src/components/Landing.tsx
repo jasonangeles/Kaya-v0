@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Icons } from './icons';
 import { SignInModal } from './SignInModal';
+import { DitheringShader } from './ui/dithering-shader';
 
 // --- Scroll reveal (fade + rise, once) -----------------------------------
 const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({ children, delay = 0, className = '' }) => {
@@ -60,7 +61,7 @@ const HeroPhone: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
   return (
     <div className="relative mx-auto w-[282px] sm:w-[316px]" onMouseMove={onMove} onMouseLeave={() => setTilt({ x: 0, y: 0 })}>
-      {/* Green ambience — kept high, behind the chart, so it never lights the bottom */}
+      {/* Green ambience, kept high behind the chart so it never lights the bottom */}
       <div className="absolute inset-x-0 top-0 h-[42%] blur-3xl" style={{ background: 'radial-gradient(ellipse 64% 92% at 50% 20%, rgba(16,185,129,0.20), transparent 72%)' }} />
       <div style={{ transform: `perspective(1100px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`, transition: 'transform .18s ease-out' }}>
         <div
@@ -81,7 +82,7 @@ const HeroPhone: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <span className="absolute right-[-1px] top-[185px] w-[2px] h-16 rounded-r bg-zinc-700" />
         </div>
       </div>
-      {/* Fixed fade overlay — darkens the bottom without clipping the moving device */}
+      {/* Fixed fade overlay: darkens the bottom without clipping the moving device */}
       <div className="pointer-events-none absolute inset-x-0 -bottom-8 h-[54%] z-20" style={{ background: 'linear-gradient(to bottom, transparent 0%, #000 70%)' }} />
     </div>
   );
@@ -259,14 +260,14 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
   }, []);
 
   const props = [
-    { icon: <Icons.Global size={22} />, title: 'Every currency', desc: 'Hold pesos, dollars, dirhams, even sats. Kaya converts it all live, so your total always makes sense.' },
-    { icon: <Icons.Trend size={22} />, title: 'Passive income', desc: 'Log dividends and interest as they arrive and watch them grow month over month — the quiet habit that builds wealth.' },
-    { icon: <Icons.Lock size={22} />, title: 'Privacy-first', desc: 'Manual by design. No bank connections, no scraping. Export or wipe your data anytime.' }
+    { icon: <Icons.Global size={22} />, title: 'Any currency', desc: 'Pesos, dollars, dirhams, even sats. Kaya converts everything at live rates, so your total always adds up.' },
+    { icon: <Icons.Trend size={22} />, title: 'Passive income', desc: 'Log dividends and interest when they land. You can see what they bring in each month and whether it\'s going up.' },
+    { icon: <Icons.Lock size={22} />, title: 'Private by design', desc: 'You type in your own balances. Kaya never connects to your bank, and you can export or delete your data anytime.' }
   ];
   const steps = [
-    { t: 'Add your accounts', d: 'Banks, wallets, stocks, crypto. You enter the balances — nothing ever connects to your bank.' },
-    { t: 'See your net worth', d: 'Everything converts to your currency, live. Switch to USD, CAD, or Bitcoin whenever you like.' },
-    { t: 'Watch it grow', d: 'Log updates and dividends, and your wealth and habits build a real history over time.' }
+    { t: 'Add your accounts', d: 'Pick your banks, wallets, stocks and crypto, then type in the balances.' },
+    { t: 'See your net worth', d: 'Kaya converts everything to your currency. Switch to USD, CAD or Bitcoin anytime.' },
+    { t: 'Keep it current', d: 'Update a balance or log a dividend when something changes. Your history builds from there.' }
   ];
 
   return (
@@ -282,9 +283,15 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
         </div>
       </header>
 
-      {/* Hero — pulled up under the sticky header so the green glow reaches the very top edge */}
-      <section className="relative -mt-16 pt-16">
-        <div className="absolute inset-x-0 top-0 h-[700px] pointer-events-none" style={{ background: 'radial-gradient(ellipse 65% 55% at 50% 0%, rgba(16,185,129,0.18) 0%, transparent 62%)' }} />
+      {/* Hero: pulled up under the sticky header so the background reaches the top edge */}
+      <section className="relative isolate -mt-16 pt-16">
+        {/* Animated dither (same settings as the app background), fading into the page at the bottom */}
+        <div
+          className="absolute inset-0 -z-10 pointer-events-none"
+          style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 78%, transparent 100%)', maskImage: 'linear-gradient(to bottom, #000 78%, transparent 100%)' }}
+        >
+          <DitheringShader shape="gradient" type="16x16" colorBack="#070C0A" colorFront="#193F2F" pxSize={1} levels={8} contrast={1.26} speed={0.6} />
+        </div>
         <div className="max-w-6xl mx-auto px-6 pt-20 pb-24 relative">
           <Reveal className="text-center max-w-2xl mx-auto">
             <span className="inline-block text-[11px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-6">Private net worth tracker</span>
@@ -292,12 +299,12 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
               Your net worth,<br /><span className="text-zinc-500">in one number.</span>
             </h1>
             <p className="text-lg text-zinc-400 mt-6 leading-relaxed">
-              Banks, savings, stocks, crypto — in any currency. Kaya adds it all up and keeps it current. No bank logins.
+              Pesos in BPI, dollars in a TFSA, a bit of Bitcoin. Kaya adds it all up in the currency you choose. You enter the balances, so there are no bank logins.
             </p>
             <div className="flex items-center justify-center gap-3 mt-8">
               <button onClick={openSignIn} className="bg-white text-black font-semibold px-6 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Start for free</button>
             </div>
-            <p className="text-xs text-zinc-600 mt-4">No bank logins · No ads · Your data stays yours</p>
+            <p className="text-xs text-zinc-600 mt-4">Free to start. No ads. Your data stays yours.</p>
           </Reveal>
 
           <Reveal delay={150} className="flex justify-center mt-12">
@@ -326,8 +333,8 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           <Reveal>
             <span className="text-xs uppercase tracking-widest text-emerald-400">One clear number</span>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3 leading-tight">A total that finally makes sense</h2>
-            <p className="text-zinc-400 mt-4 leading-relaxed text-lg">Cash in Manila, a TFSA in Canada, sats in cold storage — Kaya converts it all into your currency, live, so the number at the top is always real. Tap it to view your wealth in USD, CAD, or Bitcoin.</p>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3 leading-tight">One total for everything</h2>
+            <p className="text-zinc-400 mt-4 leading-relaxed text-lg">Savings in Manila, a TFSA in Toronto, Bitcoin on a Ledger. Kaya converts it all into one currency at live rates. Tap the total to see it in USD, CAD or Bitcoin.</p>
           </Reveal>
           <Reveal delay={120}><GlowPhone tilt={-9}><OverviewScreen /></GlowPhone></Reveal>
         </div>
@@ -338,8 +345,8 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           <Reveal className="lg:order-2">
             <span className="text-xs uppercase tracking-widest text-emerald-400">Passive income</span>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3 leading-tight">Watch the dividends build</h2>
-            <p className="text-zinc-400 mt-4 leading-relaxed text-lg">Log dividends and interest as they land. See what you're averaging a month, step back through any year, and duplicate a recurring payout in two taps instead of retyping it.</p>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3 leading-tight">Watch your dividends add up</h2>
+            <p className="text-zinc-400 mt-4 leading-relaxed text-lg">Log each dividend or interest payment as it arrives. Kaya shows your monthly average and lets you look back at any year. Repeat payouts take two taps to copy.</p>
           </Reveal>
           <Reveal delay={120} className="lg:order-1"><GlowPhone tilt={9}><IncomeScreen /></GlowPhone></Reveal>
         </div>
@@ -349,9 +356,9 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           <Reveal>
-            <span className="text-xs uppercase tracking-widest text-emerald-400">Allocation & liquidity</span>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3 leading-tight">Know exactly where you stand</h2>
-            <p className="text-zinc-400 mt-4 leading-relaxed text-lg">A clean breakdown by type and currency, plus a liquid-vs-locked view — so your diversification and how much you could actually reach in a pinch are obvious at a glance. Filter to any slice to see its share of your net worth.</p>
+            <span className="text-xs uppercase tracking-widest text-emerald-400">Allocation and liquidity</span>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3 leading-tight">See where your money sits</h2>
+            <p className="text-zinc-400 mt-4 leading-relaxed text-lg">Break your wealth down by type or by currency. The liquidity view shows how much you could reach this week and how much is tied up in pensions, crypto or property.</p>
           </Reveal>
           <Reveal delay={120}><GlowPhone tilt={-9}><AllocationScreen /></GlowPhone></Reveal>
         </div>
@@ -360,8 +367,8 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       {/* How it works */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <Reveal className="text-center max-w-xl mx-auto mb-12">
-          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">Start in minutes</h2>
-          <p className="text-zinc-400 mt-3 text-lg">No setup, no linking, no spreadsheet wrangling.</p>
+          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">Set up in a few minutes</h2>
+          <p className="text-zinc-400 mt-3 text-lg">Nothing to link and no spreadsheet to build.</p>
         </Reveal>
         <div className="grid sm:grid-cols-3 gap-6 items-stretch">
           {steps.map((s, i) => (
@@ -380,8 +387,8 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
       <section className="max-w-6xl mx-auto px-6 py-20">
         <Reveal>
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 p-12 text-center" style={{ background: 'radial-gradient(ellipse 70% 120% at 50% 0%, rgba(16,185,129,0.15), transparent 70%)' }}>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">Start tracking your wealth today</h2>
-            <p className="text-zinc-400 mt-3 text-lg">Free to use. No bank linking. Yours to keep.</p>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">See your whole net worth today</h2>
+            <p className="text-zinc-400 mt-3 text-lg">Free to use. Nothing links to your bank.</p>
             <button onClick={openSignIn} className="mt-7 bg-white text-black font-semibold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Start for free</button>
           </div>
         </Reveal>
@@ -394,7 +401,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
             <div className="w-2 h-2 rounded-full bg-emerald-400" />
             <span className="font-medium tracking-wide uppercase text-sm">Kaya</span>
           </div>
-          <p className="text-xs text-zinc-600">Built for global Filipinos · Privacy-first · © {new Date().getFullYear()} Kaya</p>
+          <p className="text-xs text-zinc-600">Made for Filipinos at home and abroad · © {new Date().getFullYear()} Kaya</p>
         </div>
       </footer>
 

@@ -84,7 +84,7 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void }> = ({ 
           <>
             <h2 className="text-2xl font-semibold text-white mb-1.5">Enter your code</h2>
             <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
-              We emailed a code to <span className="text-white">{email}</span>. Enter it below — or tap the link in the email if you're on a computer.
+              We emailed a code to <span className="text-white">{email}</span>. Type it below, or tap the link in the email if you're on a computer.
             </p>
             <form onSubmit={verifyCode} className="space-y-3">
               <input
@@ -117,7 +117,7 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void }> = ({ 
           <>
             <h2 className="text-2xl font-semibold text-white mb-1.5">Track your wealth, anywhere</h2>
             <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
-              Enter your email and we'll send you a code (and a link) — no password needed. New here? This creates your account too.
+              Enter your email and we'll send you a code and a link. No password needed. If you're new, this creates your account.
             </p>
             <form onSubmit={sendCode} className="space-y-3">
               <input

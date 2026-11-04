@@ -9,15 +9,15 @@
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="Kaya is a simple, private net worth tracker. Add your accounts in any currency and see one clear total. No bank logins, no ads."
+      content="Kaya is a private net worth tracker. Add your accounts in any currency and see one total. No bank logins, no ads."
     />
     <link rel="canonical" href="https://www.kayawealth.app/" />
 
     <!-- Open Graph (Facebook, Messenger, LinkedIn, iMessage, etc.) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Kaya" />
-    <meta property="og:title" content="Kaya — Your net worth, in one number" />
-    <meta property="og:description" content="A simple, private net worth tracker. Add your accounts in any currency and see one clear total. No bank logins." />
+    <meta property="og:title" content="Kaya: your net worth in one number" />
+    <meta property="og:description" content="A private net worth tracker. Add your accounts in any currency and see one total. No bank logins." />
     <meta property="og:url" content="https://www.kayawealth.app/" />
     <meta property="og:image" content="https://www.kayawealth.app/og-cover.png" />
     <meta property="og:image:width" content="1200" />
@@ -25,8 +25,8 @@
 
     <!-- Twitter / X card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Kaya — Your net worth, in one number" />
-    <meta name="twitter:description" content="A simple, private net worth tracker. Add your accounts in any currency and see one clear total. No bank logins." />
+    <meta name="twitter:title" content="Kaya: your net worth in one number" />
+    <meta name="twitter:description" content="A private net worth tracker. Add your accounts in any currency and see one total. No bank logins." />
     <meta name="twitter:image" content="https://www.kayawealth.app/og-cover.png" />
 
     <!-- PWA / installable home-screen app -->
@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Kaya" />
     <link rel="apple-touch-icon" href="/icon-180.png?v=3" />
 
-    <title>Kaya — Your net worth, in one number</title>
+    <title>Kaya: your net worth in one number</title>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-X5Z5EZ3QPZ"></script>
@@ -147,7 +147,7 @@
       }
 
       /* Unified Glass Panel Style */
-      /* Widgets — Figma: fill #424242 @10%, background blur 12 (uniform),
+      /* Widgets: Figma: fill #424242 @10%, background blur 12 (uniform),
          1px white @10% border, no drop shadow. */
       .glass-panel {
         background-color: rgba(66, 66, 66, 0.10);
@@ -220,7 +220,7 @@
         font-weight: 600; font-size: 15px;
         transition: background-color 0.2s ease, transform 0.15s ease;
       }
-      /* Solid hover/pressed shades (never opacity — the + button floats over content).
+      /* Solid hover/pressed shades (never opacity, since the + button floats over content).
          Hover only on real pointers so it doesn't "stick" after a tap on iPhone. */
       @media (hover: hover) { .kaya-btn:hover { background: #c6e8cb; } }
       .kaya-btn:active { background: #b8e0be; transform: scale(0.98); }
@@ -254,7 +254,7 @@
       /* Overview widget motion */
       /* Page/container entrance: slide only, NO opacity. Animating opacity on a parent of
          backdrop-filter (frosted) cards makes Safari/Chrome sometimes skip painting those
-         cards until the next repaint — the "missing Net Worth card" bug. */
+         cards until the next repaint. That was the "missing Net Worth card" bug. */
       @keyframes kayaRise { from { transform: translateY(6px); } to { transform: none; } }
       @keyframes kayaSheetUp { from { transform: translateY(100%); } to { transform: none; } }
       @keyframes kayaFadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
