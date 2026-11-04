@@ -78,7 +78,10 @@ const HeroVisual: React.FC = () => {
 export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted }) => {
   const [scrolled, setScrolled] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
-  const openSignIn = onGetStarted ?? (() => setSignInOpen(true));
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const openAuth = (m: 'signin' | 'signup') => () => { if (onGetStarted) return onGetStarted(); setAuthMode(m); setSignInOpen(true); };
+  const openSignIn = openAuth('signin');
+  const openSignUp = openAuth('signup');
   // The floating bar slides down from the top once the rounded second section
   // (#kaya-cover) reaches the top of the window, and slides away again above it.
   useEffect(() => {
@@ -121,7 +124,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
           </div>
           <div className="flex items-center gap-2">
             <button onClick={openSignIn} tabIndex={scrolled ? 0 : -1} className="h-8 px-3.5 rounded-full text-[12px] font-medium text-[#dcf5df] border border-[#dcf5df]/30 hover:border-[#dcf5df]/60 transition-colors">Sign in</button>
-            <button onClick={openSignIn} tabIndex={scrolled ? 0 : -1} className="h-8 px-3.5 rounded-full text-[12px] font-semibold text-black bg-[#dcf5df] hover:bg-[#c6e8cb] transition-colors">Start for free</button>
+            <button onClick={openSignUp} tabIndex={scrolled ? 0 : -1} className="h-8 px-3.5 rounded-full text-[12px] font-semibold text-black bg-[#dcf5df] hover:bg-[#c6e8cb] transition-colors">Start for free</button>
           </div>
         </div>
       </div>
@@ -146,7 +149,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
               Pesos in BPI, dollars in a TFSA, a bit of Bitcoin. Kaya adds it all up in the currency you choose. You enter the balances, so there are no bank logins.
             </p>
             <div className="flex items-center justify-center gap-3 mt-8">
-              <button onClick={openSignIn} className="bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[16px] font-semibold px-6 py-3.5 rounded-xl transition-colors">Start for free</button>
+              <button onClick={openSignUp} className="bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[16px] font-semibold px-6 py-3.5 rounded-xl transition-colors">Start for free</button>
             </div>
             <p className="text-[12px] leading-4 mt-4" style={{ color: '#6e8777' }}>No bank logins · No ads · Your data stays yours</p>
           </Reveal>
@@ -227,7 +230,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 p-12 text-center" style={{ background: 'radial-gradient(ellipse 70% 120% at 50% 0%, rgba(16,185,129,0.15), transparent 70%)' }}>
             <h2 className="kaya-grad-text text-[44px] sm:text-[64px] font-semibold leading-[0.86] tracking-[-0.038em]">See your whole<br />net worth today.</h2>
             <p className="text-[16px] sm:text-[18px] leading-[1.625] text-white mt-5">Free to use. Nothing links to your bank.</p>
-            <button onClick={openSignIn} className="mt-7 bg-white text-black font-semibold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Start for free</button>
+            <button onClick={openSignUp} className="mt-7 bg-white text-black font-semibold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity">Start for free</button>
           </div>
         </Reveal>
       </section>
@@ -243,7 +246,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
         </div>
       </footer>
 
-      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
+      <SignInModal open={signInOpen} mode={authMode} onClose={() => setSignInOpen(false)} />
     </div>
   );
 };

@@ -6,7 +6,12 @@ import { Icons } from './icons';
 // Users can tap the emailed link (best on desktop) or enter the 6-digit code
 // (best on phones / home-screen apps, where the link opens a different browser
 // context and breaks the session).
-export const SignInModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+export type AuthMode = 'signin' | 'signup';
+// One email-code flow handles both (a new email creates the account); only the words change.
+export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: AuthMode }> = ({ open, onClose, mode: initialMode = 'signin' }) => {
+  const [mode, setMode] = React.useState<AuthMode>(initialMode);
+  React.useEffect(() => { if (open) setMode(initialMode); }, [open, initialMode]);
+  const up = mode === 'signup';
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [phase, setPhase] = useState<'email' | 'code'>('email');
@@ -104,7 +109,7 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void }> = ({ 
                 disabled={code.length < 6 || busy}
                 className="w-full bg-white hover:opacity-90 text-black font-semibold py-3.5 rounded-xl transition-opacity disabled:opacity-50"
               >
-                {busy ? 'Verifying…' : 'Verify & sign in'}
+                {busy ? 'Verifying…' : up ? 'Verify & create account' : 'Verify & sign in'}
               </button>
             </form>
             <div className="flex items-center justify-center gap-4 mt-5 text-[13px]">
@@ -115,9 +120,11 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void }> = ({ 
           </>
         ) : (
           <>
-            <h2 className="text-2xl font-semibold text-white mb-1.5">Track your wealth, anywhere</h2>
+            <h2 className="text-2xl font-semibold text-white mb-1.5">{up ? 'Create your free account' : 'Welcome back'}</h2>
             <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
-              Enter your email and we'll send you a code and a link. No password needed. If you're new, this creates your account.
+              {up
+                ? "Enter your email and we'll send you a code to get started. No password, no bank logins."
+                : "Enter the email you signed up with and we'll send you a code and a link. No password needed."}
             </p>
             <form onSubmit={sendCode} className="space-y-3">
               <input
@@ -135,9 +142,13 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void }> = ({ 
                 disabled={busy}
                 className="w-full bg-white hover:opacity-90 text-black font-semibold py-3.5 rounded-xl transition-opacity disabled:opacity-50"
               >
-                {busy ? 'Sending…' : 'Continue with email'}
+                {busy ? 'Sending…' : up ? 'Create account' : 'Send sign-in code'}
               </button>
             </form>
+            <p className="text-[13px] text-zinc-400 text-center mt-4">
+              {up ? 'Already have an account? ' : 'New to Kaya? '}
+              <button type="button" onClick={() => setMode(up ? 'signin' : 'signup')} className="text-white font-medium hover:underline">{up ? 'Sign in' : 'Create one'}</button>
+            </p>
             <p className="text-zinc-600 text-[11px] leading-relaxed text-center mt-5">
               Kaya never connects to your bank. Your data stays on your device and syncs privately to your account.
             </p>

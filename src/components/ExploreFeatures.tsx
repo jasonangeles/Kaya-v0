@@ -481,11 +481,11 @@ const Overview: React.FC<{ mobile?: boolean }> = ({ mobile }) => {
 };
 
 // Crossfading stack: overview + one phone per feature
-const Stage: React.FC<{ active: number | null; cur: Swatch; setCur: (c: Swatch) => void; mobile?: boolean; onClose: () => void }> = ({ active, cur, setCur, mobile, onClose }) => {
+const Stage: React.FC<{ active: number | null; cur: Swatch; setCur: (c: Swatch) => void; mobile?: boolean; live: boolean }> = ({ active, cur, setCur, mobile, live }) => {
   const on = active === null ? 'overview' : ITEMS[active].id;
   const layer = (k: string) => ({ opacity: k === on ? 1 : 0, transform: k === on ? 'scale(1)' : 'scale(1.03)' });
   return (
-    <div className={`absolute inset-0 ${active !== null ? 'cursor-pointer' : ''}`} onClick={() => { if (active !== null) onClose(); }}>
+    <div className="absolute inset-0">
       {/* One shared swirling dither glow behind every visual. It lives outside the fading
           layers, so it never brightens or dims while the visuals crossfade. */}
       <div className="absolute inset-0 pointer-events-none"
@@ -493,11 +493,10 @@ const Stage: React.FC<{ active: number | null; cur: Swatch; setCur: (c: Swatch) 
         {/* contrast 1 (not 1.26) so the outer glow fades into scattered dots instead of snapping to black */}
         <DitheringShader shape="swirl" type="16x16" colorBack="#000000" colorFront="#1A4433" pxSize={1} levels={8} contrast={1} amplitude={1} speed={0.5} />
       </div>
-      <div className="absolute inset-0 transition-[opacity,transform] duration-700 pointer-events-none" style={layer('overview')}><Overview mobile={mobile} /></div>
       {ITEMS.map(it => (
         <div key={it.id} className="absolute inset-0 flex justify-center transition-[opacity,transform] duration-700 ease-[cubic-bezier(.2,.7,.2,1)] pointer-events-none" style={layer(it.id)}>
           <div className={`relative ${mobile ? 'mt-3 scale-[0.82] origin-top' : 'mt-8'}`}>
-            <PhoneScene id={it.id} play={on === it.id} cur={cur} setCur={setCur} />
+            <PhoneScene id={it.id} play={live && on === it.id} cur={cur} setCur={setCur} />
           </div>
         </div>
       ))}
@@ -508,9 +507,9 @@ const Stage: React.FC<{ active: number | null; cur: Swatch; setCur: (c: Swatch) 
 // ---------------------------------------------------------------------------
 // Controls
 const Plus = () => (
-  <span className="w-5 h-5 rounded-full border border-white/40 flex items-center justify-center shrink-0"><Icons.Add size={11} /></span>
+  <span className="w-5 h-5 md:w-[22px] md:h-[22px] rounded-full border border-white/40 flex items-center justify-center shrink-0"><Icons.Add size={12} /></span>
 );
-const pill = 'inline-flex items-center gap-2.5 h-11 pl-3 pr-5 rounded-full text-[14px] font-medium text-white bg-white/[0.08] hover:bg-white/[0.13] backdrop-blur-xl transition-colors whitespace-nowrap';
+const pill = 'inline-flex items-center gap-2.5 h-11 md:h-12 pl-3 md:pl-3.5 pr-5 md:pr-6 md:gap-3 rounded-full text-[14px] md:text-[15px] font-medium text-white bg-white/[0.08] hover:bg-white/[0.13] backdrop-blur-xl transition-colors whitespace-nowrap';
 
 const Swatches: React.FC<{ cur: Swatch; setCur: (s: Swatch) => void }> = ({ cur, setCur }) => (
   <div className="flex gap-2 mt-4">
@@ -538,10 +537,22 @@ const Round: React.FC<{ onClick: () => void; label: string; disabled?: boolean; 
 );
 
 export const ExploreFeatures: React.FC = () => {
-  const [active, setActive] = useState<number | null>(null);
+  // Always one feature open; starts on "Every currency" (no all-closed overview state)
+  const [active, setActive] = useState<number | null>(0);
+  // Chips slide in from the left, one after another, the first time the section scrolls into view
+  const listRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [listIn, setListIn] = useState(false);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    if (reduceMotion()) { setListIn(true); return; }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setListIn(true); io.disconnect(); } }, { threshold: 0.25 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   const [cur, setCur] = useState<Swatch>(CURRENCIES[0]);
   const n = ITEMS.length;
-  const close = () => setActive(null);
   const prev = () => setActive(a => (a === null ? 0 : Math.max(0, a - 1)));
   const next = () => setActive(a => (a === null ? 0 : Math.min(n - 1, a + 1)));
   const open = (i: number) => { if (ITEMS[i].currency) setCur(CURRENCIES[0]); setActive(i); };
@@ -549,7 +560,6 @@ export const ExploreFeatures: React.FC = () => {
   useEffect(() => {
     if (active === null) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
       if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next();
       if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') prev();
     };
@@ -558,16 +568,14 @@ export const ExploreFeatures: React.FC = () => {
   }, [active]); // eslint-disable-line
 
   return (
-    <div>
+    <div ref={rootRef}>
       {/* ---------- Desktop ---------- */}
       <div className="hidden md:block relative h-[680px] overflow-hidden">
-        <div className="absolute inset-y-0 right-0 left-[30%]"><Stage active={active} cur={cur} setCur={setCur} onClose={close} /></div>
+        <div className="absolute inset-y-0 right-0 left-[30%]"><Stage active={active} cur={cur} setCur={setCur} live={listIn} /></div>
 
-        {active !== null && (
-          <div className="absolute top-4 right-4 z-20"><Round onClick={close} label="Close"><Icons.Close size={16} /></Round></div>
-        )}
-
-        <div className="absolute inset-y-0 left-0 w-[380px] flex items-center z-10 pointer-events-none">
+        {/* Left edge lines up with the floating header pill (max 980px wide, centered) */}
+        <div ref={listRef} className="absolute inset-y-0 w-[420px] flex items-center z-10 pointer-events-none"
+          style={{ left: 'clamp(0px, calc((100vw - 980px) / 2 - 24px), 62px)' }}>
           {active !== null && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 flex flex-col gap-2 pointer-events-auto">
               <Round onClick={prev} label="Previous" disabled={active === 0}><Icons.ChevronDown size={16} className="rotate-180" /></Round>
@@ -577,8 +585,13 @@ export const ExploreFeatures: React.FC = () => {
           <div className={`flex flex-col items-start gap-3 transition-[padding] duration-300 pointer-events-auto ${active !== null ? 'pl-14' : 'pl-0'}`}>
             {ITEMS.map((it, i) => (
               active === i
-                ? <Detail key={it.id} item={it} cur={cur} setCur={setCur} className="w-[320px]" />
-                : <button key={it.id} onClick={() => open(i)} className={pill}><Plus />{it.title.replace(/\.$/, '')}</button>
+                ? <Detail key={it.id} item={it} cur={cur} setCur={setCur} className="w-[340px]" />
+                : (
+                  <button key={it.id} onClick={() => open(i)} className={pill}
+                    style={{ opacity: listIn ? 1 : 0, transform: listIn ? 'none' : 'translateX(-28px)', transition: `opacity .6s ease ${i * 80}ms, transform .7s cubic-bezier(.22,1,.36,1) ${i * 80}ms, background-color .2s` }}>
+                    <Plus />{it.title.replace(/\.$/, '')}
+                  </button>
+                )
             ))}
           </div>
         </div>
@@ -587,10 +600,9 @@ export const ExploreFeatures: React.FC = () => {
       {/* ---------- Mobile ---------- */}
       <div className="md:hidden">
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: '3 / 4' }}>
-          <Stage active={active} cur={cur} setCur={setCur} mobile onClose={close} />
+          <Stage active={active} cur={cur} setCur={setCur} mobile live={listIn} />
           {active !== null && (
             <>
-              <div className="absolute top-3 right-3 z-20"><Round onClick={close} label="Close"><Icons.Close size={16} /></Round></div>
               <div className="absolute inset-x-3 bottom-3 z-10 flex items-end gap-2">
                 <Round onClick={prev} label="Previous" disabled={active === 0}><Icons.ChevronRight size={16} className="rotate-180" /></Round>
                 <Detail item={ITEMS[active]} cur={cur} setCur={setCur} className="flex-1 !p-5 !text-[14px]" />
