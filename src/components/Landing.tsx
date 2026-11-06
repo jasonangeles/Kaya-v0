@@ -6,6 +6,8 @@ import { OrbitWidgets } from './OrbitWidgets';
 import { ExploreFeatures } from './ExploreFeatures';
 import { ThemeShowcase } from './ThemeShowcase';
 import { DetailsBento } from './DetailsBento';
+import { ContactEmail } from './ContactEmail';
+import { openCookieSettings } from '../services/consent';
 
 // --- Scroll reveal (fade + rise, once) -----------------------------------
 const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({ children, delay = 0, className = '' }) => {
@@ -315,7 +317,12 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
               <img src="/logo-icon.svg" alt="" className="w-6 h-6" draggable={false} />
               <span className="text-[16px] font-bold uppercase tracking-[4px] text-white">Kaya</span>
             </div>
-            <p className="text-[12px] text-[#dcf5df]/70">Every account, every currency, one number · © {new Date().getFullYear()} Kaya</p>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] text-[#dcf5df]/80">
+              <ContactEmail className="hover:text-white transition-colors" />
+              <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+              <button onClick={openCookieSettings} className="hover:text-white transition-colors">Cookie settings</button>
+            </div>
+            <p className="text-[12px] text-[#dcf5df]/60">Every account, every currency, one number · © {new Date().getFullYear()} Kaya</p>
           </div>
         </footer>
       </div>

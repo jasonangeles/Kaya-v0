@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { Icons } from './icons';
+import { CONSENT_TEXT, setPendingSignupConsent, clearPendingSignupConsent } from '../services/consent';
 
 // Sign-in / sign-up modal. Email OTP handles new + returning users with one flow.
 // Users can tap the emailed link (best on desktop) or enter the 6-digit code
@@ -17,6 +18,8 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: 
   const [phase, setPhase] = useState<'email' | 'code'>('email');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  // Marketing email consent (sign-up only). Never pre-checked; sign-up works either way.
+  const [emailOptIn, setEmailOptIn] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -27,7 +30,7 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: 
     return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
   }, [open, onClose]);
 
-  useEffect(() => { if (open) { setPhase('email'); setBusy(false); setMessage(''); setCode(''); } }, [open]);
+  useEffect(() => { if (open) { setPhase('email'); setBusy(false); setMessage(''); setCode(''); setEmailOptIn(false); } }, [open]);
 
   if (!open) return null;
 
@@ -35,6 +38,9 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: 
     e.preventDefault();
     if (!supabase || !email.trim()) return;
     setBusy(true); setMessage('');
+    // Park the consent choice on this device; the app saves it to the account once signed in
+    // (works whether they finish with the code or the email link).
+    if (up) setPendingSignupConsent(emailOptIn); else clearPendingSignupConsent();
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: { emailRedirectTo: window.location.origin }
@@ -136,6 +142,13 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: 
                 placeholder="you@email.com"
                 className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-center focus:ring-1 focus:ring-white/40 focus:border-white/40 outline-none transition-all placeholder:text-zinc-600"
               />
+              {up && (
+                <label className="flex items-start gap-3 text-left cursor-pointer select-none pt-1">
+                  <input type="checkbox" checked={emailOptIn} onChange={(e) => setEmailOptIn(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 shrink-0 rounded accent-[#dcf5df] cursor-pointer" />
+                  <span className="text-[13px] leading-snug text-zinc-400">{CONSENT_TEXT.signup_form}</span>
+                </label>
+              )}
               {message && <p className="text-rose-400 text-sm text-center">{message}</p>}
               <button
                 type="submit"

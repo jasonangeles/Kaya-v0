@@ -39,15 +39,26 @@
 
     <title>Kaya: your net worth in one number</title>
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-X5Z5EZ3QPZ"></script>
+    <!-- Google Analytics, consent-first (GDPR): nothing loads and no cookies are set until the
+         visitor clicks Accept in the cookie banner. Consent Mode starts everything as "denied". -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-X5Z5EZ3QPZ');
+      gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+      window.kayaLoadAnalytics = function () {
+        gtag('consent', 'update', { analytics_storage: 'granted' });
+        if (window.__kayaGa) return;
+        window.__kayaGa = true;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-X5Z5EZ3QPZ';
+        document.head.appendChild(s);
+        gtag('js', new Date());
+        gtag('config', 'G-X5Z5EZ3QPZ');
+      };
+      try { if (localStorage.getItem('kaya-cookie-consent') === 'granted') window.kayaLoadAnalytics(); } catch (e) {}
     </script>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -83,11 +94,18 @@
       try { if (localStorage.getItem('kaya.theme') === 'light') document.documentElement.classList.add('light'); } catch (e) {}
     </script>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <!-- Geist, self-hosted (no request to Google's servers) -->
+    <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+      @font-face {
+        font-family: 'Geist';
+        src: url('/fonts/Geist-Variable.woff2') format('woff2');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+      }
+    </style>
+
     <style>
       /* Theme tokens. Channel triplets (R G B) so Tailwind /opacity works.
          Dark values match the original palette exactly (no visual change). */
@@ -355,20 +373,6 @@
         50% { transform: translateY(-14px); }
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "recharts": "https://aistudiocdn.com/recharts@^3.5.0",
-    "vite": "https://aistudiocdn.com/vite@^7.2.4",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
-  }
-}
-</script>
 </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

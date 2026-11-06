@@ -10,6 +10,8 @@ import { AllocationCarousel } from './components/AllocationCarousel';
 import { CurrencyPicker } from './components/CurrencyPicker';
 import { Sym, DirhamSign } from './components/DirhamSign';
 import { DitherBackground } from './components/DitherBackground';
+import { PrivacyPage } from './components/PrivacyPage';
+import { optIn, optOut, dismissPrompt, shouldAskMarketing, applyPendingSignupConsent, hasPendingSignupConsent, openCookieSettings, CONSENT_TEXT, type MarketingMeta } from './services/consent';
 import { Onboarding, OnboardingResult } from './components/Onboarding';
 import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
 import { supabase, isSupabaseEnabled } from './services/supabaseClient';
@@ -1534,6 +1536,35 @@ export default function App() {
     );
   };
 
+  // --- Marketing email consent (GDPR / CASL) ---------------------------------
+  const marketingMeta = (session?.user?.user_metadata || undefined) as MarketingMeta | undefined;
+  const marketingOn = !!marketingMeta?.marketing_opt_in;
+  const [showMarketingPrompt, setShowMarketingPrompt] = useState(false);
+  const [marketingBusy, setMarketingBusy] = useState(false);
+  // Save a choice made on the sign-up form (by code or email link) once the user is signed in
+  useEffect(() => { if (session?.user?.id) applyPendingSignupConsent(); }, [session?.user?.id]);
+  // One-time prompt for existing users: signed in, past onboarding, unlocked, never asked
+  useEffect(() => {
+    if (!isSupabaseEnabled || !session || locked || settings.onboardingComplete === false) return;
+    if (!shouldAskMarketing(marketingMeta) || hasPendingSignupConsent()) return;
+    const t = setTimeout(() => setShowMarketingPrompt(true), 4000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, locked, settings.onboardingComplete, marketingMeta?.marketing_asked_at, marketingMeta?.marketing_opt_in, marketingMeta?.marketing_prompt_dismissed_at]);
+  const answerMarketingPrompt = async (yes: boolean) => {
+    setMarketingBusy(true);
+    await (yes ? optIn('in_app_prompt') : dismissPrompt());
+    setMarketingBusy(false);
+    setShowMarketingPrompt(false);
+  };
+  const closeMarketingPrompt = () => { if (showMarketingPrompt) { dismissPrompt(); setShowMarketingPrompt(false); } };
+  const toggleMarketing = async () => {
+    if (marketingBusy) return;
+    setMarketingBusy(true);
+    await (marketingOn ? optOut() : optIn('settings'));
+    setMarketingBusy(false);
+  };
+
   const greetingName = (() => {
     const custom = settings.displayName?.trim();
     if (custom) return custom;
@@ -2115,9 +2146,19 @@ export default function App() {
         <SettingsItem icon={<Icons.Delete size={20} />} label="Clear all data & start fresh" onClick={handleClearData} isLast />
       </SettingsGroup>
 
+      {isSupabaseEnabled && session && (
+        <>
+          <SettingsGroup title="Email preferences">
+            <SettingsItem icon={<Icons.Mail size={20} />} label={CONSENT_TEXT.settings} toggle isToggled={marketingOn} onToggle={toggleMarketing} isLast />
+          </SettingsGroup>
+          <p className="text-textFaint text-[11px] -mt-4 mb-6 px-2 leading-relaxed">You'll still get important account and product update emails.</p>
+        </>
+      )}
+
       <SettingsGroup title="Support">
         <SettingsItem icon={<Icons.Feedback size={20} />} label="Share feedback" onClick={() => { setFeedbackStatus('idle'); setShowFeedback(true); }} />
         <SettingsItem icon={<Icons.Shield size={20} />} label="Privacy & Data" onClick={() => setShowPrivacy(true)} />
+        <SettingsItem icon={<Icons.Settings size={20} />} label="Cookie settings" onClick={openCookieSettings} />
         <SettingsItem icon={<Icons.Star size={20} />} label="Rate Kaya" onClick={() => window.open('https://www.producthunt.com/products/kaya-wealth/reviews', '_blank', 'noopener,noreferrer')} />
         <SettingsItem icon={<Icons.Mail size={20} />} label="Contact Us" onClick={() => { setContactStatus('idle'); setShowContact(true); }} isLast />
       </SettingsGroup>
@@ -2164,6 +2205,10 @@ export default function App() {
     </div>
   );
 
+  // Public privacy policy (same URL whether signed in or not)
+  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/$/, '') === '/privacy') {
+    return <PrivacyPage />;
+  }
   // Logged-out visitors (no saved session on this device) go straight to the landing page;
   // the splash is only for people who are actually signing in.
   if (isSupabaseEnabled && authLoading) {
@@ -2433,6 +2478,17 @@ export default function App() {
         <p className="text-textFaint text-[11px] mt-4 leading-relaxed">"Immediately" locks every time you leave the app. Longer delays are more convenient but less private on a shared device.</p>
       </Modal>
 
+      {/* One-time email opt-in prompt for existing users */}
+      <Modal isOpen={showMarketingPrompt} onClose={closeMarketingPrompt}>
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(57,157,116,0.15)', color: '#399d74' }}>
+          <Icons.Mail size={22} />
+        </div>
+        <h2 className="text-2xl font-medium text-ink mb-2">Stay in the loop?</h2>
+        <p className="text-textMuted text-sm leading-relaxed mb-6">{CONSENT_TEXT.in_app_prompt}</p>
+        <button onClick={() => answerMarketingPrompt(true)} disabled={marketingBusy} className="w-full kaya-btn py-4 rounded-[14px] disabled:opacity-60">Yes, keep me posted</button>
+        <button onClick={() => answerMarketingPrompt(false)} disabled={marketingBusy} className="w-full mt-2 py-3 text-[14px] font-medium text-textFaint hover:text-ink transition-colors">No thanks</button>
+      </Modal>
+
       {/* Privacy & Data info */}
       <Modal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)}>
         <h2 className="text-2xl font-medium mb-4 text-ink">Privacy & Data</h2>
@@ -2440,6 +2496,7 @@ export default function App() {
           <p><span className="text-ink font-medium">Your data, your control.</span> Kaya is a manual tracker — it never links to your bank, so there are no banking logins or account access to expose. You enter your balances and income yourself.</p>
           <p>A copy is kept on your device so the app works offline. When you sign in, your data syncs to your private account, isolated so no other user can read it, and encrypted in transit and at rest.</p>
           <p>We use passwordless email sign-in, so there's no password to steal. You can export a backup or wipe everything anytime in <span className="text-ink">Settings → Data</span>. No ads, ever.</p>
+          <p>Read the full <a href="/privacy" className="text-ink underline underline-offset-2">Privacy Policy</a>.</p>
         </div>
         <button onClick={() => setShowPrivacy(false)} className="w-full kaya-btn py-4 rounded-[14px] mt-6">
           Got it
