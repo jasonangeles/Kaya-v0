@@ -47,7 +47,9 @@ import {
   HouseSimple,
   Heart,
   MagnifyingGlass,
-  X
+  X,
+  Square,
+  CheckSquare
 } from '@phosphor-icons/react';
 
 export const Icons = {
@@ -97,5 +99,7 @@ export const Icons = {
   Home: HouseSimple,
   Heart: Heart,
   Search: MagnifyingGlass,
-  Close: X
+  Close: X,
+  Checkbox: Square,
+  CheckboxChecked: CheckSquare
 };

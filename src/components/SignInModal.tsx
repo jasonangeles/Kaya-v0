@@ -87,14 +87,14 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: 
         </button>
 
         <div className="flex items-center gap-2 mb-6">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="font-medium tracking-wide uppercase text-sm text-white">Kaya</span>
+          <img src="/logo-icon.svg" alt="" className="w-6 h-6" draggable={false} />
+          <span className="text-[16px] font-bold uppercase tracking-[4px] text-white">Kaya</span>
         </div>
 
         {phase === 'code' ? (
           <>
             <h2 className="text-2xl font-semibold text-white mb-1.5">Enter your code</h2>
-            <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
+            <p className="text-[#6e8777] text-sm mb-6 leading-relaxed">
               We emailed a code to <span className="text-white">{email}</span>. Type it below, or tap the link in the email if you're on a computer.
             </p>
             <form onSubmit={verifyCode} className="space-y-3">
@@ -119,15 +119,15 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: 
               </button>
             </form>
             <div className="flex items-center justify-center gap-4 mt-5 text-[13px]">
-              <button onClick={sendCode} disabled={busy} className="text-zinc-400 hover:text-white transition-colors disabled:opacity-50">Resend code</button>
+              <button onClick={sendCode} disabled={busy} className="text-[#6e8777] hover:text-white transition-colors disabled:opacity-50">Resend code</button>
               <span className="text-zinc-700">·</span>
-              <button onClick={reset} className="text-zinc-400 hover:text-white transition-colors">Use a different email</button>
+              <button onClick={reset} className="text-[#6e8777] hover:text-white transition-colors">Use a different email</button>
             </div>
           </>
         ) : (
           <>
             <h2 className="text-2xl font-semibold text-white mb-1.5">{up ? 'Create your free account' : 'Welcome back'}</h2>
-            <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
+            <p className="text-[#6e8777] text-sm mb-6 leading-relaxed">
               {up
                 ? "Enter your email and we'll send you a code to get started. No password, no bank logins."
                 : "Enter the email you signed up with and we'll send you a code and a link. No password needed."}
@@ -143,10 +143,15 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: 
                 className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-center focus:ring-1 focus:ring-white/40 focus:border-white/40 outline-none transition-all placeholder:text-zinc-600"
               />
               {up && (
-                <label className="flex items-start gap-3 text-left cursor-pointer select-none pt-1">
-                  <input type="checkbox" checked={emailOptIn} onChange={(e) => setEmailOptIn(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 shrink-0 rounded accent-[#dcf5df] cursor-pointer" />
-                  <span className="text-[13px] leading-snug text-zinc-400">{CONSENT_TEXT.signup_form}</span>
+                <label className="flex items-start gap-2.5 text-left cursor-pointer select-none pt-1">
+                  {/* Real checkbox kept for keyboard + screen readers; the Phosphor box is what's shown */}
+                  <input type="checkbox" checked={emailOptIn} onChange={(e) => setEmailOptIn(e.target.checked)} className="peer sr-only" />
+                  <span aria-hidden className="shrink-0 -mt-px rounded peer-focus-visible:ring-2 peer-focus-visible:ring-[#dcf5df]/50">
+                    {emailOptIn
+                      ? <Icons.CheckboxChecked size={20} weight="fill" className="text-[#dcf5df]" />
+                      : <Icons.Checkbox size={20} className="text-[#6e8777]" />}
+                  </span>
+                  <span className="text-[13px] leading-snug text-[#6e8777]">{CONSENT_TEXT.signup_form}</span>
                 </label>
               )}
               {message && <p className="text-rose-400 text-sm text-center">{message}</p>}
@@ -158,11 +163,11 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: 
                 {busy ? 'Sending…' : up ? 'Create account' : 'Send sign-in code'}
               </button>
             </form>
-            <p className="text-[13px] text-zinc-400 text-center mt-4">
+            <p className="text-[13px] text-[#6e8777] text-center mt-4">
               {up ? 'Already have an account? ' : 'New to Kaya? '}
               <button type="button" onClick={() => setMode(up ? 'signin' : 'signup')} className="text-white font-medium hover:underline">{up ? 'Sign in' : 'Create one'}</button>
             </p>
-            <p className="text-zinc-600 text-[11px] leading-relaxed text-center mt-5">
+            <p className="text-[#6e8777]/80 text-[11px] leading-relaxed text-center mt-5">
               Kaya never connects to your bank. Your data stays on your device and syncs privately to your account.
             </p>
           </>
