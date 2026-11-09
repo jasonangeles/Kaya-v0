@@ -2106,21 +2106,6 @@ export default function App() {
         <h1 className="text-3xl font-medium text-ink">Settings</h1>
       </header>
 
-      {/* Premium Banner */}
-      {/* Same widget style as Home/Portfolio/Income cards */}
-      <div className="glass-panel mb-8 overflow-hidden rounded-[24px] p-5 cursor-pointer transition-transform active:scale-[0.98]">
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center shrink-0">
-            <Icons.Sparkles size={20} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-medium uppercase tracking-[1.2px] text-textMuted">Kaya Premium</p>
-            <p className="text-[15px] font-medium text-ink mt-1">Unlock unlimited history & AI insights</p>
-          </div>
-          <Icons.ChevronRight className="w-4 h-4 text-textFaint shrink-0" />
-        </div>
-      </div>
-
       <SettingsGroup title="General">
         <SettingsItem icon={<Icons.Global size={20} />} label="Currency" value={settings.displayCurrency} onClick={() => setActiveTab('SETTINGS_CURRENCY')} />
         <SettingsItem icon={<Icons.Moon size={20} />} label="Light mode" toggle isToggled={theme === 'light'} onToggle={toggleTheme} />
@@ -2178,6 +2163,18 @@ export default function App() {
           </>
         )}
       </SettingsGroup>
+
+      {/* Tip jar: a quiet sign-off at the bottom (replaces the old Premium card) */}
+      <div className="text-center mt-10 px-6">
+        <Icons.Heart size={18} className="mx-auto text-textFaint" />
+        <p className="text-[12px] leading-relaxed text-textFaint mt-1.5">
+          Kaya is free and ad-free.<br />If it helps you, you can chip in to keep it running.
+        </p>
+        <a href="https://ko-fi.com/kayawealth" target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center mt-3 px-3.5 h-8 rounded-full text-[12px] font-medium text-textMuted border border-textMuted/30 hover:border-textMuted/60 transition-colors">
+          Leave a tip
+        </a>
+      </div>
 
       <div className="text-center mt-8 text-textFaint text-xs">
         <p>Kaya Wealth v1.1.0</p>
