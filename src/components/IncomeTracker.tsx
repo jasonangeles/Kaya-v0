@@ -6,6 +6,7 @@ import { IncomeRecord } from '../types';
 import { symbolFor } from '../data/currencies';
 import { CurrencyPicker } from './CurrencyPicker';
 import { Sym } from './DirhamSign';
+import { BottomSheet } from './BottomSheet';
 
 const CATEGORY_OPTIONS = ['Dividend', 'Interest', 'Rental income', 'Royalties', 'Other'];
 
@@ -53,22 +54,6 @@ const monthLabel = (key: string) => {
   const [y, m] = key.split('-').map(Number);
   return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short' }) + (m === 1 ? ` '${String(y).slice(2)}` : '');
 };
-
-// Portaled to <body> so it's positioned against the screen, not the (animating) page.
-const Sheet = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children?: React.ReactNode }) => createPortal(
-  <>
-    <div
-      className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-      onClick={onClose}
-    />
-    <div style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)', visibility: isOpen ? 'visible' : 'hidden', transition: isOpen ? 'transform 300ms ease-out' : 'transform 300ms ease-out, visibility 0s linear 300ms' }} className="fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] p-6  transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto">
-      <div className="w-10 h-1 bg-ink/20 rounded-full mx-auto mb-6" />
-      <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
-      {children}
-    </div>
-  </>,
-  document.body
-);
 
 interface Props {
   displayCurrency: string;
@@ -492,7 +477,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
       )}
 
       {/* Add / Edit sheet */}
-      <Sheet isOpen={isOpen} onClose={closeSheet}>
+      <BottomSheet isOpen={isOpen} onClose={closeSheet} label={editingId ? 'Edit income' : 'Add income'}>
         {isOpen && (<>
         <h2 className={`text-2xl font-medium text-ink ${editingId ? 'mb-6' : 'mb-1.5'}`}>{editingId ? 'Edit Income' : 'Add Income'}</h2>
         {!editingId && <p className="text-[13px] leading-[19px] text-textFaint mb-6">Money your savings and investments earn, like dividends, interest and rent. Not your salary.</p>}
@@ -584,7 +569,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
           )}
         </form>
         </>)}
-      </Sheet>
+      </BottomSheet>
     </div>
   );
 };

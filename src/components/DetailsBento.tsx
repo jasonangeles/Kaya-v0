@@ -103,7 +103,7 @@ export const DetailsBento: React.FC = () => (
     <Tile title="Debts count too" body="Add loans and credit cards. Kaya subtracts them, so your number stays honest.">
       <div className="kaya-frost w-full max-w-[260px] rounded-2xl px-4 py-3.5 space-y-2 text-[13px]">
         <div className="flex justify-between"><span className="text-zinc-400">Assets</span><span className="text-white font-semibold">₱1.92M</span></div>
-        <div className="flex justify-between"><span className="text-zinc-400">Liabilities</span><span className="text-rose-400 font-semibold">−₱72.8K</span></div>
+        <div className="flex justify-between"><span className="text-zinc-400">Debts</span><span className="text-rose-400 font-semibold">−₱72.8K</span></div>
         <div className="border-t border-white/10 pt-2 flex justify-between"><span style={{ color: MUTED }}>Net worth</span><span className="font-semibold" style={{ color: MUTED }}>₱1.85M</span></div>
       </div>
     </Tile>

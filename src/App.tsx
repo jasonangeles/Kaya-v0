@@ -11,6 +11,7 @@ import { CurrencyPicker } from './components/CurrencyPicker';
 import { Sym, DirhamSign } from './components/DirhamSign';
 import { DitherBackground } from './components/DitherBackground';
 import { PrivacyPage } from './components/PrivacyPage';
+import { BottomSheet } from './components/BottomSheet';
 import { optIn, optOut, dismissPrompt, shouldAskMarketing, applyPendingSignupConsent, hasPendingSignupConsent, openCookieSettings, CONSENT_TEXT, type MarketingMeta } from './services/consent';
 import { Onboarding, OnboardingResult } from './components/Onboarding';
 import { ORDERED_CURRENCIES, COMMON_CURRENCY_CODES, symbolFor } from './data/currencies';
@@ -24,47 +25,8 @@ import { getWealthInsights } from './services/geminiService';
 
 // --- Helper Components ---
 
-const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children?: React.ReactNode }) => {
-  // Lock the background scroll while open (iOS-safe). Without this, focusing a
-  // native date/select input scrolls the page under the fixed modal and shifts
-  // the touch layer so buttons stop responding.
-  useEffect(() => {
-    if (!isOpen) return;
-    const scrollY = window.scrollY;
-    const b = document.body;
-    const prev = { position: b.style.position, top: b.style.top, width: b.style.width, overflow: b.style.overflow };
-    b.style.position = 'fixed';
-    b.style.top = `-${scrollY}px`;
-    b.style.width = '100%';
-    b.style.overflow = 'hidden';
-    return () => {
-      b.style.position = prev.position;
-      b.style.top = prev.top;
-      b.style.width = prev.width;
-      b.style.overflow = prev.overflow;
-      window.scrollTo(0, scrollY);
-    };
-  }, [isOpen]);
-  // Portaled to <body>: sheets rendered inside an animating page would otherwise be
-  // positioned relative to that page (a transformed ancestor) and peek through.
-  return createPortal(
-    <>
-      <div 
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        onClick={onClose}
-      />
-      <div
-        style={{ transform: isOpen ? 'translateY(0)' : 'translateY(100%)', visibility: isOpen ? 'visible' : 'hidden', transition: isOpen ? 'transform 300ms ease-out' : 'transform 300ms ease-out, visibility 0s linear 300ms', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}
-        className={`fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] p-6  transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto max-w-md mx-auto ${isOpen ? '' : 'pointer-events-none'}`}
-      >
-        <div className="w-10 h-1 bg-ink/20 rounded-full mx-auto mb-6" />
-        <button onClick={onClose} className="absolute top-6 right-6 text-textMuted hover:text-ink">✕</button>
-        {isOpen ? children : null}
-      </div>
-    </>,
-    document.body
-  );
-};
+// Every slide-up form uses the shared sheet (tap/swipe the grab bar, backdrop, ✕ or Escape to close).
+const Modal = BottomSheet;
 
 // Tiny inline weekly sparkline for the FX rows. Green if up over the period, red if down.
 const Sparkline: React.FC<{ data: number[]; up: boolean; w?: number; h?: number }> = ({ data, up, w = 76, h = 28 }) => {
@@ -1055,6 +1017,12 @@ export default function App() {
     setIsModalOpen(true);
   };
 
+  // Same sheet, opened straight on the Debt side (from the Portfolio "Add a loan or credit card" row).
+  const handleOpenAddDebt = () => {
+    handleOpenAddAsset();
+    setModalCategory(AssetCategory.DEBT);
+  };
+
   const handleOpenUpdateBalance = () => {
     setIsEditMode(false);
     setEditingEntryId(null);
@@ -1859,7 +1827,7 @@ export default function App() {
                                 ? { background: 'rgba(57,157,116,0.15)', color: '#399d74' }
                                 : { background: 'rgba(110,135,119,0.15)', color: 'rgb(var(--faint))' }}
                         >
-                            {asset.category}
+                            {catLabel(asset.category)}
                         </span>
                         {asset.institution && <span className="text-[10px] text-textFaint truncate">{asset.institution}</span>}
                     </span>
@@ -1995,7 +1963,7 @@ export default function App() {
                 if (categoryAssets.length === 0) return null;
                 return (
                     <div key={category} className="mb-6">
-                        <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-3 px-1">{category}</h3>
+                        <h3 className="text-[11px] font-medium text-textMuted uppercase tracking-[1.2px] mb-3 px-1">{catLabel(category)}</h3>
                         <div className="glass-panel rounded-[20px] overflow-hidden shadow-lg">
                             {categoryAssets.map((asset, index) => assetRow(asset, false, index === categoryAssets.length - 1))}
                         </div>
@@ -2006,6 +1974,18 @@ export default function App() {
             <div className="glass-panel rounded-[20px] overflow-hidden shadow-lg">
                 {sortedFlat.map((asset, index) => assetRow(asset, true, index === sortedFlat.length - 1))}
             </div>
+        )}
+
+        {/* No debts yet: a quiet way in, so loans aren't hidden behind "New asset" */}
+        {assets.length > 0 && !assets.some(a => a.category === AssetCategory.DEBT) && (
+            <button type="button" onClick={handleOpenAddDebt}
+                className="w-full mb-6 glass-panel rounded-[20px] px-4 py-3.5 flex items-center gap-3 text-left transition-transform active:scale-[0.98] hover:brightness-110">
+                <span aria-hidden className="w-10 h-10 rounded-[12px] bg-ink/5 text-textMuted flex items-center justify-center shrink-0"><Icons.Add size={18} /></span>
+                <span className="min-w-0">
+                    <span className="block text-[15px] font-medium text-ink">Add a loan or credit card</span>
+                    <span className="block text-[12px] text-textFaint mt-0.5">Kaya subtracts debts from your net worth</span>
+                </span>
+            </button>
         )}
 
         {/* Excluded — tracked but not counted toward net worth */}
@@ -2043,7 +2023,7 @@ export default function App() {
                 {Object.values(AssetCategory).filter(c => assets.some(a => a.category === c)).map(c => (
                     <button key={c} onClick={() => toggleCat(c)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors duration-200 ${catFilter.includes(c) ? 'bg-textMuted text-paper border-transparent' : 'border-ink/10 text-textMuted hover:text-ink'}`}>
-                        {c !== AssetCategory.DEBT && <i className="w-2 h-2 rounded-full" style={{ background: (CATEGORY_LIQUIDITY[c] ?? 'medium') === 'low' ? 'rgb(var(--faint))' : '#399d74' }} />}{c}
+                        {c !== AssetCategory.DEBT && <i className="w-2 h-2 rounded-full" style={{ background: (CATEGORY_LIQUIDITY[c] ?? 'medium') === 'low' ? 'rgb(var(--faint))' : '#399d74' }} />}{catLabel(c)}
                     </button>
                 ))}
             </div>
@@ -2617,19 +2597,37 @@ export default function App() {
             <>
                 <h2 className="text-2xl font-medium mb-6 text-ink">
                     {selectedAsset
-                        ? (modalCategory === AssetCategory.DEBT ? 'Edit Liability' : 'Edit Asset')
-                        : (modalCategory === AssetCategory.DEBT ? 'New Liability' : 'New Asset')}
+                        ? (modalCategory === AssetCategory.DEBT ? 'Edit debt' : 'Edit asset')
+                        : (modalCategory === AssetCategory.DEBT ? 'New debt' : 'New asset')}
                 </h2>
+                {/* Asset | Debt switch. New entries only, so an existing account can't be flipped by accident. */}
+                {!selectedAsset && (
+                    <div role="radiogroup" aria-label="Type" className="flex p-1 rounded-[14px] bg-ink/5 -mt-2 mb-6">
+                        {([['asset', 'Asset'], ['debt', 'Debt']] as const).map(([k, t]) => {
+                            const on = (modalCategory === AssetCategory.DEBT) === (k === 'debt');
+                            return (
+                                <button key={k} type="button" role="radio" aria-checked={on}
+                                    onClick={() => setModalCategory(k === 'debt' ? AssetCategory.DEBT : AssetCategory.BANK_PH)}
+                                    className={`flex-1 py-2.5 rounded-[10px] text-[14px] font-medium transition-colors duration-200 ${on ? 'bg-textMuted text-paper' : 'text-textFaint hover:text-ink'}`}>
+                                    {t}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+                {modalCategory === AssetCategory.DEBT && (
+                    <p className="text-[13px] leading-[19px] text-textFaint -mt-2 mb-6">Loans, credit cards and anything you owe. Kaya subtracts this from your net worth.</p>
+                )}
                 <form onSubmit={handleSaveAsset} className="space-y-5">
                     <div>
-                        <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">{modalCategory === AssetCategory.DEBT ? 'Liability Name' : 'Asset Name'}</label>
-                        <input required name="name" defaultValue={selectedAsset?.name} placeholder={modalCategory === AssetCategory.DEBT ? 'e.g., Car Loan' : 'e.g., BDO Savings'} className="kaya-field transition-all placeholder:text-textFaint" />
+                        <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">{modalCategory === AssetCategory.DEBT ? 'Debt name' : 'Asset name'}</label>
+                        <input required name="name" defaultValue={selectedAsset?.name} placeholder={modalCategory === AssetCategory.DEBT ? 'Car loan, BPI credit card' : 'BDO Savings'} className="kaya-field transition-all placeholder:text-textFaint" />
                     </div>
                     
                     {!selectedAsset && (
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">{modalCategory === AssetCategory.DEBT ? 'Amount Owed' : 'Amount'}</label>
+                                <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">{modalCategory === AssetCategory.DEBT ? 'Amount owed' : 'Amount'}</label>
                                 <input required name="amount" type="number" step="any" placeholder="0.00" className="kaya-field transition-all placeholder:text-textFaint" />
                             </div>
                             <div>
@@ -2640,15 +2638,19 @@ export default function App() {
                         </div>
                     )}
 
+                    {modalCategory === AssetCategory.DEBT ? (
+                        <input type="hidden" name="category" value={AssetCategory.DEBT} />
+                    ) : (
                     <div>
                         <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Category</label>
                         <div className="relative">
                             <select name="category" value={modalCategory} onChange={(e) => setModalCategory(e.target.value as AssetCategory)} className="kaya-field  transition-all">
-                                {Object.values(AssetCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                {Object.values(AssetCategory).filter(cat => cat !== AssetCategory.DEBT).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-textMuted"><Icons.ChevronDown size={20} /></div>
                         </div>
                     </div>
+                    )}
 
                     <div>
                         <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">{getInstitutionLabel(modalCategory)} (Optional)</label>
@@ -2685,7 +2687,7 @@ export default function App() {
                             <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold py-4 rounded-[14px] transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
                         )}
                         <button type="submit" className={`flex-[2] kaya-btn py-4 rounded-[14px] ${!selectedAsset ? 'w-full' : ''}`}>
-                            {selectedAsset ? 'Save Changes' : (modalCategory === AssetCategory.DEBT ? 'Add Liability' : 'Add Asset')}
+                            {selectedAsset ? 'Save Changes' : (modalCategory === AssetCategory.DEBT ? 'Add debt' : 'Add asset')}
                         </button>
                     </div>
                 </form>
@@ -2695,6 +2697,11 @@ export default function App() {
 
     </div>
   );
+}
+
+// "Liabilities" is the stored value (kept so saved data still matches); people see "Debts".
+function catLabel(category: AssetCategory | string) {
+    return category === AssetCategory.DEBT ? 'Debts' : category;
 }
 
 function getInstitutionLabel(category: AssetCategory) {

@@ -263,7 +263,7 @@ const AllocationSlide: React.FC<{ mode: 'type' | 'cur' }> = ({ mode }) => {
   return (
     <div className="w-full shrink-0">
       <div className="grid grid-cols-3 mt-3">
-        {[['Assets', '₱1.92M', 'text-white'], ['Liabilities', '−₱72.8K', 'text-rose-400'], ['Net', '₱1.85M', '']].map(([k, v, c], i) => (
+        {[['Assets', '₱1.92M', 'text-white'], ['Debts', '−₱72.8K', 'text-rose-400'], ['Net', '₱1.85M', '']].map(([k, v, c], i) => (
           <div key={k} className={i ? 'border-l border-white/10 pl-2.5' : ''}>
             <p className="text-[7.5px] font-medium uppercase tracking-[1px]" style={{ color: FAINT }}>{k}</p>
             <p className={`text-[11.5px] font-semibold mt-0.5 ${c}`} style={c ? undefined : { color: MUTED }}>{v}</p>

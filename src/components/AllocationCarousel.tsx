@@ -162,7 +162,7 @@ export const AllocationCarousel: React.FC<Props> = ({ segs, liquid, locked, liab
               <p className="text-[15px] font-semibold text-ink mt-1 tabular-nums truncate">{privacyMode ? hide : fmtCompact(aAssets)}</p>
             </div>
             <div className="min-w-0 border-l border-ink/10 pl-3.5">
-              <p className="text-[10px] font-medium uppercase tracking-[1.2px] text-textFaint">Liabilities</p>
+              <p className="text-[10px] font-medium uppercase tracking-[1.2px] text-textFaint">Debts</p>
               <p className={`text-[15px] font-semibold mt-1 tabular-nums truncate ${liabilities > 0 ? 'text-rose-400' : 'text-textFaint'}`}>
                 {privacyMode ? hide : (liabilities > 0 ? `−${fmtCompact(aLiab)}` : fmtCompact(0))}
               </p>
