@@ -2533,7 +2533,24 @@ export default function App() {
       />
 
       {/* Dynamic Slide-Up Modal */}
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+      {/* Add / edit account: fixed height with the main button pinned, so switching Asset ↔ Debt
+          never resizes the sheet. The short "Update balance" view keeps the normal fitted sheet. */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        label={selectedAsset && !isEditMode ? 'Update balance' : (modalCategory === AssetCategory.DEBT ? 'Debt' : 'Asset')}
+        fixed={!(selectedAsset && !isEditMode)}
+        footer={!(selectedAsset && !isEditMode) && (
+            <div className="flex gap-3">
+                {selectedAsset && (
+                    <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold py-4 rounded-[14px] transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
+                )}
+                <button type="submit" form="asset-form" className={`flex-[2] kaya-btn py-4 rounded-[14px] ${!selectedAsset ? 'w-full' : ''}`}>
+                    {selectedAsset ? 'Save changes' : (modalCategory === AssetCategory.DEBT ? 'Add debt' : 'Add asset')}
+                </button>
+            </div>
+        )}
+      >
         {selectedAsset && !isEditMode ? (
             // VIEW: Add Balance OR Edit a saved history entry
             <>
@@ -2618,7 +2635,7 @@ export default function App() {
                 {modalCategory === AssetCategory.DEBT && (
                     <p className="text-[13px] leading-[19px] text-textFaint -mt-2 mb-6">Loans, credit cards and anything you owe. Kaya subtracts this from your net worth.</p>
                 )}
-                <form onSubmit={handleSaveAsset} className="space-y-5">
+                <form id="asset-form" onSubmit={handleSaveAsset} className="space-y-5">
                     <div>
                         <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">{modalCategory === AssetCategory.DEBT ? 'Debt name' : 'Asset name'}</label>
                         <input required name="name" defaultValue={selectedAsset?.name} placeholder={modalCategory === AssetCategory.DEBT ? 'Car loan, BPI credit card' : 'BDO Savings'} className="kaya-field transition-all placeholder:text-textFaint" />
@@ -2682,14 +2699,6 @@ export default function App() {
                         <span className="shrink-0 w-11 h-6 rounded-full bg-ink/15 peer-checked:bg-textMuted relative transition-colors duration-200 after:content-[''] after:absolute after:top-1 after:left-1 after:w-4 after:h-4 after:rounded-full after:transition-all after:duration-200 after:bg-textFaint peer-checked:after:bg-paper peer-checked:after:translate-x-5" />
                     </label>
 
-                    <div className="flex gap-3 pt-4">
-                        {selectedAsset && (
-                            <button type="button" onClick={handleDeleteAsset} className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold py-4 rounded-[14px] transition-colors flex items-center justify-center gap-2"><Icons.Delete size={18} /> Delete</button>
-                        )}
-                        <button type="submit" className={`flex-[2] kaya-btn py-4 rounded-[14px] ${!selectedAsset ? 'w-full' : ''}`}>
-                            {selectedAsset ? 'Save Changes' : (modalCategory === AssetCategory.DEBT ? 'Add debt' : 'Add asset')}
-                        </button>
-                    </div>
                 </form>
             </>
         )}

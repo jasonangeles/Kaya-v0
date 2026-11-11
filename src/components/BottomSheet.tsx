@@ -15,8 +15,13 @@ export const BottomSheet: React.FC<{
   onClose: () => void;
   /** Accessible name for the dialog, e.g. "Add income". */
   label?: string;
+  /** Open at one fixed height (90% of the screen) with the fields scrolling inside.
+   *  Use for long forms whose content changes, so the sheet never jumps. */
+  fixed?: boolean;
+  /** Pinned to the bottom of a fixed sheet (the main button). Content scrolls under it with a blur fade. */
+  footer?: React.ReactNode;
   children?: React.ReactNode;
-}> = ({ isOpen, onClose, label = 'Sheet', children }) => {
+}> = ({ isOpen, onClose, label = 'Sheet', fixed = false, footer, children }) => {
   const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
   const start = useRef<{ y: number; t: number } | null>(null);
@@ -56,7 +61,7 @@ export const BottomSheet: React.FC<{
   const [h, setH] = useState<number | null>(null);
   const [resizing, setResizing] = useState(false);
   useEffect(() => {
-    if (!isOpen) { setH(null); return; }
+    if (!isOpen || fixed) { setH(null); return; }
     const el = inner.current;
     if (!el) return;
     let first = true, t: number | undefined;
@@ -70,7 +75,7 @@ export const BottomSheet: React.FC<{
     });
     ro.observe(el);
     return () => { ro.disconnect(); window.clearTimeout(t); };
-  }, [isOpen]);
+  }, [isOpen, fixed]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     start.current = { y: e.clientY, t: performance.now() };
@@ -109,9 +114,9 @@ export const BottomSheet: React.FC<{
           transform: `translateY(${y})`,
           visibility: isOpen ? 'visible' : 'hidden',
           transition: dragging ? 'none' : (isOpen ? 'transform 300ms ease-out' : 'transform 300ms ease-out, visibility 0s linear 300ms'),
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)',
+          ...(fixed ? { height: 'min(90dvh, 860px)' } : { paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }),
         }}
-        className={`fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] px-6 pb-6 max-h-[90vh] overflow-y-auto max-w-md mx-auto ${isOpen ? '' : 'pointer-events-none'}`}
+        className={`fixed bottom-0 inset-x-0 z-50 kaya-sheet rounded-t-[28px] px-6 max-w-md mx-auto ${fixed ? 'flex flex-col overflow-hidden' : 'pb-6 max-h-[90vh] overflow-y-auto'} ${isOpen ? '' : 'pointer-events-none'}`}
       >
         {/* Grab strip: full width so it's easy to hit. Tap or swipe down to close. */}
         <button
@@ -121,16 +126,33 @@ export const BottomSheet: React.FC<{
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={() => { start.current = null; setDragging(false); setDragY(0); }}
-          className="relative z-10 block w-[calc(100%+3rem)] -mx-6 pt-6 pb-6 cursor-grab active:cursor-grabbing"
+          className="relative z-10 shrink-0 block w-[calc(100%+3rem)] -mx-6 pt-6 pb-6 cursor-grab active:cursor-grabbing"
           style={{ touchAction: 'none' }}
         >
           <span aria-hidden className="block w-10 h-1 bg-ink/20 rounded-full mx-auto" />
         </button>
         <button type="button" onClick={onClose} aria-label="Close" className="absolute top-6 right-6 z-20 text-textMuted hover:text-ink">✕</button>
-        {/* Clip only while the height animates, so dropdowns inside the sheet aren't cut off */}
-        <div style={{ height: h ?? 'auto', transition: 'height 280ms cubic-bezier(.2,.8,.2,1)', overflow: resizing ? 'hidden' : 'visible' }}>
-          <div ref={inner} className="flow-root">{isOpen ? children : null}</div>
-        </div>
+        {fixed ? (
+          <>
+            {/* Fields scroll; bottom padding leaves room so the last field clears the pinned footer */}
+            <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar -mx-6 px-6"
+              style={{ paddingBottom: footer ? 'calc(env(safe-area-inset-bottom, 0px) + 7.5rem)' : 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
+              {isOpen ? children : null}
+            </div>
+            {footer && (
+              <div className="absolute inset-x-0 bottom-0 z-10 px-6 pt-6" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}>
+                {/* Same blur fade as the page under the toolbar, tinted to the sheet's own colour */}
+                <div aria-hidden className="kaya-sheet-fade pointer-events-none absolute inset-x-0 bottom-0 -top-8" />
+                <div className="relative">{isOpen ? footer : null}</div>
+              </div>
+            )}
+          </>
+        ) : (
+          /* Clip only while the height animates, so dropdowns inside the sheet aren't cut off */
+          <div style={{ height: h ?? 'auto', transition: 'height 280ms cubic-bezier(.2,.8,.2,1)', overflow: resizing ? 'hidden' : 'visible' }}>
+            <div ref={inner} className="flow-root">{isOpen ? children : null}</div>
+          </div>
+        )}
       </div>
     </>,
     document.body
