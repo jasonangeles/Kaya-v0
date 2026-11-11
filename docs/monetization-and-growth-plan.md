@@ -83,7 +83,29 @@ The most useful review, from an unhappy user:
 
 The three blog posts ("How I track my net worth manually", "Net worth tracking for anxious people", "A simpler YNAB alternative") are written for **search and AI answers**: question-style headings ("What app tracks net worth with manual entry?"), comparison tables, FAQs, and the product name repeated in the answers. You're right that they're SEO first, but the *ideas* in them are good, and they translate directly to short social posts.
 
-*(The Instagram account couldn't be loaded here, since Instagram blocks automated access. Send screenshots of the 8 posts if you want them analysed.)*
+**Their Instagram (@get_worth_it)**, reviewed from screenshots (Figma, "Worth It - Instagram Screenshots"):
+
+| Post | Format | Caption style | Engagement |
+|---|---|---|---|
+| "Why Track Your Net Worth?" (Mar 17, 2025) | Carousel: big white headline on a green-to-blue gradient + tilted phone | 4 benefit lines with emoji, "your future self will thank you", 10 generic hashtags, "link in bio" | 0 likes |
+| "More assets than liabilities = Wealth" (Mar 22, 2025) | Same carousel template | Definition post (assets vs liabilities), generic hashtags | 0 likes |
+| "8 New themes" (May 8, 2025) | Feature announcement: 2 phones showing the theme picker | "Pick your vibe… a little more fun", "link in bio" | 0 likes |
+
+The latest post is from May 2025, so the account stopped about 18 months ago.
+
+**What this tells us**
+- **The look is good, and close to ours:** a dark gradient, one huge headline and a phone mockup. Kaya's dither, gradient headline and Jazz screens already do this, and better.
+- **The content didn't land:** generic tips ("Why track your net worth?") with generic hashtags (#MoneyTips #Finance) compete with millions of finance accounts. There was no hook, no person and no niche.
+- **No consistency:** 8 posts then silence. The algorithm and followers both need a steady rhythm.
+- **Themes were worth a launch post for them:** this confirms our hidden colour themes are a good "Kaya Plus" feature *and* a good announcement moment.
+
+**What Kaya should do differently**
+1. **Niche first:** speak to Filipinos and families with money in more than one country (#OFW, #PinoyIpon, #FilipinoInCanada) instead of #Finance.
+2. **A human in the content:** your founder story ("I'm a designer in Canada with money back home in the Philippines, so I built this"). Faces and voice beat mockups.
+3. **Reels before carousels:** short screen recordings of real flows (switching currency, a monthly check-in, unlocking with Face ID), which feed the landing page tutorial section later.
+4. **Hooks, not definitions:** "I had money in 4 banks and 2 countries and no idea what I was worth" beats "Assets vs liabilities".
+5. **A sustainable cadence:** 2 posts a week, batched monthly, for at least 3 months before judging results.
+6. **A call to action matched to the platform:** "Comment KAYA and I'll send you the link" (the comment-keyword trick) engages better than "link in bio".
 
 **Repurpose as Kaya social posts (carousels / reels)**
 1. "Net worth = what you own − what you owe." The one-slide explainer.
