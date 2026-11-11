@@ -431,13 +431,26 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
 
       {/* Records grouped by period */}
       {records.length === 0 ? (
-        <div className="glass-panel rounded-[20px] p-8 text-center">
+        // The whole card opens Add Income, same as the floating + button.
+        <button
+          type="button"
+          onClick={openAdd}
+          aria-label="Add your first income"
+          className="block w-full glass-panel rounded-[20px] p-8 text-center transition-transform active:scale-[0.98] hover:brightness-110"
+        >
           <div className="w-12 h-12 rounded-2xl bg-[#399d74]/15 text-[#399d74] flex items-center justify-center mx-auto mb-3">
             <Icons.Trend size={22} />
           </div>
           <p className="text-ink font-medium mb-1">No income logged yet</p>
-          <p className="text-textMuted text-sm">Tap + to add your first dividend or interest payment.</p>
-        </div>
+          <p className="text-textMuted text-sm">
+            Log money your savings and investments earn, like dividends, interest and rent. Tap{' '}
+            {/* Mini version of the + button. Nudged up so it sits optically centred on "Tap" and "to". */}
+            <span aria-hidden className="inline-flex items-center justify-center w-4 h-4 rounded-[5px] bg-[#dcf5df] text-black align-[-0.15em] relative -top-px">
+              <Icons.Add size={10} weight="bold" />
+            </span>{' '}
+            to add your first one.
+          </p>
+        </button>
       ) : (
         <div key={`list-${mode}`} className="space-y-6 kaya-anim animate-[kayaRise_0.35s_ease-out]">
         {grouped.map(group => (
@@ -481,7 +494,8 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
       {/* Add / Edit sheet */}
       <Sheet isOpen={isOpen} onClose={closeSheet}>
         {isOpen && (<>
-        <h2 className="text-2xl font-medium mb-6 text-ink">{editingId ? 'Edit Income' : 'Add Income'}</h2>
+        <h2 className={`text-2xl font-medium text-ink ${editingId ? 'mb-6' : 'mb-1.5'}`}>{editingId ? 'Edit Income' : 'Add Income'}</h2>
+        {!editingId && <p className="text-[13px] leading-[19px] text-textFaint mb-6">Money your savings and investments earn, like dividends, interest and rent. Not your salary.</p>}
         <form onSubmit={save} className="space-y-5">
           <div>
             <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Amount</label>

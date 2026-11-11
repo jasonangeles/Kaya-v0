@@ -2292,7 +2292,7 @@ export default function App() {
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
           }}
-          className="relative isolate w-full h-[70px] rounded-[20px] px-5 py-0 flex justify-between items-center overflow-hidden"
+          className="relative isolate w-full h-[70px] rounded-[20px] px-2 py-0 flex items-center overflow-hidden"
         >
           {/* gradient stroke that fades to transparent */}
           <span
@@ -2317,10 +2317,9 @@ export default function App() {
               key={key}
               aria-label={label}
               onClick={() => goTab(key as any)}
-              className={`relative flex items-center justify-center w-6 h-full transition-colors ${active ? 'text-textMuted' : 'text-textFaint'}`}
+              aria-current={active ? 'page' : undefined}
+              className={`relative flex-1 flex flex-col items-center justify-center gap-[3px] h-full transition-colors ${active ? 'text-textMuted' : 'text-textFaint'}`}
             >
-              {/* invisible wider tap area (icon itself is 24px, per Figma) */}
-              <span aria-hidden className="absolute inset-y-0 -inset-x-4" />
               {active && (
                 // Glow exported from Figma (public/glow.png, 256px @2x → 128px), centered on
                 // the island's bottom edge under the icon. A pre-rendered image avoids CSS
@@ -2336,14 +2335,16 @@ export default function App() {
               )}
               {/* Active tab: filled Phosphor icon + muted color + glow; others: outline */}
               {key === 'HOME' ? (
-                <Icons.Home className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+                <Icons.Home className="relative w-[22px] h-[22px]" weight={active ? 'fill' : 'regular'} />
               ) : key === 'ASSETS' ? (
-                <Icons.Wallet className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+                <Icons.Wallet className="relative w-[22px] h-[22px]" weight={active ? 'fill' : 'regular'} />
               ) : key === 'INCOME' ? (
-                <Icons.BarChart className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+                <Icons.BarChart className="relative w-[22px] h-[22px]" weight={active ? 'fill' : 'regular'} />
               ) : (
-                <Icons.Settings className="relative w-6 h-6" weight={active ? 'fill' : 'regular'} />
+                <Icons.Settings className="relative w-[22px] h-[22px]" weight={active ? 'fill' : 'regular'} />
               )}
+              {/* Short visible label (10px, Apple tab bar size) so new users don't have to guess */}
+              <span aria-hidden className="relative text-[10px] leading-none font-medium tracking-[0.1px]">{label}</span>
             </button>
           ))}
         </nav>
