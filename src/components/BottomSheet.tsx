@@ -58,6 +58,17 @@ export const BottomSheet: React.FC<{
   // shrinks (e.g. switching Asset ↔ Debt shows different fields) the top edge would jump.
   // Measure the content and animate the wrapper's height to it instead.
   const inner = useRef<HTMLDivElement>(null);
+  // Pinned footer height (it varies: one button, or Save + Duplicate/Delete), so the fade and the
+  // scroll padding line up with the real button.
+  const footRef = useRef<HTMLDivElement>(null);
+  const [footH, setFootH] = useState(0);
+  useEffect(() => {
+    const el = footRef.current;
+    if (!isOpen || !fixed || !el) return;
+    const ro = new ResizeObserver(() => setFootH(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isOpen, fixed, !!footer]);
   const [h, setH] = useState<number | null>(null);
   const [resizing, setResizing] = useState(false);
   useEffect(() => {
@@ -134,16 +145,19 @@ export const BottomSheet: React.FC<{
         <button type="button" onClick={onClose} aria-label="Close" className="absolute top-6 right-6 z-20 text-textMuted hover:text-ink">✕</button>
         {fixed ? (
           <>
-            {/* Fields scroll; bottom padding leaves room so the last field clears the pinned footer */}
+            {/* Fields scroll and fade out (masked to transparent) as they reach the pinned button,
+                so the sheet's own background shows through. No tinted overlay, so no colour seams. */}
             <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar -mx-6 px-6"
-              style={{ paddingBottom: footer ? 'calc(env(safe-area-inset-bottom, 0px) + 7.5rem)' : 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
+              style={footer ? (() => {
+                const top = Math.max(0, footH - 24);           // button's top edge, from the sheet bottom
+                const mask = `linear-gradient(to bottom, #000 calc(100% - ${top + 48}px), transparent calc(100% - ${top - 4}px))`;
+                return { paddingBottom: footH + 24, maskImage: mask, WebkitMaskImage: mask };
+              })() : { paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
               {isOpen ? children : null}
             </div>
             {footer && (
-              <div className="absolute inset-x-0 bottom-0 z-10 px-6 pt-6" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}>
-                {/* Same blur fade as the page under the toolbar, tinted to the sheet's own colour */}
-                <div aria-hidden className="kaya-sheet-fade pointer-events-none absolute inset-x-0 bottom-0 -top-8" />
-                <div className="relative">{isOpen ? footer : null}</div>
+              <div ref={footRef} className="absolute inset-x-0 bottom-0 z-10 px-6 pt-6" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}>
+                {isOpen ? footer : null}
               </div>
             )}
           </>

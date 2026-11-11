@@ -477,11 +477,31 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
       )}
 
       {/* Add / Edit sheet */}
-      <BottomSheet isOpen={isOpen} onClose={closeSheet} label={editingId ? 'Edit income' : 'Add income'}>
+      <BottomSheet
+        isOpen={isOpen}
+        onClose={closeSheet}
+        label={editingId ? 'Edit income' : 'Add income'}
+        fixed
+        footer={editingId ? (
+          <div className="space-y-3">
+            <button type="submit" form="income-form" className="w-full kaya-btn py-4 rounded-[14px]">Save</button>
+            <div className="flex gap-3">
+              <button type="button" onClick={duplicate} className="flex-1 bg-ink/5 hover:bg-ink/10 text-ink border border-ink/10 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                <Icons.History size={18} /> Duplicate
+              </button>
+              <button type="button" onClick={remove} className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                <Icons.Delete size={18} /> Delete
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button type="submit" form="income-form" className="w-full kaya-btn py-4 rounded-[14px]">Add Income</button>
+        )}
+      >
         {isOpen && (<>
         <h2 className={`text-2xl font-medium text-ink ${editingId ? 'mb-6' : 'mb-1.5'}`}>{editingId ? 'Edit Income' : 'Add Income'}</h2>
         {!editingId && <p className="text-[13px] leading-[19px] text-textFaint mb-6">Money your savings and investments earn, like dividends, interest and rent. Not your salary.</p>}
-        <form onSubmit={save} className="space-y-5">
+        <form id="income-form" onSubmit={save} className="space-y-5">
           <div>
             <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Amount</label>
             <div className="flex items-center kaya-field kaya-field-wrap transition-all">
@@ -548,25 +568,6 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
             />
           </div>
 
-          {editingId ? (
-            <div className="space-y-3 pt-2">
-              <button type="submit" className="w-full kaya-btn py-4 rounded-[14px]">
-                Save
-              </button>
-              <div className="flex gap-3">
-                <button type="button" onClick={duplicate} className="flex-1 bg-ink/5 hover:bg-ink/10 text-ink border border-ink/10 font-medium py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
-                  <Icons.History size={18} /> Duplicate
-                </button>
-                <button type="button" onClick={remove} className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold py-4 rounded-[14px] transition-colors flex items-center justify-center gap-2">
-                  <Icons.Delete size={18} /> Delete
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button type="submit" className="w-full kaya-btn py-4 rounded-[14px] mt-2">
-              Add Income
-            </button>
-          )}
         </form>
         </>)}
       </BottomSheet>
