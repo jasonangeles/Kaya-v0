@@ -169,6 +169,7 @@ export const SignInModal: React.FC<{ open: boolean; onClose: () => void; mode?: 
             </p>
             <p className="text-[#6e8777]/80 text-[11px] leading-relaxed text-center mt-5">
               Kaya never connects to your bank. Your data stays on your device and syncs privately to your account.
+              {up && <> See our <a href="/privacy" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-white">Privacy Policy</a>.</>}
             </p>
           </>
         )}

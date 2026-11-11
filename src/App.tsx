@@ -780,6 +780,9 @@ export default function App() {
 
   const selectedAsset = useMemo(() => assets.find(a => a.id === selectedAssetId), [assets, selectedAssetId]);
   const editingEntry = useMemo(() => selectedAsset?.history.find(h => h.id === editingEntryId) || null, [selectedAsset, editingEntryId]);
+  // A trend needs at least two balance updates on different days. Before that, the line would only
+  // move with exchange rates, which reads like history that isn't there yet.
+  const hasTrend = useMemo(() => new Set(assets.flatMap(a => (a.history || []).map(h => String(h.date).slice(0, 10)))).size >= 2, [assets]);
   const historyData = useMemo(
     () => buildNetWorthSeries(assets, selectedTimeRange, rates, btcUsd, settings.displayCurrency),
     [assets, selectedTimeRange, rates, btcUsd, settings.displayCurrency]
@@ -1478,13 +1481,15 @@ export default function App() {
                 </div>
 
                 <div className="h-28 -mx-5 mt-2">
-                    <NetWorthChart
+                    {assetHistoryData.length < 2 ? (
+                      <div className="h-full flex items-center justify-center px-8 text-center text-[13px] text-textFaint">Update this balance again to see its progress</div>
+                    ) : <NetWorthChart
                         data={assetHistoryData}
                         mode={selectedAsset.currency === Currency.BTC ? 'BTC' : 'FIAT'}
                         displayCurrency={selectedAsset.currency}
                         timeRange={selectedTimeRange}
                         onScrub={setAssetScrub}
-                    />
+                    />}
                 </div>
 
                 <div className="flex justify-between items-center mt-2">
@@ -1666,7 +1671,7 @@ export default function App() {
                     )}
                  </div>
 
-                 {homeChange !== null && !privacyMode && (
+                 {homeChange !== null && !privacyMode && hasTrend && (
                    <div className="mt-1 flex items-center gap-2">
                       <span className={`text-[13px] font-medium flex items-center gap-1 tabular-nums ${homeChange.pct >= 0 ? 'text-[#399d74]' : 'text-rose-400'}`}>
                           {homeChange.pct >= 0 ? <Icons.Trend size={14} /> : <Icons.TrendDown size={14} />} {homeChange.pct >= 0 ? '+' : ''}{homeChange.pct.toFixed(1)}%
@@ -1677,13 +1682,15 @@ export default function App() {
             </div>
          </div>
          <div className="h-28 -mx-5 mt-2">
-            <NetWorthChart
+            {!hasTrend ? (
+              <div className="h-full flex items-center justify-center px-8 text-center text-[13px] text-textFaint">Add another balance to see your progress</div>
+            ) : <NetWorthChart
                 data={historyData}
                 mode={settings.displayCurrency === Currency.BTC ? 'BTC' : 'FIAT'}
                 displayCurrency={settings.displayCurrency}
                 timeRange={selectedTimeRange}
                 onScrub={setHomeScrub}
-            />
+            />}
          </div>
          <div className="flex justify-between items-center mt-2">
             {(['1D', '1W', '1M', '3M', 'YTD', '1Y', 'ALL'] as TimeRange[]).map((range) => (
@@ -1865,7 +1872,7 @@ export default function App() {
             <p className="font-semibold text-ink text-[15px] tabular-nums">
                 {privacyMode ? '••••••' : (<><Sym code={asset.currency} />{asset.currency === Currency.BTC ? '' : ' '}{asset.amount.toLocaleString()}</>)}
             </p>
-            <p className="text-[11px] text-textFaint mt-0.5">{new Date(asset.lastUpdated).toLocaleDateString()}</p>
+            <p className="text-[11px] text-textFaint mt-0.5">Updated {new Date(asset.lastUpdated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
         </div>
     </div>
   );
@@ -1932,7 +1939,7 @@ export default function App() {
         {assets.length > 0 && (
             <div className="flex items-center justify-between px-1 pt-1">
                 <span className="text-xs text-textMuted">
-                    {filteredAssets.length === assets.length ? `${assets.length} accounts` : `${filteredAssets.length} of ${assets.length}`}
+                    {filteredAssets.length === assets.length ? `${assets.length} ${assets.length === 1 ? 'account' : 'accounts'}` : `${filteredAssets.length} of ${assets.length}`}
                 </span>
                 <button
                     onClick={() => setFilterOpen(true)}
@@ -2549,7 +2556,7 @@ export default function App() {
         {selectedAsset && !isEditMode ? (
             // VIEW: Add Balance OR Edit a saved history entry
             <>
-                <h2 className="text-2xl font-medium mb-6 text-ink">{editingEntryId ? 'Edit Entry' : 'Add Balance'}</h2>
+                <h2 className="text-2xl font-medium mb-6 text-ink">{editingEntryId ? 'Edit Entry' : 'Update balance'}</h2>
                 <form onSubmit={handleSaveAsset} className="space-y-6">
                     <div>
                         <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Date</label>
@@ -2567,7 +2574,7 @@ export default function App() {
                     </div>
 
                     <div>
-                        <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">New Balance</label>
+                        <label className="block text-[11px] font-medium text-textMuted mb-2 uppercase tracking-[1.2px]">Total balance</label>
                         <div className="flex items-center kaya-field kaya-field-wrap transition-all">
                              <span className="text-textFaint font-medium mr-2">{selectedAsset.currency}</span>
                              <input
@@ -2582,6 +2589,7 @@ export default function App() {
                                 autoFocus
                             />
                         </div>
+                        <p className="text-[12px] leading-[18px] text-textFaint mt-2">Enter your total balance on this date, not a deposit. Logging income doesn't change it.</p>
                     </div>
 
                     <div className="flex gap-3 pt-2">
@@ -2598,7 +2606,7 @@ export default function App() {
                             type="submit"
                             className={`kaya-btn py-4 rounded-[14px] ${editingEntryId ? 'flex-[2]' : 'w-full'}`}
                         >
-                            {editingEntryId ? 'Save Entry' : 'Add Balance'}
+                            {editingEntryId ? 'Save Entry' : 'Update balance'}
                         </button>
                     </div>
                 </form>

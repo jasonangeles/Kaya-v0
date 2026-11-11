@@ -145,6 +145,15 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
     return sum / (chartData.length || 1);
   }, [chartData, mode]);
 
+  // Spell out which months the average covers ("Jan to Nov"), so one entry doesn't look oddly low.
+  const avgRange = useMemo(() => {
+    if (!chartData.length) return '';
+    const m = (k: string) => new Date(Number(k.split('-')[0]), Number(k.split('-')[1]) - 1, 1).toLocaleDateString('en-US', { month: 'short' });
+    const first = m(chartData[0].key), last = m(chartData[chartData.length - 1].key);
+    const span = first === last ? first : `${first} to ${last}`;
+    return viewYear === currentYear ? span : `${span} ${viewYear}`;
+  }, [chartData, viewYear, currentYear]);
+
   // Headline number + growth: current month (MoM) for this year, year total (YoY) when browsing a past year, year total (YoY) in Yearly mode.
   const summary = useMemo(() => {
     const amt = (r: IncomeRecord) => toDisplay(r.amount, r.currency, displayCurrency, rates, r.rateUsd);
@@ -320,7 +329,7 @@ export const IncomeTracker: React.FC<Props> = ({ displayCurrency, privacyMode, o
             </div>
             <p className="text-[12px] leading-[18px] text-textFaint mt-1">
               {mode === 'MONTH' && avgMonthly > 0
-                ? <>Averaging <span className="text-[#399d74] font-medium">{hide(fmt(avgMonthly, displayCurrency))}</span> a month {viewYear === currentYear ? 'this year' : `in ${viewYear}`}</>
+                ? <>Averaging <span className="text-[#399d74] font-medium">{hide(fmt(avgMonthly, displayCurrency))}</span> a month, {avgRange}</>
                 : <>{mode === 'MONTH' ? 'No income yet for this year' : 'Year over year'} · All-time {hide(fmt(allTimeTotal, displayCurrency))}</>}
             </p>
           </div>

@@ -216,7 +216,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
             <div className="flex items-center justify-center gap-3 mt-8">
               <button onClick={openSignUp} className="bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[16px] font-semibold px-6 py-3.5 rounded-xl transition-colors">Start for free</button>
             </div>
-            <p className="text-[12px] leading-4 mt-4" style={{ color: '#6e8777' }}>No bank logins · No ads · Your data stays yours</p>
+            <p className="text-[12px] leading-4 mt-4" style={{ color: '#6e8777' }}>Free to use · No bank logins · No ads</p>
           </Reveal>
         </div>
         <Reveal delay={150}>
@@ -307,7 +307,7 @@ export const Landing: React.FC<{ onGetStarted?: () => void }> = ({ onGetStarted 
           />
           <Reveal className="mt-12">
             <button onClick={openSignUp} className="bg-[#dcf5df] hover:bg-[#c6e8cb] text-black text-[16px] font-semibold px-6 py-3.5 rounded-xl transition-colors">Start for free</button>
-            <p className="text-[12px] leading-4 mt-4" style={{ color: '#6e8777' }}>No bank logins · No ads · Your data stays yours</p>
+            <p className="text-[12px] leading-4 mt-4" style={{ color: '#6e8777' }}>Free to use · No bank logins · No ads</p>
           </Reveal>
         </section>
 
